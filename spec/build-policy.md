@@ -1,6 +1,6 @@
 # Foundation build and portability policy
 
-Status: proposed for independent review under BUILD-001, 2026-10-06.
+Status: ACCEPTED under BUILD-001, 2026-10-06, following user review.
 Owner: build/integration. See [RFC](../rfcs/BUILD-001-portable-foundation.md) and
 [decision record](../adr/BUILD-001-portable-toolchain.md). This document supplements
 the existing module DAG; it does not introduce new module dependencies.

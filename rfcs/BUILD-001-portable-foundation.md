@@ -1,6 +1,6 @@
 # RFC BUILD-001 — Portable foundation toolchain
 
-Status: PROPOSED, awaiting independent review.
+Status: ACCEPTED following independent user review, 2026-10-06.
 Author: codex-worker. Date: 2026-10-06.
 Affected owners: build/integration and future module implementers.
 
@@ -37,5 +37,6 @@ the exact acceptance commands. BUILD-002 must execute the future scaffold checks
 this policy does not claim those results. The retained architecture is the accepted
 ADR 0001; this RFC adds implementation policy, not new dependency edges.
 
-Independent review: pending. Decision: pending.
-Decision record: adr/BUILD-001-portable-toolchain.md (proposed until review).
+Independent reviewer: user. Approval: "it all looks good. continue building".
+Decision: accepted, 2026-10-06.
+Decision record: adr/BUILD-001-portable-toolchain.md.

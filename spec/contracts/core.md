@@ -1,6 +1,6 @@
 # Core values contract v1
 
-Status: proposed under CORE-001; frozen only after independent review and merge.
+Status: ACCEPTED under CORE-001 following independent user review, 2026-10-06.
 Owner: core. Consumers: scene and subsequent domain/application modules.
 No internal or external library dependencies beyond the C++ standard library.
 

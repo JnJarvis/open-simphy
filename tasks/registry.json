@@ -225,9 +225,9 @@
       "id": "CORE-002",
       "title": "Implement stable ID and diagnostic values",
       "stage": 1,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 2,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "CORE-001",
         "BUILD-002",
@@ -260,9 +260,9 @@
       "id": "MATH-002",
       "title": "Implement minimal vector and transform operations",
       "stage": 1,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 2,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "MATH-001",
         "BUILD-002",

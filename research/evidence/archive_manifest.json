@@ -1,0 +1,2833 @@
+[
+  {
+    "source": "3D Physics Demo\\3D car Racing Demo.ssim",
+    "sha256": "e872cfa66cedbe2776a6811595a498efaa5a09d90753f57c10e6037791749b8e",
+    "size": 3208163,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 46249,
+        "compression": 8
+      },
+      {
+        "name": "jeep.glb",
+        "bytes": 2944976,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 913650,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3D car Racing Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\3D Joints Demo.ssim",
+    "sha256": "6f2213f6f8eee58a03bd81e0600225a0e34a98bec96e19f3b1854d7c866b29c9",
+    "size": 57960,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16167,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 64169,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3D Joints Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,constraint",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\3D world Bridge Demo.ssim",
+    "sha256": "8f9af9c7fd8bbafe5f18fcba582e157163efbd08bc03c7aa044e3d077d9563c9",
+    "size": 66452,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13880,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 73961,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3D world Bridge Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\3d world HeightField test.ssim",
+    "sha256": "450b34245f053a2c458a4149111e0aa3f3719b8428db9a35aed7faa0b4b318c7",
+    "size": 86249,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 10299,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 94976,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3d world HeightField test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\3d world Plane test.ssim",
+    "sha256": "5ecb26cbceaab75bab7d97c986a21a6be66aa6969e9ba18966c9c7c978a7d070",
+    "size": 63633,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 9277,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 73270,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3d world Plane test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,collision and com",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\3d world weldjoint demo.ssim",
+    "sha256": "65aa4457953f76eb419954a394a452e84ffa364e3fb9b4102726ade0a07efc7d",
+    "size": 20453,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 10003,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 21426,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3d world weldjoint demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,free",
+      "speed": "0.6699999999999997"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\Particle Cradle.ssim",
+    "sha256": "3161870a5dba88d2aa3d40ef81e87c0c9bedd3b2d9d15f512b86e71682327c86",
+    "size": 50368,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13392,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 58779,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Particle Cradle",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games,3d,collision and com",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\Spring joint Demo.ssim",
+    "sha256": "49b75714271eb8ebbbba6a70a8dc807bdad78e0832cc8f7a2853d9af448f72f3",
+    "size": 41763,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 9787,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 49560,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Spring joint Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,constraint",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "3D Physics Demo\\Theed RayCast Car Demo.ssim",
+    "sha256": "45667ef9ebd5bcf8d8a5a1beb0c85c631faa6318e8be6f5198fd6a3da399de17",
+    "size": 2809214,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 18892,
+        "compression": 8
+      },
+      {
+        "name": "jeep.glb",
+        "bytes": 2944976,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 515848,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Theed RayCast Car Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Charge oscillation.ssim",
+    "sha256": "4042bb8ce562ab0b630ad5d344a0cee5fd323c528023af77c85021581bfb8826",
+    "size": 78405,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 20220,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 88038,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Charge oscillation",
+      "author": "mk@simphy.com",
+      "access": "0",
+      "price": "0.0",
+      "categories": "electromagnetism,collision",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Newton Cradle.ssim",
+    "sha256": "f8eeb3e46c233266762e7ca2d6d8cf687ecb0b78a817767c88290ee6e2f64647",
+    "size": 369107,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 17050,
+        "compression": 8
+      },
+      {
+        "name": "ClipartKey_794777.png",
+        "bytes": 254263,
+        "compression": 8
+      },
+      {
+        "name": "shine_ball.jpg",
+        "bytes": 13471,
+        "compression": 8
+      },
+      {
+        "name": "newtons_cradle_billard.wav",
+        "bytes": 3842,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 107730,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.1",
+      "title": "Newton Cradle",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "collision and com,experiments",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Potentiometer Experiment.ssim",
+    "sha256": "673df1bca4fea1170e164843b6465c050255f52c767ec83271251bc9bfdb416f",
+    "size": 146883,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 10467,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 162023,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Potentiometer Experiment",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "circuits,electronics",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Prism Dispersion.ssim",
+    "sha256": "a7f45fc1f5ee89ddf02cb127bec40f217bba3e50dc2bd0d3be89618f34c62238",
+    "size": 206464,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 14292,
+        "compression": 8
+      },
+      {
+        "name": "graph.jpg",
+        "bytes": 94645,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 126625,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Prism Dispersion",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "optics",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Resonance in Action.ssim",
+    "sha256": "46f09f3dd3b647d9fcfaeb064c094320e0004d8c2171eb4a10fb774459de33e2",
+    "size": 1069687,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 26519,
+        "compression": 8
+      },
+      {
+        "name": "Group_102.png",
+        "bytes": 266946,
+        "compression": 8
+      },
+      {
+        "name": "box copy.png",
+        "bytes": 96499,
+        "compression": 8
+      },
+      {
+        "name": "PNGPIX-COM-Wood-Box-Vector-PNG-Transparent-Image.png",
+        "bytes": 408590,
+        "compression": 8
+      },
+      {
+        "name": "box1 copy.png",
+        "bytes": 84633,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 330658,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Resonance in Action",
+      "author": "hitendra",
+      "access": "0",
+      "price": "0.0",
+      "categories": "oscillation,experiments",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Rotation Toppling.ssim",
+    "sha256": "b41a8ef76ebfedc47ea17135b1ef41c54435d365a457e06572a89e54df687a69",
+    "size": 92461,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 23724,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 153273,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Rotation Toppling",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "friction,rotation",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Examples\\Static and Kinetic Friction.ssim",
+    "sha256": "d4e371f60a556bea560e884fde48229471c11d6cce1c1e26507ddc1aedd07518",
+    "size": 9829308,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 19522,
+        "compression": 8
+      },
+      {
+        "name": "pulley1.png",
+        "bytes": 11097,
+        "compression": 8
+      },
+      {
+        "name": "wood.png",
+        "bytes": 18775,
+        "compression": 8
+      },
+      {
+        "name": "wood1.png",
+        "bytes": 18775,
+        "compression": 8
+      },
+      {
+        "name": "861.jpg",
+        "bytes": 4784445,
+        "compression": 8
+      },
+      {
+        "name": "crate1.png",
+        "bytes": 1585,
+        "compression": 8
+      },
+      {
+        "name": "crate.png",
+        "bytes": 1585,
+        "compression": 8
+      },
+      {
+        "name": "86.jpg",
+        "bytes": 4784445,
+        "compression": 8
+      },
+      {
+        "name": "pulley.png",
+        "bytes": 11097,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 395013,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Static and Kinetic Friction",
+      "author": "Satveer",
+      "access": "0",
+      "price": "0.0",
+      "categories": "newton's laws",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Body and joints Demo.ssim",
+    "sha256": "c55a7ffd1805f41fcf7e7a91e2732b41d219906b9a0e3833e24008baa2e7da91",
+    "size": 198529,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 201895,
+        "compression": 8
+      },
+      {
+        "name": "tire.png",
+        "bytes": 9132,
+        "compression": 8
+      },
+      {
+        "name": "car (1).png",
+        "bytes": 36702,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 137841,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Body and joints Demo",
+      "author": "DELL",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games,tutorial",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Circuit Demo.ssim",
+    "sha256": "7144a466d393598c31557ce26f327fa78b21f40237efb8f332109ce85655dcd4",
+    "size": 64243,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 8601,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 169820,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Circuit Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "circuits,tutorial,current",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\collapsible_Panel_test.ssim",
+    "sha256": "8e957392b89471f59a26f7dfc9e3a6d77abecd225b385c2238b229c4e3fc7de0",
+    "size": 58324,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 8493,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 70290,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "collapsible_Panel_test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "free",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Fields Demo.ssim",
+    "sha256": "e797be0f34acaa0ff0ee30e78fe8dae651410e462e0e87ba03f3ac555f8961af",
+    "size": 142869,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13264,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 174889,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Fields Demo",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "magnetism",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Geometry Demo.ssim",
+    "sha256": "fd762dbf0bc5f7152a641e05eb109fea440db26a143d05831ff9879bd6870f40",
+    "size": 158101,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 12690,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 168077,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Geometry Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "maths",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Graph Demo.ssim",
+    "sha256": "7a20a4b11a3d8af0f79f92899c26a0a909baabbff12224cbf4c787160ff7339c",
+    "size": 170174,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13248,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 185648,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.1",
+      "title": "Graph Demo",
+      "author": "Mahesh",
+      "access": "0",
+      "price": "2.0",
+      "categories": "kinematics",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Gui Interaction Demo.ssim",
+    "sha256": "1433967fd4d6379baa878550d84b9cddce8423c9fbabf3b3ffb24235007e0c1f",
+    "size": 14743729,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16469,
+        "compression": 8
+      },
+      {
+        "name": "cottage_diffuse.png",
+        "bytes": 7613736,
+        "compression": 8
+      },
+      {
+        "name": "Dog_diffuse.jpg",
+        "bytes": 271315,
+        "compression": 8
+      },
+      {
+        "name": "raptor.jpg",
+        "bytes": 715201,
+        "compression": 8
+      },
+      {
+        "name": "cottage_normal.png",
+        "bytes": 4861157,
+        "compression": 8
+      },
+      {
+        "name": "Cylinder.obj",
+        "bytes": 6922,
+        "compression": 8
+      },
+      {
+        "name": "raptor.obj",
+        "bytes": 435303,
+        "compression": 8
+      },
+      {
+        "name": "cube.mtl",
+        "bytes": 234,
+        "compression": 8
+      },
+      {
+        "name": "cottage_obj.mtl",
+        "bytes": 665,
+        "compression": 8
+      },
+      {
+        "name": "torus.obj",
+        "bytes": 768465,
+        "compression": 8
+      },
+      {
+        "name": "cottage_obj.obj",
+        "bytes": 35557,
+        "compression": 8
+      },
+      {
+        "name": "face.obj",
+        "bytes": 940597,
+        "compression": 8
+      },
+      {
+        "name": "cube.obj",
+        "bytes": 835,
+        "compression": 8
+      },
+      {
+        "name": "raptor.mtl",
+        "bytes": 187,
+        "compression": 8
+      },
+      {
+        "name": "teapot.obj",
+        "bytes": 930842,
+        "compression": 8
+      },
+      {
+        "name": "sphere.obj",
+        "bytes": 83256,
+        "compression": 8
+      },
+      {
+        "name": "torusknot.obj",
+        "bytes": 258693,
+        "compression": 8
+      },
+      {
+        "name": "12228_Dog_v1_L2.mtl",
+        "bytes": 334,
+        "compression": 8
+      },
+      {
+        "name": "dog.obj",
+        "bytes": 1292348,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 132121,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.1",
+      "title": "Gui Interaction Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games,tutorial",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Liquid Demo.ssim",
+    "sha256": "0cc9d768b982bdf09927efca11533e090e68401fdef905f59581f63fd505fb30",
+    "size": 498906,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 29956,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 514441,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Liquid Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games,fluid and matter",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\MultiTouch Test.ssim",
+    "sha256": "098a3df81a8361bd2194ad59ef9f9a8555b33329ae6c2d56ab932e05f047cede",
+    "size": 45731,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 18111,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 78007,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "MultiTouch Test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Optics Demo.ssim",
+    "sha256": "e132eccaf4d025da94c8f36e6c1a37151a9ccd2aa9c4369a5f31572ce2554044",
+    "size": 167615,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13431,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 201479,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Optics Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Plotter_Test.ssim",
+    "sha256": "075102ebf664c939f97090070928b259e54833ea973916b26a722e79e1f6176c",
+    "size": 109325,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 10923,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 122434,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Plotter_Test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "maths",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Spring Controller Demo.ssim",
+    "sha256": "2b918d00ebc0c6c42a5784b47684d72655da980381443471cc735173390f05d4",
+    "size": 125986,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16888,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 178774,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Spring Controller Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "constraint,work and energy,collision and com",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Features Demo\\Tracers Demo.ssim",
+    "sha256": "13e2d1a2b4a9fde503dc1e6a6088c9dc165181fa63bc8eb0fad1993a2689d77f",
+    "size": 290449,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 109682,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 284631,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Tracers Demo",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games,experiments",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Day on Mercury.ssim",
+    "sha256": "06916ddaf6e543fbc3bd7a7d1e0c00c8b721d5bffc56c28664cdbf1faa6abb89",
+    "size": 93654,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16450,
+        "compression": 8
+      },
+      {
+        "name": "mercury-polar.png",
+        "bytes": 2695,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 99585,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Day on Mercury",
+      "author": "anike",
+      "access": "0",
+      "price": "0.0",
+      "categories": "astronomy,tutorial",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Doppler Effect Simulation.ssim",
+    "sha256": "0a6d9f03fa8cf2a38d03836bf2b234bde6e8a91bbc7c9a474448a5f51be730f9",
+    "size": 150528,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 19599,
+        "compression": 8
+      },
+      {
+        "name": "image.png",
+        "bytes": 14224,
+        "compression": 8
+      },
+      {
+        "name": "microphone.png",
+        "bytes": 11757,
+        "compression": 8
+      },
+      {
+        "name": "mic_tint.png",
+        "bytes": 14544,
+        "compression": 8
+      },
+      {
+        "name": "speaker.png",
+        "bytes": 13437,
+        "compression": 8
+      },
+      {
+        "name": "collide.mp3",
+        "bytes": 4736,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 105261,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Doppler Effect Simulation",
+      "author": "Mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "wave,sound",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Egg_in_solution (OsmoticPressure).ssim",
+    "sha256": "84ab9d24ca76a1378bf592a0dc3ea27010f7cd87bdc960bc717354a198b52ee4",
+    "size": 112248,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 22310,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 123882,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Egg_in_solution (OsmoticPressure)",
+      "author": "anike",
+      "access": "0",
+      "price": "0.0",
+      "categories": "atoms,fluid and matter,kinetic theory",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Electric field lines.ssim",
+    "sha256": "9eb624c139617e24681253587a1b2e04d3d9d574181b1fa13ca759424c775be6",
+    "size": 239298,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 143382,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 211134,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "Electric field lines",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Lenz_Law3D.ssim",
+    "sha256": "f93b5410687555e2098a503bfeff841e23daa7342213e388f27bfba8d89c2b7a",
+    "size": 130415,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 26041,
+        "compression": 8
+      },
+      {
+        "name": "texture.png",
+        "bytes": 45473,
+        "compression": 8
+      },
+      {
+        "name": "needle.png",
+        "bytes": 7593,
+        "compression": 8
+      },
+      {
+        "name": "Inductor and Galv.obj",
+        "bytes": 55679,
+        "compression": 8
+      },
+      {
+        "name": "Inductor and Galv.mtl",
+        "bytes": 1787,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 79164,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Lenz_Law3D",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,experiments,magnetism",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Micrometer.ssim",
+    "sha256": "49a77ef7d0265fd3cd3579ddcced989890131e5bc5cc0b79fcd393e81a4d5c7e",
+    "size": 836446,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 27380,
+        "compression": 8
+      },
+      {
+        "name": "thimble.png",
+        "bytes": 71365,
+        "compression": 8
+      },
+      {
+        "name": "texture9.png",
+        "bytes": 54218,
+        "compression": 8
+      },
+      {
+        "name": "micrometer_base.png",
+        "bytes": 79189,
+        "compression": 8
+      },
+      {
+        "name": "spindle.png",
+        "bytes": 724,
+        "compression": 8
+      },
+      {
+        "name": "tick.wav",
+        "bytes": 20986,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 630686,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Micrometer",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "experiments,instruments",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Polarization3D.ssim",
+    "sha256": "2d7893e344d3789d4035e66eb073125381fcd3a70a93cca357d87f56f613dbbd",
+    "size": 441757,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 29753,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 446565,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Polarization3D",
+      "author": "anike",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,optics,wave",
+      "speed": "1.3000000000000003"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Solar System.ssim",
+    "sha256": "ef93ec9ada4af30634d02fe9fd7175c506210c06c20312117a29e4380e356ef1",
+    "size": 7180801,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 18852,
+        "compression": 8
+      },
+      {
+        "name": "right.png",
+        "bytes": 790729,
+        "compression": 8
+      },
+      {
+        "name": "bottom.png",
+        "bytes": 861217,
+        "compression": 8
+      },
+      {
+        "name": "2k_stars_milky_way.jpg",
+        "bytes": 251454,
+        "compression": 8
+      },
+      {
+        "name": "sun.jpeg",
+        "bytes": 10428,
+        "compression": 8
+      },
+      {
+        "name": "front.png",
+        "bytes": 882425,
+        "compression": 8
+      },
+      {
+        "name": "left.png",
+        "bytes": 801029,
+        "compression": 8
+      },
+      {
+        "name": "back.png",
+        "bytes": 813635,
+        "compression": 8
+      },
+      {
+        "name": "top.png",
+        "bytes": 714399,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 2056961,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Solar System",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "0.99"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Vernier Calliper.ssim",
+    "sha256": "9e4a31c05f67fec617fa67d2d93596a1bea7cc52066bda7aad3309e783828388",
+    "size": 209700,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 39887,
+        "compression": 8
+      },
+      {
+        "name": "vernier_base.png",
+        "bytes": 15108,
+        "compression": 8
+      },
+      {
+        "name": "vernier3.png",
+        "bytes": 1407,
+        "compression": 8
+      },
+      {
+        "name": "vernier.png",
+        "bytes": 10800,
+        "compression": 8
+      },
+      {
+        "name": "vernier1.png",
+        "bytes": 7361,
+        "compression": 8
+      },
+      {
+        "name": "vernier2.png",
+        "bytes": 5610,
+        "compression": 8
+      },
+      {
+        "name": "blade.png",
+        "bytes": 772,
+        "compression": 8
+      },
+      {
+        "name": "tick.wav",
+        "bytes": 20986,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 172468,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Vernier Calliper",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "experiments,instruments",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "From Simulation Bundle\\Wave Ripples.ssim",
+    "sha256": "1ecacfae7917e9ee838a1c40549d84e91450dd17e136a73b10b4b27ce9a426b7",
+    "size": 328731,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 29791,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 334082,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Wave Ripples",
+      "author": "MaheshKurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "kinematics,oscillation and waves,3d",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\15-Puzzle.ssim",
+    "sha256": "6c8d0b3b173c39e5aafa92d57ab73ca1c2435e1934db0d600bfce3710f5a8749",
+    "size": 919930,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 48169,
+        "compression": 8
+      },
+      {
+        "name": "15_puzzle.png",
+        "bytes": 382211,
+        "compression": 8
+      },
+      {
+        "name": "background020.wav",
+        "bytes": 286606,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 419193,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "15-Puzzle",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "null",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Analog Clock.ssim",
+    "sha256": "c370eee0c4f89216e0b212f1df395a8460f22da364b4108e73be0d1d86519d73",
+    "size": 1049546,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 54178,
+        "compression": 8
+      },
+      {
+        "name": "clock2.png",
+        "bytes": 128235,
+        "compression": 8
+      },
+      {
+        "name": "seamless_pattern.png",
+        "bytes": 117550,
+        "compression": 8
+      },
+      {
+        "name": "Tick-DeepFrozenApps-397275646.wav",
+        "bytes": 20986,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 817548,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Analog Clock",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "null",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Animating background.ssim",
+    "sha256": "96b3e64783c72993d9ff76116a4a030823a7098f94945686b223c2b35c7bf27d",
+    "size": 1942970,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 12779,
+        "compression": 8
+      },
+      {
+        "name": "Trees-Landscape-Silhouette.png",
+        "bytes": 156482,
+        "compression": 8
+      },
+      {
+        "name": "music.mp3",
+        "bytes": 1600574,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 236854,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Animating background",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Arrow and Bow game.ssim",
+    "sha256": "edb8462e604dcdfef8c1ae949fa848bf782c60b080ca61d845d81bc582b1aa18",
+    "size": 1869820,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 27796,
+        "compression": 8
+      },
+      {
+        "name": "v957-nunny-11.jpg",
+        "bytes": 1308677,
+        "compression": 8
+      },
+      {
+        "name": "14966453.jpg",
+        "bytes": 74521,
+        "compression": 8
+      },
+      {
+        "name": "v935-aum-14.jpg",
+        "bytes": 672990,
+        "compression": 8
+      },
+      {
+        "name": "whoosh2.mp3",
+        "bytes": 20685,
+        "compression": 8
+      },
+      {
+        "name": "arrowHit01.wav",
+        "bytes": 125328,
+        "compression": 8
+      },
+      {
+        "name": "arrow.wav",
+        "bytes": 1181914,
+        "compression": 8
+      },
+      {
+        "name": "whoosh.mp3",
+        "bytes": 32640,
+        "compression": 8
+      },
+      {
+        "name": "whistle.wav",
+        "bytes": 254618,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 213190,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Arrow and Bow game",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Canvas Clock Demo.ssim",
+    "sha256": "1afe58f9a0994c06fa28375274ae676734384282f1c2d5e160f4f335d2e13a40",
+    "size": 175915,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13666,
+        "compression": 8
+      },
+      {
+        "name": "wood-pattern.png",
+        "bytes": 78528,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 108616,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Canvas Clock Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Canvas FireWorks.ssim",
+    "sha256": "a243ba454b8e2749ebd3280055882bb8d1b4d493fc0e85af877e15d7f1342a6b",
+    "size": 135611,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 11566,
+        "compression": 8
+      },
+      {
+        "name": "tiny_rocketwav-14647.mp3",
+        "bytes": 36960,
+        "compression": 8
+      },
+      {
+        "name": "bbang-47623.mp3",
+        "bytes": 47647,
+        "compression": 8
+      },
+      {
+        "name": "080160_fireworkmp3-87733.mp3",
+        "bytes": 40320,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 26337,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Canvas FireWorks",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Cloth Simulation.ssim",
+    "sha256": "5b333e19e06c5530e3206ce23d0193077c7880da11d9ff9acaa0e909a43aceee",
+    "size": 235727,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16720,
+        "compression": 8
+      },
+      {
+        "name": "getthumbnailfile.png",
+        "bytes": 15968,
+        "compression": 8
+      },
+      {
+        "name": "button-sprite.png",
+        "bytes": 45119,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 200031,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Cloth Simulation",
+      "author": "Mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "scripting,constraint,experiment",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Flappy Bird Xperia X1.ssim",
+    "sha256": "b9db9011d5759eeef0fbee34890a39acbb7bf628ff0ca2566b14a85c65944d9d",
+    "size": 948753,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 25461,
+        "compression": 8
+      },
+      {
+        "name": "t1.png",
+        "bytes": 1092,
+        "compression": 8
+      },
+      {
+        "name": "getready.png",
+        "bytes": 5384,
+        "compression": 8
+      },
+      {
+        "name": "Xperia-X1.png",
+        "bytes": 78119,
+        "compression": 8
+      },
+      {
+        "name": "g1.png",
+        "bytes": 11797,
+        "compression": 8
+      },
+      {
+        "name": "g11.png",
+        "bytes": 11797,
+        "compression": 8
+      },
+      {
+        "name": "ground.png",
+        "bytes": 13724,
+        "compression": 8
+      },
+      {
+        "name": "botpipe.png",
+        "bytes": 15475,
+        "compression": 8
+      },
+      {
+        "name": "b1.png",
+        "bytes": 2398,
+        "compression": 8
+      },
+      {
+        "name": "g01.png",
+        "bytes": 11365,
+        "compression": 8
+      },
+      {
+        "name": "go.png",
+        "bytes": 634,
+        "compression": 8
+      },
+      {
+        "name": "b2.png",
+        "bytes": 2402,
+        "compression": 8
+      },
+      {
+        "name": "g0.png",
+        "bytes": 11365,
+        "compression": 8
+      },
+      {
+        "name": "t0.png",
+        "bytes": 1045,
+        "compression": 8
+      },
+      {
+        "name": "b0.png",
+        "bytes": 2398,
+        "compression": 8
+      },
+      {
+        "name": "BG.png",
+        "bytes": 38885,
+        "compression": 8
+      },
+      {
+        "name": "toppipe.png",
+        "bytes": 15395,
+        "compression": 8
+      },
+      {
+        "name": "die.wav",
+        "bytes": 133422,
+        "compression": 8
+      },
+      {
+        "name": "score.wav",
+        "bytes": 177454,
+        "compression": 8
+      },
+      {
+        "name": "hit.wav",
+        "bytes": 96558,
+        "compression": 8
+      },
+      {
+        "name": "start.wav",
+        "bytes": 354606,
+        "compression": 8
+      },
+      {
+        "name": "flap.wav",
+        "bytes": 29870,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 308445,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Flappy Bird Xperia X1",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Freecell.ssim",
+    "sha256": "da3b1c8382fafcd685d4aede09d1d40ee3d6dfa329ac2bc63cb224602ccf8651",
+    "size": 600249,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 174268,
+        "compression": 8
+      },
+      {
+        "name": "game-freecell-logo.png",
+        "bytes": 45842,
+        "compression": 8
+      },
+      {
+        "name": "logo.png",
+        "bytes": 62081,
+        "compression": 8
+      },
+      {
+        "name": "freecell.png",
+        "bytes": 91259,
+        "compression": 8
+      },
+      {
+        "name": "high.wav",
+        "bytes": 30878,
+        "compression": 8
+      },
+      {
+        "name": "win_music.wav",
+        "bytes": 286606,
+        "compression": 8
+      },
+      {
+        "name": "scratch.wav",
+        "bytes": 33450,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 252861,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Freecell",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "scripting,game",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Helicopter Game.ssim",
+    "sha256": "e252f17531b4896232b0d8d086b542cd1c0db0bfbe0fbf26f05cdeaadc0806d7",
+    "size": 351534,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 23020,
+        "compression": 8
+      },
+      {
+        "name": "heli.png",
+        "bytes": 908,
+        "compression": 8
+      },
+      {
+        "name": "heli2.png",
+        "bytes": 793,
+        "compression": 8
+      },
+      {
+        "name": "motor.ogg",
+        "bytes": 51354,
+        "compression": 8
+      },
+      {
+        "name": "heli.ogg",
+        "bytes": 166552,
+        "compression": 8
+      },
+      {
+        "name": "crash.ogg",
+        "bytes": 65974,
+        "compression": 8
+      },
+      {
+        "name": "assetsManager.js",
+        "bytes": 4427,
+        "compression": 8
+      },
+      {
+        "name": "collisionManager.js",
+        "bytes": 9585,
+        "compression": 8
+      },
+      {
+        "name": "background.js",
+        "bytes": 821,
+        "compression": 8
+      },
+      {
+        "name": "scorePanel.js",
+        "bytes": 799,
+        "compression": 8
+      },
+      {
+        "name": "bullet.js",
+        "bytes": 3399,
+        "compression": 8
+      },
+      {
+        "name": "enemy.js",
+        "bytes": 11446,
+        "compression": 8
+      },
+      {
+        "name": "spacecraft.js",
+        "bytes": 9676,
+        "compression": 8
+      },
+      {
+        "name": "gameplayManager.js",
+        "bytes": 5403,
+        "compression": 8
+      },
+      {
+        "name": "meteor.js",
+        "bytes": 5144,
+        "compression": 8
+      },
+      {
+        "name": "inputManager.js",
+        "bytes": 864,
+        "compression": 8
+      },
+      {
+        "name": "powerUp.js",
+        "bytes": 569,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 67950,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Helicopter Game",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\MS Paint Clone.ssim",
+    "sha256": "dbe488d4dc054526016a03b450bdb37e2a21c2a1283d5dfbf513013ddc8d4a20",
+    "size": 212450,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 38846,
+        "compression": 8
+      },
+      {
+        "name": "menu_icons.png",
+        "bytes": 9671,
+        "compression": 8
+      },
+      {
+        "name": "color_pallette (2).png",
+        "bytes": 16352,
+        "compression": 8
+      },
+      {
+        "name": "color_pallette.png",
+        "bytes": 16648,
+        "compression": 8
+      },
+      {
+        "name": "ms_paint_icons.png",
+        "bytes": 9835,
+        "compression": 8
+      },
+      {
+        "name": "Data.txt",
+        "bytes": 13345,
+        "compression": 8
+      },
+      {
+        "name": "createUI",
+        "bytes": 1520,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 202548,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "MS Paint Clone",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Path svg test.ssim",
+    "sha256": "c701a80108cda3dcdf051310544197e95af5b37d1991209acb1f20869038fc49",
+    "size": 216507,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 9055,
+        "compression": 8
+      },
+      {
+        "name": "map.json",
+        "bytes": 166545,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 158324,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Path svg test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Serpent and Worms.ssim",
+    "sha256": "fb2d8751680f552d93c8a611c74cf3bc1f44a78f7b4a8ecc2b3a1eb2b165a9de",
+    "size": 8827920,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 188057,
+        "compression": 8
+      },
+      {
+        "name": "mid1_3d1.png",
+        "bytes": 1454,
+        "compression": 8
+      },
+      {
+        "name": "wasp.png",
+        "bytes": 156473,
+        "compression": 8
+      },
+      {
+        "name": "tail_1.png",
+        "bytes": 2744,
+        "compression": 8
+      },
+      {
+        "name": "head_3d1.png",
+        "bytes": 14889,
+        "compression": 8
+      },
+      {
+        "name": "sand3.png",
+        "bytes": 669619,
+        "compression": 8
+      },
+      {
+        "name": "worm spritesheet (1).png",
+        "bytes": 1788,
+        "compression": 8
+      },
+      {
+        "name": "mid2_3d1.png",
+        "bytes": 1279,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 7956717,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Serpent and Worms",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Torus.ssim",
+    "sha256": "e19136286fe72bf7b12c3aed981f575478b14da28d7d1244efb56ea2d60ac935",
+    "size": 638080,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 81350,
+        "compression": 8
+      },
+      {
+        "name": "torus.png",
+        "bytes": 430538,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 223978,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Torus",
+      "author": "mahesh",
+      "access": "0",
+      "price": "0.0",
+      "categories": "fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Games and Scripting\\Tower Game.ssim",
+    "sha256": "e5df09b54f4c2cd359ac9aee70749e1d2fcc5c801f211a3bb93905a63926f96a",
+    "size": 333703,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 66871,
+        "compression": 8
+      },
+      {
+        "name": "tower.png",
+        "bytes": 287414,
+        "compression": 8
+      },
+      {
+        "name": "demo.json",
+        "bytes": 4033,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 72318,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Tower Game",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene2D Demo\\Physics playground.ssim",
+    "sha256": "32ebd5ab1867d90f0b336d296994b6caef049a6bd0aed522289a55a4d145e347",
+    "size": 47492,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 15021,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 57518,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "Physics playground",
+      "author": "maheshkurmi",
+      "access": "1",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene2D Demo\\Pointer Test.ssim",
+    "sha256": "19403e638336df868ed669f972cfa42713a52089249c967ea720cf59fdf74216",
+    "size": 68592,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16547,
+        "compression": 8
+      },
+      {
+        "name": "simphy-logo.png",
+        "bytes": 14948,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 64269,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "Pointer Test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene2D Demo\\SolarSystem Test.ssim",
+    "sha256": "1fa7169e91ba4c2db076f601737c861bb989d37f2ac16eab8ef26ff7fbb838e1",
+    "size": 88234,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13714,
+        "compression": 8
+      },
+      {
+        "name": "simphy-logo.png",
+        "bytes": 14948,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 77958,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "SolarSystem Test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\3D Audio with Spectrum.ssim",
+    "sha256": "9d2b0064dc66b2277f8cd5fe10b4ad9499d91cfdb151f86e6f172be46a47224f",
+    "size": 14323890,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 19642,
+        "compression": 8
+      },
+      {
+        "name": "35  Mere khayalon ki malika(j.mp3",
+        "bytes": 4711246,
+        "compression": 8
+      },
+      {
+        "name": "music.wav",
+        "bytes": 10662700,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 108209,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "3D Audio with Spectrum",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Ferrari Car Demo.ssim",
+    "sha256": "32fc6a58c0085ed3be3a928d9b4c1afb69dc2dbe7c32cfa44a5ea540e758630d",
+    "size": 7213723,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 13963,
+        "compression": 8
+      },
+      {
+        "name": "ferrari_ao.png",
+        "bytes": 39350,
+        "compression": 8
+      },
+      {
+        "name": "ferrari.glb",
+        "bytes": 13027904,
+        "compression": 8
+      },
+      {
+        "name": "venice_sunset_1k.hdr",
+        "bytes": 1397783,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 875881,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "Ferrari Car Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Skinning and Morphing Demo.ssim",
+    "sha256": "c9537f8be522166ba05ef1775b2a01c021a8f4f82ca2312f1594e09272c0a50e",
+    "size": 324801,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 18428,
+        "compression": 8
+      },
+      {
+        "name": "RobotExpressive.glb",
+        "bytes": 463988,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 199877,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Skinning and Morphing Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Spline Editor Demo.ssim",
+    "sha256": "1754a4e960887a5c885caf71179f24fa196bc78d1f2760152b1c7381cd6b308f",
+    "size": 279698,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 22195,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 284926,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Spline Editor Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games,maths",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\SpotLight Texture Demo.ssim",
+    "sha256": "afa20da7ebceeaee4b016e2bc947edffd6074d23834062dd93d61e6db204c3ca",
+    "size": 2464855,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 17729,
+        "compression": 8
+      },
+      {
+        "name": "colors.png",
+        "bytes": 530,
+        "compression": 8
+      },
+      {
+        "name": "uv_grid_opengl.jpg",
+        "bytes": 549505,
+        "compression": 8
+      },
+      {
+        "name": "disturb.jpg",
+        "bytes": 417816,
+        "compression": 8
+      },
+      {
+        "name": "checkerboard.jpg",
+        "bytes": 1741,
+        "compression": 8
+      },
+      {
+        "name": "Lucy100k.ply",
+        "bytes": 1900227,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 488846,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "SpotLight Texture Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Teapot Material Demo.ssim",
+    "sha256": "7093d81b82a3a38680efe773d4e7450cd796b54838bcdef3948b2df7cb698bd0",
+    "size": 1275674,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 17377,
+        "compression": 8
+      },
+      {
+        "name": "ny.png",
+        "bytes": 82197,
+        "compression": 8
+      },
+      {
+        "name": "px.png",
+        "bytes": 72934,
+        "compression": 8
+      },
+      {
+        "name": "uv_grid_opengl.jpg",
+        "bytes": 549505,
+        "compression": 8
+      },
+      {
+        "name": "nx.png",
+        "bytes": 62951,
+        "compression": 8
+      },
+      {
+        "name": "nz.png",
+        "bytes": 85026,
+        "compression": 8
+      },
+      {
+        "name": "pz.png",
+        "bytes": 88709,
+        "compression": 8
+      },
+      {
+        "name": "py.png",
+        "bytes": 76608,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 312578,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.2",
+      "title": "Teapot Material Demo",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\TransformControl Test.ssim",
+    "sha256": "217a7038ef9bd733886649fc0b72dd7f34510b538373e8fb034ea6f4c2731cf4",
+    "size": 299969,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 14088,
+        "compression": 8
+      },
+      {
+        "name": "crate.gif",
+        "bytes": 67585,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 247416,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "TransformControl Test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Transmission Material Test.ssim",
+    "sha256": "38dd5251d39696c81981620257ca7de5b294269f35e41196a2852ce4a4c6fdd2",
+    "size": 11836362,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 16028,
+        "compression": 8
+      },
+      {
+        "name": "packeddirt_n.jpg",
+        "bytes": 5950,
+        "compression": 8
+      },
+      {
+        "name": "7R6u-texture.jpg",
+        "bytes": 280297,
+        "compression": 8
+      },
+      {
+        "name": "empty_warehouse_01_2k.hdr",
+        "bytes": 6581920,
+        "compression": 8
+      },
+      {
+        "name": "DragonAttenuation.glb",
+        "bytes": 6566656,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 1636512,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Transmission Material Test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Voxel painter.ssim",
+    "sha256": "0ec1ed62a6899190966cf1f80848c31f83eb9872d7d182fb70051f4e2af5e78e",
+    "size": 383407,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 25486,
+        "compression": 8
+      },
+      {
+        "name": "packed_ice.png",
+        "bytes": 242,
+        "compression": 8
+      },
+      {
+        "name": "square-outline-textured.png",
+        "bytes": 683,
+        "compression": 8
+      },
+      {
+        "name": "ice.png",
+        "bytes": 249,
+        "compression": 8
+      },
+      {
+        "name": "cactus.png",
+        "bytes": 276,
+        "compression": 8
+      },
+      {
+        "name": "clay.png",
+        "bytes": 278,
+        "compression": 8
+      },
+      {
+        "name": "sandstone.png",
+        "bytes": 283,
+        "compression": 8
+      },
+      {
+        "name": "gold_block.png",
+        "bytes": 266,
+        "compression": 8
+      },
+      {
+        "name": "cracked_stone_bricks.png",
+        "bytes": 283,
+        "compression": 8
+      },
+      {
+        "name": "dead_horn_coral_block.png",
+        "bytes": 273,
+        "compression": 8
+      },
+      {
+        "name": "bricks.png",
+        "bytes": 266,
+        "compression": 8
+      },
+      {
+        "name": "tube_coral_block.png",
+        "bytes": 277,
+        "compression": 8
+      },
+      {
+        "name": "gold_ore.png",
+        "bytes": 271,
+        "compression": 8
+      },
+      {
+        "name": "diamond_block.png",
+        "bytes": 263,
+        "compression": 8
+      },
+      {
+        "name": "water.png",
+        "bytes": 1269,
+        "compression": 8
+      },
+      {
+        "name": "stone_bricks.png",
+        "bytes": 242,
+        "compression": 8
+      },
+      {
+        "name": "emerald_block.png",
+        "bytes": 250,
+        "compression": 8
+      },
+      {
+        "name": "emerald_ore.png",
+        "bytes": 263,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 386551,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Voxel painter",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  },
+  {
+    "source": "Scene3D Demo\\Water Sky test.ssim",
+    "sha256": "c1bcb697459a191b13f96b11fcea2173be9e7503b987b63e3b2cb8e1a578d77c",
+    "size": 2065052,
+    "magic": "504b030414000808",
+    "entries": [
+      {
+        "name": "simulation.xml",
+        "bytes": 17532,
+        "compression": 8
+      },
+      {
+        "name": "screenshot.png",
+        "bytes": 2084270,
+        "compression": 8
+      }
+    ],
+    "root_attributes": {
+      "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "http://www.simphy.com",
+      "version": "4.0",
+      "title": "Water Sky test",
+      "author": "maheshkurmi",
+      "access": "0",
+      "price": "0.0",
+      "categories": "3d,fun and games",
+      "speed": "1.0"
+    }
+  }
+]

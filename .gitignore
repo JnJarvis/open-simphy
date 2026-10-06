@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+/tasks/.registry-lock/
+/tasks/registry.json.tmp
+/build/
+/.worktrees/
+/CMakeUserPresets.json
+# Local research evidence remains available pending redistribution provenance.
+/research/fixtures/
+/research/evidence/*.jpg
+/research/evidence/*.png

@@ -1,0 +1,553 @@
+{
+  "schema_version": 1,
+  "coordinator": null,
+  "gates": {
+    "research_available": {
+      "satisfied": false,
+      "evidence": null
+    }
+  },
+  "tasks": [
+    {
+      "id": "BUILD-001",
+      "title": "Select foundation toolchain and coding policy",
+      "stage": 0,
+      "status": "READY",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [],
+      "blocks": [
+        "REN-001",
+        "BUILD-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/build-policy.md",
+        "adr/BUILD-001-*.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "CONTRIBUTING.md"
+      ],
+      "description": "tasks/items/BUILD-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "CORE-001",
+      "title": "Specify IDs and diagnostics contracts",
+      "stage": 0,
+      "status": "READY",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [],
+      "blocks": [
+        "CORE-002",
+        "SCENE-001"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/core.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md"
+      ],
+      "description": "tasks/items/CORE-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "MATH-001",
+      "title": "Specify 2D numeric contracts",
+      "stage": 0,
+      "status": "READY",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [],
+      "blocks": [
+        "MATH-002",
+        "SCENE-001"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/math.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md"
+      ],
+      "description": "tasks/items/MATH-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "REN-001",
+      "title": "Select minimal render strategy",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "BUILD-001"
+      ],
+      "blocks": [
+        "REN-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/render-policy.md",
+        "adr/REN-001-*.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/BUILD-001.md"
+      ],
+      "description": "tasks/items/REN-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "COMPAT-001",
+      "title": "Prepare research intake templates",
+      "stage": 0,
+      "status": "READY",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [],
+      "blocks": [
+        "COMPAT-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "research/templates/",
+        "research/README.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "spec/research-intake.md"
+      ],
+      "description": "tasks/items/COMPAT-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "BUILD-002",
+      "title": "Create CMake and CI test scaffold",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "BUILD-001"
+      ],
+      "blocks": [
+        "TEST-001",
+        "CORE-002",
+        "MATH-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "cmake/",
+        ".github/workflows/",
+        ".clang-format",
+        ".gitignore"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "CONTRIBUTING.md",
+        "tasks/items/BUILD-001.md"
+      ],
+      "description": "tasks/items/BUILD-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "TEST-001",
+      "title": "Add test registration and fixture conventions",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "BUILD-002"
+      ],
+      "blocks": [
+        "CORE-002",
+        "MATH-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "tests/CMakeLists.txt",
+        "tests/support/",
+        "tests/fixtures/README.md",
+        "spec/test-evidence.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "CONTRIBUTING.md",
+        "tasks/items/BUILD-002.md"
+      ],
+      "description": "tasks/items/TEST-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "CORE-002",
+      "title": "Implement stable ID and diagnostic values",
+      "stage": 1,
+      "status": "BLOCKED",
+      "priority": 2,
+      "owner": null,
+      "dependencies": [
+        "CORE-001",
+        "BUILD-002",
+        "TEST-001"
+      ],
+      "blocks": [
+        "SCENE-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "src/core/",
+        "tests/unit/core/",
+        "tests/contract/core/"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/CORE-001.md",
+        "tasks/items/BUILD-002.md",
+        "tasks/items/TEST-001.md"
+      ],
+      "description": "tasks/items/CORE-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "MATH-002",
+      "title": "Implement minimal vector and transform operations",
+      "stage": 1,
+      "status": "BLOCKED",
+      "priority": 2,
+      "owner": null,
+      "dependencies": [
+        "MATH-001",
+        "BUILD-002",
+        "TEST-001"
+      ],
+      "blocks": [
+        "SCENE-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "src/math/",
+        "tests/unit/math/",
+        "tests/contract/math/"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/MATH-001.md",
+        "tasks/items/BUILD-002.md",
+        "tasks/items/TEST-001.md"
+      ],
+      "description": "tasks/items/MATH-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "SCENE-001",
+      "title": "Specify minimal document and snapshot contracts",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "CORE-001",
+        "MATH-001"
+      ],
+      "blocks": [
+        "PHY-001",
+        "REN-002",
+        "SCENE-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/scene.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/CORE-001.md",
+        "tasks/items/MATH-001.md"
+      ],
+      "description": "tasks/items/SCENE-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "PHY-001",
+      "title": "Specify fixed-step particle simulation port",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "SCENE-001"
+      ],
+      "blocks": [
+        "PHY-002"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/physics.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/SCENE-001.md"
+      ],
+      "description": "tasks/items/PHY-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "REN-002",
+      "title": "Specify render port and test doubles",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "SCENE-001",
+        "REN-001"
+      ],
+      "blocks": [
+        "REN-003"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/renderer.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/SCENE-001.md",
+        "tasks/items/REN-001.md"
+      ],
+      "description": "tasks/items/REN-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "SCENE-002",
+      "title": "Implement particle document validation and snapshots",
+      "stage": 1,
+      "status": "BLOCKED",
+      "priority": 2,
+      "owner": null,
+      "dependencies": [
+        "SCENE-001",
+        "CORE-002",
+        "MATH-002"
+      ],
+      "blocks": [
+        "PHY-002",
+        "REN-003"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "src/scene/",
+        "tests/unit/scene/",
+        "tests/contract/scene/"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/SCENE-001.md",
+        "tasks/items/CORE-002.md",
+        "tasks/items/MATH-002.md"
+      ],
+      "description": "tasks/items/SCENE-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "PHY-002",
+      "title": "Implement uniform-gravity particle stepper",
+      "stage": 1,
+      "status": "BLOCKED",
+      "priority": 2,
+      "owner": null,
+      "dependencies": [
+        "PHY-001",
+        "SCENE-002"
+      ],
+      "blocks": [
+        "INT-001"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "src/physics/",
+        "tests/unit/physics/",
+        "tests/reference/physics/",
+        "tests/contract/physics/"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/PHY-001.md",
+        "tasks/items/SCENE-002.md"
+      ],
+      "description": "tasks/items/PHY-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "REN-003",
+      "title": "Implement minimal particle renderer",
+      "stage": 1,
+      "status": "BLOCKED",
+      "priority": 2,
+      "owner": null,
+      "dependencies": [
+        "REN-002",
+        "SCENE-002"
+      ],
+      "blocks": [
+        "INT-001"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "src/renderer/",
+        "tests/unit/renderer/",
+        "tests/contract/renderer/"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/REN-002.md",
+        "tasks/items/SCENE-002.md"
+      ],
+      "description": "tasks/items/REN-003.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "INT-001",
+      "title": "Integrate the first runnable simulation",
+      "stage": 1,
+      "status": "BLOCKED",
+      "priority": 2,
+      "owner": null,
+      "dependencies": [
+        "PHY-002",
+        "REN-003"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/app/",
+        "tests/integration/app/",
+        "docs/demo.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "tasks/items/PHY-002.md",
+        "tasks/items/REN-003.md"
+      ],
+      "description": "tasks/items/INT-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "COMPAT-002",
+      "title": "Normalize supplied SimPHY capability research",
+      "stage": 0,
+      "status": "BLOCKED",
+      "priority": 1,
+      "owner": null,
+      "dependencies": [
+        "COMPAT-001"
+      ],
+      "blocks": [],
+      "gates": [
+        "research_available"
+      ],
+      "allowed_paths": [
+        "research/normalized/",
+        "research/requirements.json",
+        "research/intake-report.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "spec/research-intake.md",
+        "tasks/items/COMPAT-001.md"
+      ],
+      "description": "tasks/items/COMPAT-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    }
+  ]
+}

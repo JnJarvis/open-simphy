@@ -154,7 +154,7 @@
       "id": "BUILD-002",
       "title": "Create CMake and CI test scaffold",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -184,14 +184,14 @@
       "description": "tasks/items/BUILD-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/BUILD-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "7425dd6b6005adaa15405ddb760493cb4afa39ce"
     },
     {
       "id": "TEST-001",
       "title": "Add test registration and fixture conventions",
       "stage": 0,
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": 1,
       "owner": null,
       "dependencies": [

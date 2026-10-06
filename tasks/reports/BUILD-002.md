@@ -2,7 +2,7 @@
 
 Owner: codex-worker. Coordinator: codex-coordinator. Date: 2026-10-06.
 Branch: task/BUILD-002. Implementation commit: c91c571 (includes 5cc122e).
-Status: REVIEW. Required native CI passed; independent review and merge pending.
+Status: DONE. Required native CI passed; user approved and implementation merged.
 
 ## Deliverables and scope
 
@@ -92,4 +92,11 @@ formatting, configure, build, CTest and the tests-disabled build.
 
 The native CI blocker is resolved. Submitted for independent review; no reviewer
 approval or merge is claimed. Downstream tasks remain gated on reviewed merge.
+
+## Acceptance and merge
+
+Independent reviewer: user. Approval: "looks good", in response to the build
+comparison and explicit merge approval request. Accepted implementation: c91c571.
+Merged into master as 7425dd6b6005adaa15405ddb760493cb4afa39ce.
+This acceptance supersedes the pending-review status recorded above.
 

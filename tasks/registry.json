@@ -191,7 +191,7 @@
       "id": "TEST-001",
       "title": "Add test registration and fixture conventions",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -218,14 +218,14 @@
       "description": "tasks/items/TEST-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/TEST-001.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "c875c45dfb833ea2293720af37ea79b854022386"
     },
     {
       "id": "CORE-002",
       "title": "Implement stable ID and diagnostic values",
       "stage": 1,
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": 2,
       "owner": null,
       "dependencies": [
@@ -260,7 +260,7 @@
       "id": "MATH-002",
       "title": "Implement minimal vector and transform operations",
       "stage": 1,
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": 2,
       "owner": null,
       "dependencies": [

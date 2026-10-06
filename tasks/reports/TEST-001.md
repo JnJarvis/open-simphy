@@ -1,7 +1,7 @@
 # TEST-001 implementation evidence
 
 Owner: codex-worker. Branch: codex/test-001. Commit: 99c7fca.
-Status: REVIEW. Local and native CI verified; independent review pending.
+Status: DONE. Local and native CI verified; user approved and changes merged.
 
 ## Scope and acceptance
 
@@ -47,3 +47,10 @@ vectors. Review and baseline merge remain required before dependent implementati
 Native CI run https://github.com/JnJarvis/open-simphy/actions/runs/37528087385:
 all eight jobs completed successfully for 99c7fca (MSVC, GCC, Clang, AppleClang;
 Debug and Release). Each job runs formatting, full CTest and tests-disabled build.
+
+## Acceptance and merge
+
+Independent reviewer: user. Approval: "looks good 👍" in response to the explicit
+merge approval request and comparison link. Accepted commit: 99c7fca.
+Merged baseline: c875c45dfb833ea2293720af37ea79b854022386.
+This acceptance supersedes the pending review statements above.

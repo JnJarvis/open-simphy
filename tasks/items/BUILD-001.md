@@ -12,6 +12,11 @@ Choose the smallest supported C++ build and test baseline with a reproducible ac
 ## Allowed files/modules
 - `spec/build-policy.md`
 - `adr/BUILD-001-*.md`
+- `rfcs/BUILD-001-*.md`
+
+Coordinator scope amendment, 2026-10-06: include the technology-choice RFC required
+by rfcs/README.md. The user authorized foundation development with Windows first
+and straightforward later Linux/macOS support; the module dependency DAG is unchanged.
 
 Registry/report updates go through the coordinator. A new dependency or required edit
 outside these paths needs a scoped follow-up or reviewed scope amendment first.

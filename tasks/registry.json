@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "coordinator": null,
+  "coordinator": "codex-coordinator",
   "gates": {
     "research_available": {
       "satisfied": false,
@@ -12,9 +12,9 @@
       "id": "BUILD-001",
       "title": "Select foundation toolchain and coding policy",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [],
       "blocks": [
         "REN-001",
@@ -23,7 +23,8 @@
       "gates": [],
       "allowed_paths": [
         "spec/build-policy.md",
-        "adr/BUILD-001-*.md"
+        "adr/BUILD-001-*.md",
+        "rfcs/BUILD-001-*.md"
       ],
       "spec_refs": [
         "spec/architecture.md",
@@ -41,9 +42,9 @@
       "id": "CORE-001",
       "title": "Specify IDs and diagnostics contracts",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [],
       "blocks": [
         "CORE-002",
@@ -68,9 +69,9 @@
       "id": "MATH-001",
       "title": "Specify 2D numeric contracts",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [],
       "blocks": [
         "MATH-002",

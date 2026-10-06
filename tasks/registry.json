@@ -191,7 +191,7 @@
       "id": "TEST-001",
       "title": "Add test registration and fixture conventions",
       "stage": 0,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -217,7 +217,7 @@
       ],
       "description": "tasks/items/TEST-001.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/TEST-001.md",
       "reviewer": null,
       "merged_commit": null
     },

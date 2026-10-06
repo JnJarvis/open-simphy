@@ -33,7 +33,7 @@ jobs:
             cxx: clang++-18
             compiler_id: Clang
           - toolchain: appleclang
-            os: macos-15-arm64
+            os: macos-15
             cc: clang
             cxx: clang++
             compiler_id: AppleClang

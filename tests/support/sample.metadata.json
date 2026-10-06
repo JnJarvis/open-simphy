@@ -1,0 +1,13 @@
+{
+  "file": "sample.json",
+  "synthetic": true,
+  "origin": "Authored for TEST-001; integer identity vectors",
+  "permission": "Project author permits use of this synthetic sample for project testing",
+  "sha256": "253a2a80a70f7ed6221aaba07061206ecc1e2739a4dc9df4036f0c2e12ed8a70",
+  "version": "1",
+  "expected_result": "Integer values remain exactly 0, -2, 4",
+  "units": "dimensionless",
+  "tolerances": {
+    "kind": "exact"
+  }
+}

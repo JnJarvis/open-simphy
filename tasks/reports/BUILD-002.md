@@ -62,3 +62,14 @@ Windows results do not establish Linux/macOS portability. Downstream implementat
 tasks remain blocked. Coordinator follow-up: obtain repository/runner details,
 run the matrix, address failures within scope, then submit for independent review.
 No acceptance criterion has been relaxed.
+
+## GitHub verification update
+
+User supplied https://github.com/JnJarvis/open-simphy.git and authorized publication
+in context of the repository setup request. Baseline master, task/BUILD-002 and
+task/SCENE-001 were pushed successfully. Native run for implementation 5cc122e:
+https://github.com/JnJarvis/open-simphy/actions/runs/37522163848.
+Windows MSVC Debug/Release and Linux GCC/Clang Debug/Release all completed with
+success (six jobs). Both macOS jobs remain queued at this report update; no macOS
+success is claimed. The missing-remote blocker is resolved; the remaining gate is
+macOS execution, followed by independent review and merge.

@@ -2,7 +2,7 @@
 
 Owner: codex-worker. Coordinator: codex-coordinator. Date: 2026-10-06.
 Branch: task/SCENE-001. Implementation commit: 11da2ec.
-Status: submitted for independent review; not merged.
+Status: DONE; user approved and contract merged.
 
 ## Deliverable and scope
 
@@ -38,3 +38,11 @@ Assumption: the approved first slice contains free particles only. Particle radi
 is presentation data, not collision geometry. Future entity kinds require reviewed
 contract extensions. PHY/INT will verify the runtime reset lifecycle; SCENE-002
 will own document/snapshot implementation and conformance tests after prerequisites.
+
+## Acceptance and merge
+
+Independent reviewer: user. Approval: "looks good" in response to the explicit
+scene contract approval request and comparison link. Accepted commit: 11da2ec.
+Merged baseline: 0c793b164b95f4029df8292e469e0598e4ebb18d.
+This acceptance supersedes pending-review statements above. Contract status metadata
+was updated to ACCEPTED without changing its semantics.

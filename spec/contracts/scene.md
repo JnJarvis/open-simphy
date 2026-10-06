@@ -1,6 +1,6 @@
 # Minimal scene and snapshot contract v1
 
-Status: PROPOSED under SCENE-001; requires independent review before implementation.
+Status: ACCEPTED under SCENE-001 following independent user review, 2026-10-06.
 Owner: scene. Dependencies: accepted core v1 and math v1 contracts only.
 Consumers: physics, renderer, editor, native serialization and compatibility.
 

@@ -1,8 +1,8 @@
 # BUILD-002 local verification report
 
 Owner: codex-worker. Coordinator: codex-coordinator. Date: 2026-10-06.
-Branch: task/BUILD-002. Implementation commit: 5cc122e.
-Status: BLOCKED pending required native CI results; not merged or independently reviewed.
+Branch: task/BUILD-002. Implementation commit: c91c571 (includes 5cc122e).
+Status: REVIEW. Required native CI passed; independent review and merge pending.
 
 ## Deliverables and scope
 
@@ -52,7 +52,7 @@ Catch2 3.7.1 archive was downloaded with TLS and verified SHA256
 `c991b247a1a0d7bb9c39aa35faf0fe9e19764213f28ffba3109388e62ee0269c`.
 Release reused that local source with explicit version checking. Catch2 is test-only.
 
-## Remaining acceptance evidence and follow-up
+## Original blocker (resolved)
 
 Native Linux GCC/Clang and macOS AppleClang jobs are authored but NOT executed.
 There is no configured Git remote or supplied native runner. The accepted
@@ -81,4 +81,15 @@ only the AppleClang runner label to macos-15, retaining Xcode 16.4 and both pres
 YAML validation confirms all eight jobs remain; git diff whitespace check passed.
 Replacement run: https://github.com/JnJarvis/open-simphy/actions/runs/37526635119.
 Its results are pending; previous successful jobs are evidence for 5cc122e only.
+
+## Final native CI verification
+
+Run 37526635119 completed successfully at exact head
+`c91c5719ce063b36708fe820def74a57824f6fd6`. GitHub's run and jobs APIs confirm
+all eight jobs completed with success: MSVC, GCC, Clang and AppleClang, each in
+Debug and Release. No failed steps were reported. Each workflow job includes
+formatting, configure, build, CTest and the tests-disabled build.
+
+The native CI blocker is resolved. Submitted for independent review; no reviewer
+approval or merge is claimed. Downstream tasks remain gated on reviewed merge.
 

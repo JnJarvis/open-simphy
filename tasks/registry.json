@@ -154,7 +154,7 @@
       "id": "BUILD-002",
       "title": "Create CMake and CI test scaffold",
       "stage": 0,
-      "status": "BLOCKED",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -182,8 +182,8 @@
         "tasks/items/BUILD-001.md"
       ],
       "description": "tasks/items/BUILD-002.md",
-      "block_reason": "User-requested macos-15 runner correction pushed as c91c571; old run cancelled. Replacement run 37526635119 pending; independent review and merge pending.",
-      "completion_report": null,
+      "block_reason": null,
+      "completion_report": "tasks/reports/BUILD-002.md",
       "reviewer": null,
       "merged_commit": null
     },

@@ -182,7 +182,7 @@
         "tasks/items/BUILD-001.md"
       ],
       "description": "tasks/items/BUILD-002.md",
-      "block_reason": "GitHub run 37522163848: six Windows/Linux jobs passed; two macOS jobs queued. Required macOS results, independent review and merge pending. See tasks/reports/BUILD-002.md.",
+      "block_reason": "User-requested macos-15 runner correction pushed as c91c571; old run cancelled. Replacement run 37526635119 pending; independent review and merge pending.",
       "completion_report": null,
       "reviewer": null,
       "merged_commit": null

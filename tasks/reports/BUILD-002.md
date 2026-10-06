@@ -73,3 +73,12 @@ Windows MSVC Debug/Release and Linux GCC/Clang Debug/Release all completed with
 success (six jobs). Both macOS jobs remain queued at this report update; no macOS
 success is claimed. The missing-remote blocker is resolved; the remaining gate is
 macOS execution, followed by independent review and merge.
+## Runner correction requested by user
+
+User explicitly requested cancelling the queued run and using macos-15 or
+macos-latest. Run 37522163848 is confirmed cancelled. Task commit c91c571 changes
+only the AppleClang runner label to macos-15, retaining Xcode 16.4 and both presets.
+YAML validation confirms all eight jobs remain; git diff whitespace check passed.
+Replacement run: https://github.com/JnJarvis/open-simphy/actions/runs/37526635119.
+Its results are pending; previous successful jobs are evidence for 5cc122e only.
+

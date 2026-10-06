@@ -388,9 +388,9 @@
       "id": "SCENE-002",
       "title": "Implement particle document validation and snapshots",
       "stage": 1,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 2,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "SCENE-001",
         "CORE-002",

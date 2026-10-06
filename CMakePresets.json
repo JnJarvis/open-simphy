@@ -1,0 +1,61 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "headless-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "OPENSIM_BUILD_APP": false,
+        "OPENSIM_BUILD_TESTS": true,
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+      }
+    },
+    {
+      "name": "headless-debug",
+      "inherits": "headless-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "headless-release",
+      "inherits": "headless-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "windows-vs",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "cacheVariables": { "OPENSIM_BUILD_APP": false, "OPENSIM_BUILD_TESTS": true }
+    }
+  ],
+  "buildPresets": [
+    { "name": "headless-debug", "configurePreset": "headless-debug" },
+    { "name": "headless-release", "configurePreset": "headless-release" },
+    { "name": "windows-vs-debug", "configurePreset": "windows-vs", "configuration": "Debug" }
+  ],
+  "testPresets": [
+    {
+      "name": "headless-debug",
+      "configurePreset": "headless-debug",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    {
+      "name": "headless-release",
+      "configurePreset": "headless-release",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    {
+      "name": "windows-vs-debug",
+      "configurePreset": "windows-vs",
+      "configuration": "Debug",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    }
+  ]
+}

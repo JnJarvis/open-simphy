@@ -1,0 +1,80 @@
+name: Portable headless foundation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  headless:
+    name: ${{ matrix.toolchain }} / ${{ matrix.preset }}
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [headless-debug, headless-release]
+        toolchain: [msvc, gcc, clang, appleclang]
+        include:
+          - toolchain: msvc
+            os: windows-2022
+            cc: cl
+            cxx: cl
+            compiler_id: MSVC
+          - toolchain: gcc
+            os: ubuntu-24.04
+            cc: gcc-13
+            cxx: g++-13
+            compiler_id: GNU
+          - toolchain: clang
+            os: ubuntu-24.04
+            cc: clang-18
+            cxx: clang++-18
+            compiler_id: Clang
+          - toolchain: appleclang
+            os: macos-15-arm64
+            cc: clang
+            cxx: clang++
+            compiler_id: AppleClang
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11.9'
+      - name: Select MSVC 14.44
+        if: matrix.toolchain == 'msvc'
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: x64
+          toolset: '14.44'
+          vsversion: '2022'
+      - name: Select Xcode 16.4
+        if: matrix.toolchain == 'appleclang'
+        run: echo "DEVELOPER_DIR=/Applications/Xcode_16.4.app/Contents/Developer" >> "$GITHUB_ENV"
+      - name: Install exact build tools
+        run: python -m pip install cmake==3.28.4 ninja==1.11.1.4 clang-format==18.1.8
+      - name: Record tool versions
+        run: |
+          cmake --version
+          ninja --version
+          python --version
+      - name: Check owned C++ formatting
+        run: python cmake/checks/check_format.py
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -DOPENSIM_WARNINGS_AS_ERRORS=ON -DOPENSIM_EXPECT_COMPILER_ID=${{ matrix.compiler_id }}
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel 3
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure --no-tests=error
+      - name: Verify dependency-free engine configuration
+        run: cmake -S . -B build/no-tests -G Ninja -DOPENSIM_BUILD_TESTS=OFF -DOPENSIM_BUILD_APP=OFF -DFETCHCONTENT_FULLY_DISCONNECTED=ON
+      - name: Build without test dependencies
+        run: cmake --build build/no-tests --parallel 3

@@ -154,7 +154,7 @@
       "id": "BUILD-002",
       "title": "Create CMake and CI test scaffold",
       "stage": 0,
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -182,7 +182,7 @@
         "tasks/items/BUILD-001.md"
       ],
       "description": "tasks/items/BUILD-002.md",
-      "block_reason": null,
+      "block_reason": "Required native Linux/macOS CI results unavailable: no remote/native runner configured. See tasks/reports/BUILD-002.md; independent review and merge also pending.",
       "completion_report": null,
       "reviewer": null,
       "merged_commit": null
@@ -295,7 +295,7 @@
       "id": "SCENE-001",
       "title": "Specify minimal document and snapshot contracts",
       "stage": 0,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -320,7 +320,7 @@
       ],
       "description": "tasks/items/SCENE-001.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/SCENE-001.md",
       "reviewer": null,
       "merged_commit": null
     },

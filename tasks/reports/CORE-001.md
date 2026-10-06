@@ -2,7 +2,7 @@
 
 Owner: codex-worker. Coordinator: codex-coordinator. Date: 2026-10-06.
 Branch: task/CORE-001. Implementation commit: 519d15f.
-Status: submitted for independent review; not frozen or merged.
+Status: accepted by the user and merged, 2026-10-06.
 
 Deliverable/only changed path:
 [spec/contracts/core.md](../../.worktrees/CORE-001/spec/contracts/core.md).
@@ -40,5 +40,6 @@ an explicit compatibility mapping; diagnostics are data, never UI services.
 Follow-up: scene must enforce uniqueness across entity kinds and retain allocator
 state appropriately; those are existing scene-task responsibilities.
 
-Independent reviewer/outcome: pending.
-Merged baseline commit: none; branch is available for review.
+Independent reviewer: user. Approval: "it all looks good. continue building".
+Outcome: ACCEPTED; acceptance metadata recorded in task commit a37ac7b.
+Merged baseline commit: d5b0d41.

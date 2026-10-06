@@ -12,7 +12,7 @@
       "id": "BUILD-001",
       "title": "Select foundation toolchain and coding policy",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [],
@@ -35,14 +35,14 @@
       "description": "tasks/items/BUILD-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/BUILD-001.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "9021c9f"
     },
     {
       "id": "CORE-001",
       "title": "Specify IDs and diagnostics contracts",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [],
@@ -62,14 +62,14 @@
       "description": "tasks/items/CORE-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/CORE-001.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "d5b0d41"
     },
     {
       "id": "MATH-001",
       "title": "Specify 2D numeric contracts",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [],
@@ -89,14 +89,14 @@
       "description": "tasks/items/MATH-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/MATH-001.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "f2aa8e4"
     },
     {
       "id": "REN-001",
       "title": "Select minimal render strategy",
       "stage": 0,
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": 1,
       "owner": null,
       "dependencies": [
@@ -154,9 +154,9 @@
       "id": "BUILD-002",
       "title": "Create CMake and CI test scaffold",
       "stage": 0,
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "BUILD-001"
       ],
@@ -295,9 +295,9 @@
       "id": "SCENE-001",
       "title": "Specify minimal document and snapshot contracts",
       "stage": 0,
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "CORE-001",
         "MATH-001"

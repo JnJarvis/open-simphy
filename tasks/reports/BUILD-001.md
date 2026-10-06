@@ -2,7 +2,7 @@
 
 Owner: codex-worker. Coordinator: codex-coordinator. Date: 2026-10-06.
 Branch: task/BUILD-001. Implementation commit: 00188d1.
-Status: submitted for independent review; not accepted or merged.
+Status: accepted by the user and merged, 2026-10-06.
 
 ## Deliverables and scope
 
@@ -55,5 +55,6 @@ not require engine rewrites. No framework or backend chosen ahead of REN-001.
 BUILD-002 must verify runner availability and lock the dependency by immutable
 identity before implementation is accepted. No remote is configured yet.
 
-Independent reviewer/outcome: pending.
-Merged baseline commit: none; branch is available for review.
+Independent reviewer: user. Approval: "it all looks good. continue building".
+Outcome: ACCEPTED; acceptance metadata recorded in task commit 50ee649.
+Merged baseline commit: 9021c9f.

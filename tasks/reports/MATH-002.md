@@ -1,7 +1,7 @@
 # MATH-002 implementation report
 
 Owner: codex-worker. Branch: codex/math-002. Commit: 9eb980c.
-Status: REVIEW; native CI passed; independent review and merge pending.
+Status: DONE; native CI passed; user approved and implementation merged.
 
 Changed paths: src/math/CMakeLists.txt, src/math/README.md,
 src/math/include/opensim/math/math.hpp, tests/unit/math/{CMakeLists.txt,header.cpp,
@@ -29,3 +29,7 @@ limited guarantee. Required native CI and independent review remain before DONE.
 Native CI run https://github.com/JnJarvis/open-simphy/actions/runs/37530505621
 completed successfully at 9eb980c: eight MSVC/GCC/Clang/AppleClang Debug/Release jobs.
 This resolves the CI requirement; independent review and merge remain outstanding.
+
+Independent reviewer: user. Approval: "looks good" in response to the explicit
+request to approve both core and math. Merge: 4639287e40aef66f3373d6aa4ab75b2a014b1a43.
+This supersedes pending-review statements above.

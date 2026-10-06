@@ -1,7 +1,7 @@
 # CORE-002 implementation report
 
 Owner: codex-worker. Branch: codex/core-002. Commit: 0e5c46d.
-Status: REVIEW; native CI passed; independent review and merge pending.
+Status: DONE; native CI passed; user approved and implementation merged.
 
 Changed paths: src/core/CMakeLists.txt, src/core/README.md,
 src/core/include/opensim/core/values.hpp, tests/unit/core/{CMakeLists.txt,header.cpp,
@@ -37,3 +37,7 @@ formatting directly. No build policy was changed in this task.
 Native CI run https://github.com/JnJarvis/open-simphy/actions/runs/37530520508
 completed successfully at 0e5c46d: eight MSVC/GCC/Clang/AppleClang Debug/Release jobs.
 This includes formatting, full tests and tests-disabled configuration/build.
+
+Independent reviewer: user. Approval: "looks good" in response to the explicit
+request to approve both core and math. Merge: 6d72e5d72e09ec040c9ab7168f40ca46038d2865.
+This supersedes pending-review statements above.

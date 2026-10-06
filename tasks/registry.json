@@ -225,7 +225,7 @@
       "id": "CORE-002",
       "title": "Implement stable ID and diagnostic values",
       "stage": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -253,14 +253,14 @@
       "description": "tasks/items/CORE-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/CORE-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "6d72e5d72e09ec040c9ab7168f40ca46038d2865"
     },
     {
       "id": "MATH-002",
       "title": "Implement minimal vector and transform operations",
       "stage": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -288,8 +288,8 @@
       "description": "tasks/items/MATH-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/MATH-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "4639287e40aef66f3373d6aa4ab75b2a014b1a43"
     },
     {
       "id": "SCENE-001",

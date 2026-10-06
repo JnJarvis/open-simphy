@@ -1,6 +1,6 @@
 # Minimal 2D numeric contract v1
 
-Status: proposed under MATH-001; frozen only after independent review and merge.
+Status: ACCEPTED under MATH-001 following independent user review, 2026-10-06.
 Owner: math. Consumers: scene and subsequent domain/presentation modules.
 Dependencies: standard library only; no core diagnostics, scene or OS types.
 

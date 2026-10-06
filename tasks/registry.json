@@ -191,9 +191,9 @@
       "id": "TEST-001",
       "title": "Add test registration and fixture conventions",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "BUILD-002"
       ],

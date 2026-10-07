@@ -494,7 +494,7 @@
       "id": "INT-001",
       "title": "Integrate the first runnable simulation",
       "stage": 1,
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -517,7 +517,7 @@
         "tasks/items/REN-003.md"
       ],
       "description": "tasks/items/INT-001.md",
-      "block_reason": null,
+      "block_reason": "Implementation and normal-scale Windows smoke complete; accepted render policy still requires high-DPI/mixed-scale display evidence unavailable on this single 100% display.",
       "completion_report": null,
       "reviewer": null,
       "merged_commit": null

@@ -10,7 +10,8 @@ reassign claims from this document alone. See SMALL-TASK-GUIDE.md in this direct
 
 Approved and merged: build policy/scaffold, core/math/scene contracts, test utilities,
 core IDs/diagnostics, 2D math and scene implementation. All required native jobs passed.
-There is no runnable simulator yet. Preserve the modular architecture and Windows
+An unmerged runnable demo now exists under .worktrees/INT-001/build/demo/src/app/.
+See docs/demo.md in that worktree. Preserve the modular architecture and Windows
 desktop priority with portable Linux/macOS headless foundations.
 
 SCENE-002 merged as 70db740 after explicit user approval. Local suite: 23/23 PASS;
@@ -25,9 +26,9 @@ Use the registry for any later changes; current worker retains coordinator owner
 
 PHY-002 implementation is approved and merged as c8e4f09; local suite 28/28 PASS,
 native run 37555585323 passed all eight jobs. It advances particles in tests,
-but no interactive application exists. REN-002 raster contract is approved and
+and are composed in the new INT-001 demo branch. REN-002 raster contract is approved and
 merged as c2c24b5, with independently checked pixel goldens. Read accepted files
-from master. BUILD-003 is the next prerequisite for renderer implementation. Prioritize difficult
+from master. BUILD-003 and REN-003 are merged. Prioritize difficult
 correctness/lifecycle decisions before smaller tasks, as requested by the user.
 
 ## Resume safely
@@ -46,9 +47,13 @@ All eight native CI jobs passed (run 37568944027), including the Windows SDL pro
 local offline-source probe also passed. See BUILD-003.md for evidence. User approved;
 merged as e336d1d. REN-003 is implemented by codex-worker on codex/ren-003
 at a742d17, worktree .worktrees/REN-003. Local 40/40 tests passed; native CI
-run 37570462632 passed all eight jobs. Submitted for REVIEW. See REN-003.md.
-Do not claim it or begin INT-001
-until independent review and merge are recorded. Continue using
+run 37570462632 passed all eight jobs. User approved; merged as 72d3158.
+INT-001 is owned by codex-worker on codex/int-001 at a067a00. Local app build and
+43/43 tests passed; real Windows window smoke passed on one 100% display.
+High-DPI/mixed-scale validation remains unavailable and is required before final
+acceptance; registry is BLOCKED on that hardware check, retaining its owner.
+Native headless CI run 37571375012 passed all eight jobs. See INT-001.md.
+Do not reassign the claim or mark DONE without remaining evidence and review. Continue using
 isolated branches; do not take over claims automatically.
 
 ## Shortest authorized route to the first demo

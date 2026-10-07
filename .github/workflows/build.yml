@@ -78,3 +78,14 @@ jobs:
         run: cmake -S . -B build/no-tests -G Ninja -DOPENSIM_BUILD_TESTS=OFF -DOPENSIM_BUILD_APP=OFF -DFETCHCONTENT_FULLY_DISCONNECTED=ON
       - name: Build without test dependencies
         run: cmake --build build/no-tests --parallel 3
+      - name: Verify SDL rejection paths
+        if: matrix.toolchain == 'msvc' && matrix.preset == 'headless-debug'
+        run: python cmake/checks/verify_sdl_rejections.py . cmake
+      - name: Configure isolated SDL probe
+        if: matrix.toolchain == 'msvc' && matrix.preset == 'headless-debug'
+        run: cmake -S cmake/checks/sdl_probe -B build/sdl-probe -G Ninja -DCMAKE_BUILD_TYPE=Debug
+      - name: Build and test isolated SDL probe
+        if: matrix.toolchain == 'msvc' && matrix.preset == 'headless-debug'
+        run: |
+          cmake --build build/sdl-probe --parallel 3
+          ctest --test-dir build/sdl-probe --output-on-failure --no-tests=error

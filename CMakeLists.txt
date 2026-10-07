@@ -19,6 +19,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(OpenSimModules)
+include(OpenSimSDL)
 
 if(OPENSIM_BUILD_TESTS)
     enable_testing()
@@ -30,9 +31,9 @@ endif()
 
 # Explicit topological order. Missing CMakeLists are allowed only for placeholders.
 set(_opensim_modules core math scene collision constraints physics visualization
-    analysis serialization compat)
+    analysis serialization compat renderer)
 if(OPENSIM_BUILD_APP)
-    list(APPEND _opensim_modules renderer editor platform app)
+    list(APPEND _opensim_modules editor platform app)
 endif()
 foreach(_module IN LISTS _opensim_modules)
     if(EXISTS "${PROJECT_SOURCE_DIR}/src/${_module}/CMakeLists.txt")

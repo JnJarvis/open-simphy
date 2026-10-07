@@ -558,9 +558,9 @@
       "id": "BUILD-003",
       "title": "Prepare portable renderer builds and optional SDL host dependency",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "BUILD-002",
         "REN-001"

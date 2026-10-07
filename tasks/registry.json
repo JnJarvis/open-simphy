@@ -426,9 +426,9 @@
       "id": "PHY-002",
       "title": "Implement uniform-gravity particle stepper",
       "stage": 1,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 2,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "PHY-001",
         "SCENE-002"

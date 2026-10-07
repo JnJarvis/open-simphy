@@ -460,7 +460,7 @@
       "id": "REN-003",
       "title": "Implement minimal particle renderer",
       "stage": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -487,16 +487,16 @@
       "description": "tasks/items/REN-003.md",
       "block_reason": null,
       "completion_report": "tasks/reports/REN-003.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "72d3158fd32e02a6c8358241b5fe5921153c7cb2"
     },
     {
       "id": "INT-001",
       "title": "Integrate the first runnable simulation",
       "stage": 1,
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "priority": 2,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "PHY-002",
         "REN-003",

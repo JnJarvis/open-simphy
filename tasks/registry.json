@@ -667,7 +667,7 @@
       "id": "INT-002",
       "title": "Build and integrate particle editor",
       "stage": 2,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -697,8 +697,8 @@
       "description": "tasks/items/INT-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "c56ec7ce22f185cbf0034b95f19b84ad215a689e"
     }
   ]
 }

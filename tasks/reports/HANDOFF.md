@@ -125,3 +125,7 @@ playback modes and DPI-aware UI. Local51/51 tests passed; actual150% window smok
 passed after a clipped-panel/toolbar regression was fixed. All14 native matrix jobs passed;
 see INT-002.md. Do not reassign active work or merge without independent review.
 The old INT-001 smoke also passed at150%; only mixed-monitor evidence remains.
+
+INT-002 approved by user as an early demo (not finished product), merged into master
+as c56ec7ce22f185cbf0034b95f19b84ad215a689e on 2026-10-07; registry DONE.
+Previous INT-002 review-queue notes are superseded. Mixed-monitor limitation remains.

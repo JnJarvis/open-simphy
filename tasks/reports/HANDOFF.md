@@ -20,7 +20,7 @@ PHY-001 proposal: codex/phy-001 at c398c22, .worktrees/PHY-001.
 REN-001 proposal: codex/ren-001 at 05b1cf1, .worktrees/REN-001.
 Both are now accepted and merged after explicit user approval: physics merge
 4c96e65, rendering merge e6f19c1. Read their accepted files from master.
-BUILD-003 closes the headless-renderer/optional-SDL gap and is now READY.
+BUILD-003 closes the headless-renderer/optional-SDL gap and is submitted for review.
 Use the registry for any later changes; current worker retains coordinator ownership.
 
 PHY-002 implementation is approved and merged as c8e4f09; local suite 28/28 PASS,
@@ -40,8 +40,11 @@ Do not take over an existing claim while this worker is active. This worker stop
 scene edits after the final review submission; coordinator must verify before any
 reassignment. Never auto-expire claims or weaken required tests.
 
-PHY-001/REN-001/PHY-002/REN-002 reviews are complete. BUILD-003 remains available
-subject to registry checks. Continue using
+PHY-001/REN-001/PHY-002/REN-002 reviews are complete. BUILD-003 is owned by
+codex-worker, branch codex/build-003 at 39d4b51, worktree .worktrees/BUILD-003.
+All eight native CI jobs passed (run 37568944027), including the Windows SDL probe;
+local offline-source probe also passed. See BUILD-003.md for evidence. Await
+independent approval and merge before REN-003. Continue using
 isolated branches; do not take over claims automatically.
 
 ## Shortest authorized route to the first demo

@@ -558,7 +558,7 @@
       "id": "BUILD-003",
       "title": "Prepare portable renderer builds and optional SDL host dependency",
       "stage": 0,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -585,7 +585,7 @@
       ],
       "description": "tasks/items/BUILD-003.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/BUILD-003.md",
       "reviewer": null,
       "merged_commit": null
     }

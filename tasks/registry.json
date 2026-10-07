@@ -460,9 +460,9 @@
       "id": "REN-003",
       "title": "Implement minimal particle renderer",
       "stage": 1,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 2,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "REN-002",
         "SCENE-002",

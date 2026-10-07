@@ -129,3 +129,8 @@ The old INT-001 smoke also passed at150%; only mixed-monitor evidence remains.
 INT-002 approved by user as an early demo (not finished product), merged into master
 as c56ec7ce22f185cbf0034b95f19b84ad215a689e on 2026-10-07; registry DONE.
 Previous INT-002 review-queue notes are superseded. Mixed-monitor limitation remains.
+
+IO-001 is in REVIEW, branch codex/io-001 at5686b2e. Native-file codec contract and
+app persistence transaction proposed; no codec implementation yet. See IO-001.md.
+Tasks/graph.md now reflects all22 registered tasks and actual dependency/status
+data, with clearly unscheduled persistence follow-ups. COMPAT-001 remains READY.

@@ -388,7 +388,7 @@
       "id": "SCENE-002",
       "title": "Implement particle document validation and snapshots",
       "stage": 1,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -416,7 +416,7 @@
       ],
       "description": "tasks/items/SCENE-002.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/SCENE-002.md",
       "reviewer": null,
       "merged_commit": null
     },

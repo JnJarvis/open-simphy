@@ -460,7 +460,7 @@
       "id": "REN-003",
       "title": "Implement minimal particle renderer",
       "stage": 1,
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": 2,
       "owner": null,
       "dependencies": [
@@ -558,7 +558,7 @@
       "id": "BUILD-003",
       "title": "Prepare portable renderer builds and optional SDL host dependency",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -586,8 +586,8 @@
       "description": "tasks/items/BUILD-003.md",
       "block_reason": null,
       "completion_report": "tasks/reports/BUILD-003.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "e336d1d0ca2716229ca39a42456ac23e15e847a8"
     }
   ]
 }

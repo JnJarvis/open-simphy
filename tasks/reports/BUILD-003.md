@@ -2,7 +2,7 @@
 
 Owner: codex-worker. Branch: codex/build-003.
 Implementation: 39d4b51b9686705b36e61cf76b7e2118f146fea3.
-Status: submitted for independent review; not merged.
+Status: DONE; user approved and implementation merged.
 
 Changed paths: CMakeLists.txt, .github/workflows/build.yml,
 cmake/{OpenSimSDL.cmake,README.md,SDL.md}, cmake/checks/CMakeLists.txt,
@@ -52,4 +52,7 @@ pinned-download static SDL version probe. Headless configurations do not acquire
 No renderer or interactive application is implemented by this task. Native window
 smoke testing belongs to INT-001; renderer behavior belongs to REN-003. Those
 already-scoped tasks remain dependent on accepted prerequisites. No additional
-follow-up proposal is needed. Independent review and merge remain outstanding.
+follow-up proposal is needed.
+
+Independent reviewer: user. Approval: "i approve. keep up the good work".
+Merged baseline: e336d1d0ca2716229ca39a42456ac23e15e847a8.

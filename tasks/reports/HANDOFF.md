@@ -10,7 +10,8 @@ reassign claims from this document alone. See SMALL-TASK-GUIDE.md in this direct
 
 Approved and merged: build policy/scaffold, core/math/scene contracts, test utilities,
 core IDs/diagnostics, 2D math and scene implementation. All required native jobs passed.
-An unmerged runnable demo now exists under .worktrees/INT-001/build/demo/src/app/.
+The runnable demo is merged as 0591745 after explicit user approval. Its existing
+local executable remains under .worktrees/INT-001/build/demo/src/app/.
 See docs/demo.md in that worktree. Preserve the modular architecture and Windows
 desktop priority with portable Linux/macOS headless foundations.
 
@@ -51,7 +52,8 @@ run 37570462632 passed all eight jobs. User approved; merged as 72d3158.
 INT-001 is owned by codex-worker on codex/int-001 at a067a00. Local app build and
 43/43 tests passed; real Windows window smoke passed on one 100% display.
 High-DPI/mixed-scale validation remains unavailable and is required before final
-acceptance; registry is BLOCKED on that hardware check, retaining its owner.
+task completion; user approved merging with that known limitation. Registry remains
+BLOCKED on the hardware check, retaining its owner.
 Native headless CI run 37571375012 passed all eight jobs. See INT-001.md.
 Do not reassign the claim or mark DONE without remaining evidence and review. Continue using
 isolated branches; do not take over claims automatically.

@@ -598,7 +598,7 @@
       "id": "BUILD-004",
       "title": "Validate desktop application builds across native platforms",
       "stage": 1,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -623,7 +623,7 @@
       ],
       "description": "tasks/items/BUILD-004.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/BUILD-004.md",
       "reviewer": null,
       "merged_commit": null
     },
@@ -631,7 +631,7 @@
       "id": "EDT-001",
       "title": "Specify transactional particle editing, picking and history",
       "stage": 2,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -655,7 +655,7 @@
       ],
       "description": "tasks/items/EDT-001.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/EDT-001.md",
       "reviewer": null,
       "merged_commit": null
     }

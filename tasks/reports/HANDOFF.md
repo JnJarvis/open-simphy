@@ -2,7 +2,7 @@
 
 Repository: https://github.com/JnJarvis/open-simphy.git
 Canonical local checkout: C:/Users/Dell4/Desktop/open-simphy.
-Updated 2026-10-06. User has NOT switched workers yet. Keep this ready for possible
+Updated 2026-10-07. User has NOT switched workers yet. Keep this ready for possible
 later small-task work with their chosen model (Qwen 3.8 27B). Do not delegate or
 reassign claims from this document alone. See SMALL-TASK-GUIDE.md in this directory.
 
@@ -95,3 +95,20 @@ Recent interfaces: core Result<T> has const nullable value/error accessors and n
 assignment; copy/move construction is supported. Test-only numerical helpers live
 in tests/support. Each module owns its target and public include directory, and
 tests/<category>/<module>/CMakeLists.txt registers through opensim_add_test.
+
+
+## Current review queue (2026-10-07)
+
+BUILD-004: codex/build-004 at 3e2970b, .worktrees/BUILD-004. Six native
+Windows/Linux/macOS desktop Debug/Release builds passed (run37619394668),
+plus all eight existing headless jobs (run37619394487). Checker and README
+updates ready for independent review; not merged. See BUILD-004.md.
+
+EDT-001: codex/edt-001 at 037b2d1, .worktrees/EDT-001. PROPOSED editor contract
+and affected-consumer RFC ready for review; no editor code yet. Covers transactional
+history/monotonic IDs, selection, checked picking, baseline-relative drag, bounded
+resource use and future app Authoring/Simulation modes. All30 specification vectors
+listed; arithmetic/link/consistency checks recorded in EDT-001.md. Do not implement
+or treat this contract as accepted until independent approval and merge. Future
+implementation must receive explicit IDs/scopes, especially shared editor headers.
+COMPAT-001 remains READY/unclaimed for the later small-task worker.

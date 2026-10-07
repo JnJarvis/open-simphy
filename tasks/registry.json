@@ -359,9 +359,9 @@
       "id": "REN-002",
       "title": "Specify render port and test doubles",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "SCENE-001",
         "REN-001"

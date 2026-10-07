@@ -401,7 +401,8 @@
       "blocks": [
         "PHY-002",
         "REN-003",
-        "EDT-001"
+        "EDT-001",
+        "IO-001"
       ],
       "gates": [],
       "allowed_paths": [
@@ -674,7 +675,9 @@
         "EDT-001",
         "BUILD-004"
       ],
-      "blocks": [],
+      "blocks": [
+        "IO-001"
+      ],
       "gates": [],
       "allowed_paths": [
         "src/editor/",
@@ -699,6 +702,37 @@
       "completion_report": "tasks/reports/INT-002.md",
       "reviewer": "user",
       "merged_commit": "c56ec7ce22f185cbf0034b95f19b84ad215a689e"
+    },
+    {
+      "id": "IO-001",
+      "title": "Specify bounded native particle persistence",
+      "stage": 2,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "SCENE-002",
+        "INT-002"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/serialization.md",
+        "rfcs/IO-001-native-document.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "spec/contracts/core.md",
+        "spec/contracts/scene.md",
+        "spec/contracts/editor.md"
+      ],
+      "description": "tasks/items/IO-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
     }
   ]
 }

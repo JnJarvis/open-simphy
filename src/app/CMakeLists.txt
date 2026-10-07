@@ -1,6 +1,6 @@
-opensim_add_module(app SOURCES session.cpp HEADERS session.hpp PUBLIC_DEPS core math scene physics renderer)
+opensim_add_module(app SOURCES session.cpp HEADERS session.hpp PUBLIC_DEPS core math scene physics renderer editor)
 opensim_setup_sdl()
-add_executable(opensim_demo main.cpp sdl_host.cpp sdl_host.hpp)
+add_executable(opensim_demo main.cpp sdl_host.cpp sdl_host.hpp editor_ui.cpp editor_ui.hpp)
 opensim_configure_target(opensim_demo)
 target_link_libraries(opensim_demo PRIVATE opensim::app SDL3::SDL3-static)
 configure_file("${OPENSIM_SDL_LICENSE_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/SDL-LICENSE.txt" COPYONLY)

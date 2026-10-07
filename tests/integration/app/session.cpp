@@ -49,7 +49,7 @@ TEST_CASE("Initial advance pause reset and analytic trajectory") {
     REQUIRE(s.snapshot().time() == 1.0 / 128);
     REQUIRE(s.reset().has_value());
     REQUIRE(s.snapshot() == initial);
-    s.set_running(true);
+    REQUIRE(s.set_running(true).has_value());
     for (int i = 0; i < 128; ++i)
         REQUIRE(s.tick(1.0 / 128).has_value());
     const auto advanced = s.snapshot();
@@ -61,19 +61,19 @@ TEST_CASE("Initial advance pause reset and analytic trajectory") {
         REQUIRE(std::abs(b.position.y - (a.position.y + a.velocity.y - 4.90625)) <= 1e-12);
         REQUIRE(std::abs(b.velocity.y - (a.velocity.y - 9.8125)) <= 1e-12);
     }
-    s.set_running(false);
+    REQUIRE(s.set_running(false).has_value());
     REQUIRE(s.tick(10).has_value());
     REQUIRE(s.snapshot() == advanced);
     REQUIRE(s.reset().has_value());
     REQUIRE_FALSE(s.running());
     REQUIRE(s.snapshot() == initial);
-    s.set_running(true);
+    REQUIRE(s.set_running(true).has_value());
     REQUIRE(s.reset().has_value());
-    REQUIRE(s.running());
+    REQUIRE_FALSE(s.running());
 }
 TEST_CASE("Fixed-step accumulation is bounded and pause discards backlog") {
     auto s = session();
-    s.set_running(true);
+    REQUIRE(s.set_running(true).has_value());
     REQUIRE(s.tick(1.0 / 256).has_value());
     REQUIRE(s.snapshot().time() == 0);
     REQUIRE(s.tick(1.0 / 256).has_value());
@@ -86,8 +86,8 @@ TEST_CASE("Fixed-step accumulation is bounded and pause discards backlog") {
     REQUIRE(s.tick(std::numeric_limits<double>::quiet_NaN()).error());
     REQUIRE(s.snapshot() == before);
     REQUIRE(s.tick(1.0 / 256).has_value());
-    s.set_running(false);
-    s.set_running(true);
+    REQUIRE(s.set_running(false).has_value());
+    REQUIRE(s.set_running(true).has_value());
     REQUIRE(s.tick(1.0 / 256).has_value());
     REQUIRE(s.snapshot() == before);
 }
@@ -108,7 +108,7 @@ TEST_CASE("Composition forwards current snapshots and preserves frames on failur
     const auto saved = present.bytes;
     REQUIRE(s.draw({0, 0}, render, present).has_value());
     REQUIRE(render.calls == 2);
-    s.set_running(true);
+    REQUIRE(s.set_running(true).has_value());
     present.fail = true;
     const auto failed = s.draw({64, 48}, render, present);
     REQUIRE(failed.error());
@@ -120,7 +120,7 @@ TEST_CASE("Composition forwards current snapshots and preserves frames on failur
     present.fail = false;
     const auto invalid = s.draw({4097, 1}, render, present);
     REQUIRE(invalid.error());
-    REQUIRE(invalid.error()->path == "extent");
+    REQUIRE(invalid.error()->path == "view.extent");
     REQUIRE(present.calls == 3);
     REQUIRE(s.snapshot() == before);
     REQUIRE(s.draw({64, 48}, render, present).has_value());

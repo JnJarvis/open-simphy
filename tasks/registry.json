@@ -521,7 +521,7 @@
         "tasks/items/REN-003.md"
       ],
       "description": "tasks/items/INT-001.md",
-      "block_reason": "Implementation and normal-scale Windows smoke complete; accepted render policy still requires high-DPI/mixed-scale display evidence unavailable on this single 100% display.",
+      "block_reason": "Merged demo has passing 100% and 150% native smoke; mixed-scale multi-monitor check remains unavailable on this single display.",
       "completion_report": "tasks/reports/INT-001.md",
       "reviewer": "user",
       "merged_commit": "05917450bd34bbb79fd0a40abb01beb3656ac3d1"
@@ -667,7 +667,7 @@
       "id": "INT-002",
       "title": "Build and integrate particle editor",
       "stage": 2,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -696,7 +696,7 @@
       ],
       "description": "tasks/items/INT-002.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/INT-002.md",
       "reviewer": null,
       "merged_commit": null
     }

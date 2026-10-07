@@ -112,3 +112,16 @@ listed; arithmetic/link/consistency checks recorded in EDT-001.md. Do not implem
 or treat this contract as accepted until independent approval and merge. Future
 implementation must receive explicit IDs/scopes, especially shared editor headers.
 COMPAT-001 remains READY/unclaimed for the later small-task worker.
+
+
+## Editor implementation (2026-10-07)
+
+BUILD-004 and EDT-001 explicitly approved and merged as165437e /423de3e.
+Editor contract/RFC now accepted; ADR recorded. INT-002 is submitted for REVIEW by codex-worker
+in .worktrees/INT-002, branch codex/int-002 at c0596c2 (code f665e47).
+Working native editor executable: build/editor/src/app/opensim_demo.exe in that
+worktree. Includes editable properties, selection/drag, creation/deletion, history,
+playback modes and DPI-aware UI. Local51/51 tests passed; actual150% window smoke
+passed after a clipped-panel/toolbar regression was fixed. All14 native matrix jobs passed;
+see INT-002.md. Do not reassign active work or merge without independent review.
+The old INT-001 smoke also passed at150%; only mixed-monitor evidence remains.

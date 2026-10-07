@@ -23,6 +23,14 @@ Both are now accepted and merged after explicit user approval: physics merge
 BUILD-003 closes the headless-renderer/optional-SDL gap and is now READY.
 Use the registry for any later changes; current worker retains coordinator ownership.
 
+New hard-task work: PHY-002 implementation on codex/phy-002 at cb5e0c0,
+.worktrees/PHY-002; local full suite 28/28 PASS. Native CI/review status is in
+tasks/reports/PHY-002.md and registry. It now actually advances particles in tests,
+but no interactive application exists. REN-002 precise raster contract is proposed
+on codex/ren-002 at 0154787, .worktrees/REN-002, with independently checked pixel
+goldens. Do not implement its draft before acceptance. Prioritize difficult
+correctness/lifecycle decisions before smaller tasks, as requested by the user.
+
 ## Resume safely
 
 Read AGENTS.md, README.md, tasks/README.md, registry.json, the assigned task and
@@ -33,8 +41,9 @@ Do not take over an existing claim while this worker is active. This worker stop
 scene edits after the final review submission; coordinator must verify before any
 reassignment. Never auto-expire claims or weaken required tests.
 
-PHY-001/REN-001 review is complete. PHY-002, REN-002 and BUILD-003 are eligible
-for claims; check the registry before starting. Continue using isolated task branches.
+PHY-001/REN-001 review is complete. PHY-002 and REN-002 are claimed by the current
+worker; BUILD-003 remains available subject to registry checks. Continue using
+isolated branches; do not take over claims automatically.
 
 ## Shortest authorized route to the first demo
 

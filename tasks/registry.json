@@ -359,7 +359,7 @@
       "id": "REN-002",
       "title": "Specify render port and test doubles",
       "stage": 0,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -383,8 +383,8 @@
       "description": "tasks/items/REN-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/REN-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "c2c24b51f1cade7c2173741bc9e61eb431573029"
     },
     {
       "id": "SCENE-002",
@@ -426,7 +426,7 @@
       "id": "PHY-002",
       "title": "Implement uniform-gravity particle stepper",
       "stage": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -453,8 +453,8 @@
       "description": "tasks/items/PHY-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/PHY-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "c8e4f0972072a6f02d163a74c3580c9d50865d5e"
     },
     {
       "id": "REN-003",

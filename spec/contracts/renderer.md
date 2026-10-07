@@ -1,6 +1,6 @@
 # CPU rendering port and raster contract v1
 
-Status: PROPOSED under REN-002; requires independent review before REN-003.
+Status: ACCEPTED under REN-002 following explicit user approval, 2026-10-06.
 Owner: renderer. Direct dependencies: core, math, scene; standard library backend.
 Uses accepted REN-001 CPU-frame/SDL-host policy. No window, SDL, native handle,
 physics object, file I/O, clocks, callbacks to app or platform-module dependency.

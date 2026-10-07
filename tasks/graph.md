@@ -47,6 +47,11 @@ flowchart TD
   PHY_001 --> PHY_002
   SCENE_002 --> PHY_002
   REN_003["REN-003: Implement minimal particle renderer"]
+  BUILD_003["BUILD-003: Portable renderer build and optional SDL setup"]
+  BUILD_002 --> BUILD_003
+  REN_001 --> BUILD_003
+  BUILD_003 --> REN_003
+  BUILD_003 --> INT_001
   REN_002 --> REN_003
   SCENE_002 --> REN_003
   INT_001["INT-001: Integrate the first runnable simulation"]

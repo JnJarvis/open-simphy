@@ -2,23 +2,25 @@
 
 Repository: https://github.com/JnJarvis/open-simphy.git
 Canonical local checkout: C:/Users/Dell4/Desktop/open-simphy.
-Updated 2026-10-06. The user may temporarily use another AI due to usage limits.
+Updated 2026-10-06. User has NOT switched workers yet. Keep this ready for possible
+later small-task work with their chosen model (Qwen 3.8 27B). Do not delegate or
+reassign claims from this document alone. See SMALL-TASK-GUIDE.md in this directory.
 
 ## Current state
 
 Approved and merged: build policy/scaffold, core/math/scene contracts, test utilities,
-core IDs/diagnostics and 2D math. All their required native platform jobs passed.
+core IDs/diagnostics, 2D math and scene implementation. All required native jobs passed.
 There is no runnable simulator yet. Preserve the modular architecture and Windows
 desktop priority with portable Linux/macOS headless foundations.
 
-SCENE-002 implementation is on codex/scene-002 at 4ea2598, pushed to origin.
-Local worktree: .worktrees/SCENE-002. Report: tasks/reports/SCENE-002.md.
-It has validated documents, atomic edits, snapshots and drawing packets. Local
-Windows Debug: 23/23 tests pass. CI run 37552678480 is the authoritative native
-verification for that commit. All eight jobs passed; task submitted for REVIEW.
-No scene implementation merge approval has been received. Check the canonical
-registry for subsequent changes. Scene editing by this worker is now stopped;
-the coordinator may verify this state before assigning review corrections.
+SCENE-002 merged as 70db740 after explicit user approval. Local suite: 23/23 PASS;
+native run 37552678480: eight jobs PASS. See tasks/reports/SCENE-002.md.
+
+PHY-001 proposal: codex/phy-001 at c398c22, .worktrees/PHY-001.
+REN-001 proposal: codex/ren-001 at 05b1cf1, .worktrees/REN-001.
+Both are submitted for review, not accepted/merged. Do not consume draft branches.
+BUILD-003 closes the headless-renderer/optional-SDL gap and is blocked on REN-001.
+Use the registry for any later changes; current worker retains coordinator ownership.
 
 ## Resume safely
 
@@ -30,22 +32,22 @@ Do not take over an existing claim while this worker is active. This worker stop
 scene edits after the final review submission; coordinator must verify before any
 reassignment. Never auto-expire claims or weaken required tests.
 
-Finish review of SCENE-002 after its native checks pass. User approval is still
-required under the repository review workflow; merge and record the real merge
-commit before DONE. Do not consume its branch as an unmerged dependency.
+Finish independent review of PHY-001/REN-001; record actual merge commits before
+DONE. Do not consume proposal branches as unmerged dependencies.
 
 ## Shortest authorized route to the first demo
 
-1. PHY-001 (READY): specify fixed-step particle port and update equations, dt limits,
+1. PHY-001 (REVIEW): specify fixed-step particle port and update equations, dt limits,
    failure atomicity, reset and analytic reference bounds. Owns only
    spec/contracts/physics.md. Requires review before implementation.
-2. REN-001 (READY): select a minimal render route from primary docs, document
+2. REN-001 (REVIEW): select a minimal render route from primary docs, document
    platform/surface ownership and headless tests. Owns render policy and task ADR.
    Do not choose a full editor toolkit or introduce a renderer-to-platform edge.
 3. REN-002 after REN-001 merge: freeze render port using accepted scene packets.
 4. PHY-002 after PHY-001 and SCENE-002 merge: uniform-gravity stepper and tests.
-5. REN-003 after REN-002 and SCENE-002 merge: minimal particle renderer.
-6. INT-001 after PHY-002/REN-003 merge: app composition, private host adapter,
+5. BUILD-003 after REN-001 merge: headless renderer and optional SDL setup.
+6. REN-003 after REN-002, BUILD-003 and SCENE-002 merge: particle renderer.
+7. INT-001 after PHY-002/REN-003/BUILD-003 merge: app composition, private host adapter,
    advance/pause/reset controls, headless lifecycle tests, documented visual demo.
    Only integration tasks own src/app/. No speculative collision/full-editor work.
 

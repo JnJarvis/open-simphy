@@ -96,9 +96,9 @@
       "id": "REN-001",
       "title": "Select minimal render strategy",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "BUILD-001"
       ],
@@ -328,9 +328,9 @@
       "id": "PHY-001",
       "title": "Specify fixed-step particle simulation port",
       "stage": 0,
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "priority": 1,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "SCENE-001"
       ],
@@ -388,7 +388,7 @@
       "id": "SCENE-002",
       "title": "Implement particle document validation and snapshots",
       "stage": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -417,8 +417,8 @@
       "description": "tasks/items/SCENE-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/SCENE-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "70db740b802d2d120bb1cae8a705eda146f21cc4"
     },
     {
       "id": "PHY-002",

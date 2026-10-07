@@ -1,7 +1,7 @@
 # SCENE-002 implementation evidence
 
 Owner: codex-worker. Branch: codex/scene-002. Commit: 4ea2598.
-Status: REVIEW; local and native CI passed; independent review/merge pending.
+Status: DONE; local and native CI passed; user approved and implementation merged.
 
 ## Scope and behavior
 
@@ -57,3 +57,7 @@ and velocities without choosing an integrator. Document and snapshot spans borro
 from their owning object; owning copies survive producer destruction. Result's
 const payload API entails extra copies; optimize only with measured need and review.
 No interactive app yet. Next work follows the coordinator handoff report.
+
+Independent reviewer: user. Explicit approval: "i approve of that merge".
+Merged commit: 70db740b802d2d120bb1cae8a705eda146f21cc4.
+This supersedes pending-review statements above.

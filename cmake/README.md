@@ -138,3 +138,31 @@ cannot substitute for the required Linux/macOS execution evidence.
 Sources consulted for CI configuration:
 [MSVC action inputs](https://github.com/ilammy/msvc-dev-cmd/tree/v1.13.0) and
 [macOS arm64 image](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md).
+
+
+## Native desktop verification (BUILD-004)
+
+The separate desktop workflow compiles the user-approved merged demo on
+Windows MSVC 14.44, Linux GCC 13 and macOS Xcode 16.4, each Debug/Release.
+Debug enables and runs all headless tests in the app build; Release disables
+tests and checks no Python discovery or Catch2 acquisition occurred. Python
+runs the CI verifier; it is not a tests-off application configure dependency.
+The original eight headless jobs remain unchanged.
+
+All jobs use the existing pinned SDL acquisition and CMake 3.28.4/Ninja 1.11.1.4
+packages. Linux installs video development packages from Ubuntu 24.04 repositories
+(X11/XRandR/cursor/input/screensaver, xkbcommon and Mesa GL/EGL), based on SDL
+3.2.28's README-linux.md. These are runner system build prerequisites, not vendored
+or version-pinned project libraries; apt package versions can change with updates.
+No new production library API or architecture dependency is introduced.
+
+`python cmake/checks/verify_desktop.py build/desktop --tests ON` (or OFF) verifies
+executable and exact SDL 3.2.28 LICENSE.txt SHA256, configuration/dependency layout,
+and two expected diagnostic/exit-code pairs, each with a 30-second timeout.
+Its `--self-test` covers absent/modified outputs, unexpected test dependencies,
+wrong exit codes/messages and timeout propagation using synthetic fixtures.
+
+Failure probes set SDL_VIDEODRIVER=dummy and SDL_RENDER_DRIVER=software only in
+child-process environments. They never count as native window, GPU, high-DPI,
+resize or visual smoke evidence. No release binaries are uploaded by this workflow.
+Interactive hardware validation remains in docs/demo.md and the INT-001 report.

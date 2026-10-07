@@ -1,39 +1,62 @@
-# Open physics simulator — planning repository
+# Open Simphy - C++ particle simulation
 
-An independent, open-source C++ simulator project, aiming eventually at broad
-SimPHY feature and project-file compatibility. No compatibility is claimed and no
-simulator is implemented. SimPHY research is being produced separately.
+A modular, independent open-source simulator project with a working Windows
+particle demo. The current slice models free particles under uniform gravity:
+play/pause, single-step, reset, CPU circles/lines, and an SDL desktop host.
+No collisions, editor, project-file support or SimPHY compatibility is claimed.
 
-## Start here
+## Try the demo
 
-1. Read [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
-2. Read [architecture](spec/architecture.md), [roadmap](spec/roadmap.md), and
-   [task workflow](tasks/README.md).
-3. Run `python tools/tasks.py ready`, select one task, and read its Markdown file.
-4. Claim through the shared coordination checkout:
-   `python tools/tasks.py claim BUILD-001 agent-name`.
-5. Implement only that task in an isolated checkout; submit evidence for review.
-6. The integration owner reviews and merges, then marks DONE and refreshes readiness.
+See [demo instructions](docs/demo.md) for build commands, controls and the exact
+scene. On Windows, use a Visual Studio 2022 Developer PowerShell:
 
-See [initial backlog and dependency graph](tasks/graph.md), [open questions](spec/open-questions.md),
-[testing](spec/testing.md), [interfaces](spec/interfaces.md), and
-[research intake](spec/research-intake.md).
+```text
+cmake -S . -B build/demo -G Ninja -DCMAKE_BUILD_TYPE=Debug -DOPENSIM_BUILD_APP=ON
+cmake --build build/demo --parallel 4
+ctest --test-dir build/demo --output-on-failure
+./build/demo/src/app/opensim_demo.exe
+```
 
-The registry is `tasks/registry.json`; descriptions are in `tasks/items/`.
-The coordination script uses only Python 3's standard library. It is planning
-infrastructure, not a build dependency of the future C++ application.
+Space plays/pauses, Right Arrow advances once, R resets, Escape closes. It starts
+paused. Particles may fall out of view; the axes are reference lines, not walls.
 
-Only one canonical coordination checkout may grant claims. Separate clones must
-not self-assign from stale registries. See the workflow for distributed operation.
+The engine, renderer and app controller have native Windows/Linux/macOS headless
+checks. A separate [desktop workflow](.github/workflows/desktop.yml) builds the
+SDL executable on all three systems in Debug and Release. Those jobs check
+packaging inputs and failure paths with a dummy video driver, not interactive
+window behavior. Normal-scale Windows window smoke has passed. High-DPI and
+mixed-scale checks remain outstanding; Linux/macOS desktop support is not yet
+validated. See [integration evidence](tasks/reports/INT-001.md).
 
-## Layout
+## Headless development
 
-`spec/` holds specifications, `adr/` accepted decisions, `rfcs/` proposed changes,
-`tasks/` work and reports, `research/` future evidence, `src/` module placeholders,
-`tests/` test categories and fixture provenance, and `tools/` repository utilities.
+```text
+cmake --preset headless-debug
+cmake --build --preset headless-debug
+ctest --preset headless-debug --output-on-failure
+```
 
-The project name, license, supported platforms, and build stack remain open.
-Do not distribute a release until the license and dependency policy are resolved.
+C++20, CMake 3.28+, Ninja 1.11+; exact CI toolchain versions are in
+[build policy](spec/build-policy.md). Catch2 3.7.1 is test-only. SDL 3.2.28 is
+app-private; headless builds do not acquire it. Tests-disabled builds do not
+require Catch2 or Python. Dependency downloads are pinned; see
+[build notes](cmake/README.md) and [offline SDL setup](cmake/SDL.md).
 
-The [planning delivery index](spec/planning-delivery.md) maps all requested
-deliverables and lists the one-time setup before dispatching workers.
+## Architecture and contributing
+
+Scene, math and physics have no native window dependencies. Renderer produces
+owning RGBA frames; app owns SDL events and presentation. The modular boundary is
+intended to keep later Linux/macOS desktop work in platform integration and
+packaging rather than physics algorithms.
+
+Read [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+[architecture](spec/architecture.md), [task workflow](tasks/README.md), and the
+[roadmap](spec/roadmap.md). Select only READY tasks and claim through the canonical
+coordinator. The [registry](tasks/registry.json) is authoritative; independent
+review and merge are required before DONE. Some planning documents describe
+historical initial state; consult current task reports for actual delivery evidence.
+
+Research intake and compatibility are separate, evidence-gated work. No proprietary
+SimPHY binaries or unlicensed fixtures belong here. Project release licensing is
+still unresolved; this development demo is not a release package. Retain SDL's
+notice with any authorized future distribution.

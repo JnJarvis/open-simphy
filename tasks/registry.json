@@ -460,7 +460,7 @@
       "id": "REN-003",
       "title": "Implement minimal particle renderer",
       "stage": 1,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 2,
       "owner": "codex-worker",
       "dependencies": [
@@ -486,7 +486,7 @@
       ],
       "description": "tasks/items/REN-003.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/REN-003.md",
       "reviewer": null,
       "merged_commit": null
     },

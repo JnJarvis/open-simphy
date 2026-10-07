@@ -44,7 +44,11 @@ PHY-001/REN-001/PHY-002/REN-002 reviews are complete. BUILD-003 is owned by
 codex-worker, branch codex/build-003 at 39d4b51, worktree .worktrees/BUILD-003.
 All eight native CI jobs passed (run 37568944027), including the Windows SDL probe;
 local offline-source probe also passed. See BUILD-003.md for evidence. User approved;
-merged as e336d1d. REN-003 is the next implementation task. Continue using
+merged as e336d1d. REN-003 is implemented by codex-worker on codex/ren-003
+at a742d17, worktree .worktrees/REN-003. Local 40/40 tests passed; native CI
+run 37570462632 passed all eight jobs. Submitted for REVIEW. See REN-003.md.
+Do not claim it or begin INT-001
+until independent review and merge are recorded. Continue using
 isolated branches; do not take over claims automatically.
 
 ## Shortest authorized route to the first demo

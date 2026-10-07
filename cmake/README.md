@@ -118,7 +118,8 @@ Cases are discovered through Catch2 with a target-specific prefix and category
 label. Valid categories are unit, contract, integration, regression, reference,
 serialization, compatibility and malformed. Unknown categories fail configure.
 Missing placeholder module/test CMakeLists are skipped; actual sources are never
-globbed into build targets. Headless configuration omits renderer/editor/platform/app.
+globbed into build targets. Headless configuration includes the portable renderer
+when registered, and omits editor/platform/app. It does not acquire SDL.
 
 ## CI and validation limits
 

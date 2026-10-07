@@ -30,3 +30,8 @@ add_test(NAME build.task_workflow
     COMMAND "${Python3_EXECUTABLE}" -m unittest discover
         -s "${PROJECT_SOURCE_DIR}/tests" -p test_task_workflow.py -v)
 set_tests_properties(build.registry build.task_workflow PROPERTIES LABELS build TIMEOUT 30)
+
+add_test(NAME build.headless_renderer
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/verify_renderer_build.py"
+        "${PROJECT_SOURCE_DIR}" "${CMAKE_COMMAND}")
+set_tests_properties(build.headless_renderer PROPERTIES LABELS build TIMEOUT 90)

@@ -1,7 +1,6 @@
 # Particle editor contract v1
 
-Status: PROPOSED under EDT-001, 2026-10-07. Requires independent approval before
-implementation. Companion: [affected-contract RFC](../../rfcs/EDT-001-editor.md).
+Status: ACCEPTED under EDT-001 after user approval, 2026-10-07. Companion: [affected-contract RFC](../../rfcs/EDT-001-editor.md).
 Owner: editor. Allowed dependencies: core, math, scene. No renderer, physics,
 SDL, native handles, UI toolkit, clocks, filesystem or app dependency.
 

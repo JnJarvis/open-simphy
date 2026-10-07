@@ -598,14 +598,16 @@
       "id": "BUILD-004",
       "title": "Validate desktop application builds across native platforms",
       "stage": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
         "BUILD-003",
         "REN-003"
       ],
-      "blocks": [],
+      "blocks": [
+        "INT-002"
+      ],
       "gates": [],
       "allowed_paths": [
         ".github/workflows/desktop.yml",
@@ -624,14 +626,14 @@
       "description": "tasks/items/BUILD-004.md",
       "block_reason": null,
       "completion_report": "tasks/reports/BUILD-004.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "165437ee615d10f79a7b072dea36d06a51f55fb4"
     },
     {
       "id": "EDT-001",
       "title": "Specify transactional particle editing, picking and history",
       "stage": 2,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -639,7 +641,9 @@
         "REN-003",
         "PHY-002"
       ],
-      "blocks": [],
+      "blocks": [
+        "INT-002"
+      ],
       "gates": [],
       "allowed_paths": [
         "spec/contracts/editor.md",
@@ -656,6 +660,43 @@
       "description": "tasks/items/EDT-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/EDT-001.md",
+      "reviewer": "user",
+      "merged_commit": "423de3e21f3281d8e8bb18f2ee93531ed3dfa6f0"
+    },
+    {
+      "id": "INT-002",
+      "title": "Build and integrate particle editor",
+      "stage": 2,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "EDT-001",
+        "BUILD-004"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/editor/",
+        "src/app/",
+        "tests/unit/editor/",
+        "tests/contract/editor/",
+        "tests/integration/app/",
+        "CMakeLists.txt",
+        "docs/demo.md"
+      ],
+      "spec_refs": [
+        "spec/contracts/editor.md",
+        "rfcs/EDT-001-editor.md",
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/scene.md",
+        "spec/contracts/renderer.md",
+        "spec/contracts/physics.md"
+      ],
+      "description": "tasks/items/INT-002.md",
+      "block_reason": null,
+      "completion_report": null,
       "reviewer": null,
       "merged_commit": null
     }

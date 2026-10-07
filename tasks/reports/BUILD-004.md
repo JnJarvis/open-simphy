@@ -40,3 +40,5 @@ No compile-only claim is substituted for execution: probes/tests ran successfull
 INT-001 high-DPI/mixed-scale evidence is still outstanding; Linux/macOS interactive
 window smoke remains unperformed. Neither is weakened by passing these jobs.
 Independent reviewer/outcome: pending. Merged baseline: none. No new follow-up.
+
+User approved both and requested editor implementation. Merged: 165437ee615d10f79a7b072dea36d06a51f55fb4.

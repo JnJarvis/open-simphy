@@ -1,6 +1,6 @@
 # EDT-001 RFC: transactional particle authoring and history
 
-Status: PROPOSED, 2026-10-07. Decision pending independent maintainer/consumer review.
+Status: ACCEPTED by user, 2026-10-07; editor and app mode/reset semantics approved.
 This is a new editor contract and an explicit proposal for future app behavior,
 not approval to implement or mutate existing producer APIs.
 

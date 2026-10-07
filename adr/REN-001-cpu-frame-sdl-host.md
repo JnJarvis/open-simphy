@@ -1,6 +1,6 @@
 # REN-001: CPU frames with an SDL3 presentation host
 
-Status: PROPOSED. Review with spec/render-policy.md before REN-002.
+Status: ACCEPTED following explicit user approval, 2026-10-06.
 
 The first demo needs particles and simple overlays, stable headless checks, and
 Windows interaction without platform code leaking into physics or scene. Select

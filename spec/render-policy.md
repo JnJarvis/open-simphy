@@ -1,6 +1,6 @@
 # Minimal portable rendering policy
 
-Status: PROPOSED under REN-001; requires independent review before REN-002.
+Status: ACCEPTED under REN-001 following explicit user approval, 2026-10-06.
 Decision: a portable CPU raster backend owned by renderer produces an owning RGBA8
 frame. A thin app-private SDL3 host displays it and handles events. Windows is the
 first desktop smoke target. Linux/macOS renderer math and raster tests stay headless.

@@ -1,6 +1,6 @@
 # Fixed-step particle physics contract v1
 
-Status: PROPOSED under PHY-001; independent review required before PHY-002.
+Status: ACCEPTED under PHY-001 following explicit user approval, 2026-10-06.
 Owner: physics. Direct dependencies: core, math, scene only for this slice.
 Consumers: app and its test doubles. No collisions, forces other than uniform
 gravity, joints, runtime entity creation, solver framework or wall-clock access.

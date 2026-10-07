@@ -18,8 +18,9 @@ native run 37552678480: eight jobs PASS. See tasks/reports/SCENE-002.md.
 
 PHY-001 proposal: codex/phy-001 at c398c22, .worktrees/PHY-001.
 REN-001 proposal: codex/ren-001 at 05b1cf1, .worktrees/REN-001.
-Both are submitted for review, not accepted/merged. Do not consume draft branches.
-BUILD-003 closes the headless-renderer/optional-SDL gap and is blocked on REN-001.
+Both are now accepted and merged after explicit user approval: physics merge
+4c96e65, rendering merge e6f19c1. Read their accepted files from master.
+BUILD-003 closes the headless-renderer/optional-SDL gap and is now READY.
 Use the registry for any later changes; current worker retains coordinator ownership.
 
 ## Resume safely
@@ -32,15 +33,15 @@ Do not take over an existing claim while this worker is active. This worker stop
 scene edits after the final review submission; coordinator must verify before any
 reassignment. Never auto-expire claims or weaken required tests.
 
-Finish independent review of PHY-001/REN-001; record actual merge commits before
-DONE. Do not consume proposal branches as unmerged dependencies.
+PHY-001/REN-001 review is complete. PHY-002, REN-002 and BUILD-003 are eligible
+for claims; check the registry before starting. Continue using isolated task branches.
 
 ## Shortest authorized route to the first demo
 
-1. PHY-001 (REVIEW): specify fixed-step particle port and update equations, dt limits,
+1. PHY-001 (DONE): specifies fixed-step particle port and update equations, dt limits,
    failure atomicity, reset and analytic reference bounds. Owns only
-   spec/contracts/physics.md. Requires review before implementation.
-2. REN-001 (REVIEW): select a minimal render route from primary docs, document
+   spec/contracts/physics.md. Accepted and available for implementation.
+2. REN-001 (DONE): selects a minimal render route from primary docs, documents
    platform/surface ownership and headless tests. Owns render policy and task ADR.
    Do not choose a full editor toolkit or introduce a renderer-to-platform edge.
 3. REN-002 after REN-001 merge: freeze render port using accepted scene packets.

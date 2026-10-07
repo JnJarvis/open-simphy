@@ -400,7 +400,8 @@
       ],
       "blocks": [
         "PHY-002",
-        "REN-003"
+        "REN-003",
+        "EDT-001"
       ],
       "gates": [],
       "allowed_paths": [
@@ -434,7 +435,8 @@
         "SCENE-002"
       ],
       "blocks": [
-        "INT-001"
+        "INT-001",
+        "EDT-001"
       ],
       "gates": [],
       "allowed_paths": [
@@ -469,7 +471,9 @@
         "BUILD-003"
       ],
       "blocks": [
-        "INT-001"
+        "INT-001",
+        "BUILD-004",
+        "EDT-001"
       ],
       "gates": [],
       "allowed_paths": [
@@ -567,7 +571,8 @@
       ],
       "blocks": [
         "REN-003",
-        "INT-001"
+        "INT-001",
+        "BUILD-004"
       ],
       "gates": [],
       "allowed_paths": [
@@ -588,6 +593,71 @@
       "completion_report": "tasks/reports/BUILD-003.md",
       "reviewer": "user",
       "merged_commit": "e336d1d0ca2716229ca39a42456ac23e15e847a8"
+    },
+    {
+      "id": "BUILD-004",
+      "title": "Validate desktop application builds across native platforms",
+      "stage": 1,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "BUILD-003",
+        "REN-003"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        ".github/workflows/desktop.yml",
+        "cmake/checks/verify_desktop.py",
+        "cmake/README.md",
+        "README.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "spec/contracts/scene.md",
+        "spec/contracts/renderer.md",
+        "spec/contracts/physics.md"
+      ],
+      "description": "tasks/items/BUILD-004.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "EDT-001",
+      "title": "Specify transactional particle editing, picking and history",
+      "stage": 2,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "SCENE-002",
+        "REN-003",
+        "PHY-002"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/editor.md",
+        "rfcs/EDT-001-editor.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "spec/contracts/scene.md",
+        "spec/contracts/renderer.md",
+        "spec/contracts/physics.md"
+      ],
+      "description": "tasks/items/EDT-001.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
     }
   ]
 }

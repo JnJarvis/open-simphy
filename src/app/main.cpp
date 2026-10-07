@@ -1,3 +1,4 @@
+#include "editor_ui.hpp"
 #include "sdl_host.hpp"
 #include "session.hpp"
 #include <SDL3/SDL_main.h>
@@ -13,64 +14,115 @@ void checked(const core::Result<void> &result) {
     if (result.error())
         throw std::runtime_error(result.error()->message);
 }
-bool events(app::Session &session) {
+bool events(app::Session &session, app::EditorUI &ui, app::Host &host) {
     SDL_Event event{};
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+    while (SDL_PollEvent(&event))
+        if (!ui.event(event, session, host))
             return false;
-        if (event.type != SDL_EVENT_KEY_DOWN || event.key.repeat)
-            continue;
-        switch (event.key.key) {
-        case SDLK_ESCAPE:
-            return false;
-        case SDLK_SPACE:
-            session.set_running(!session.running());
-            break;
-        case SDLK_RIGHT:
-            session.set_running(false);
-            checked(session.advance());
-            break;
-        case SDLK_R:
-            checked(session.reset());
-            break;
-        default:
-            break;
-        }
-    }
     return true;
 }
-void key(SDL_Keycode code, app::Session &session) {
+void key(SDL_Keycode code, app::Session &session, app::EditorUI &ui, app::Host &host,
+         SDL_Keymod mod = 0) {
     SDL_Event event{};
     event.type = SDL_EVENT_KEY_DOWN;
     event.key.key = code;
     event.key.down = true;
+    event.key.mod = mod;
     app::require_sdl(SDL_PushEvent(&event), "Queue smoke key");
-    if (!events(session))
+    if (!events(session, ui, host))
         throw std::runtime_error("Unexpected close during smoke");
 }
 void expect(bool value, const char *message) {
     if (!value)
         throw std::runtime_error(message);
 }
-void smoke(app::Session &session, app::Host &host) {
+void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     const auto draw = [&](const char *capture = nullptr) {
-        checked(session.draw(host.extent(), renderer::render,
-                             [&](const renderer::Frame &f) { return host.present(f, capture); }));
+        checked(session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
+            return host.present(f, capture, false, [&](SDL_Renderer *r) {
+                ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
+            });
+        }));
     };
+    events(session, ui, host);
+    checked(session.resize(host.canvas_extent()));
+    const auto mouse = [&](SDL_EventType type, double px, double py) {
+        int w = 0, h = 0;
+        app::require_sdl(SDL_GetWindowSize(host.window(), &w, &h), "Smoke window size");
+        const auto extent = host.extent();
+        SDL_Event e{};
+        e.type = type;
+        const float x = static_cast<float>(px * w / extent.width),
+                    y = static_cast<float>(py * h / extent.height);
+        if (type == SDL_EVENT_MOUSE_MOTION) {
+            e.motion.x = x;
+            e.motion.y = y;
+        } else {
+            e.button.button = SDL_BUTTON_LEFT;
+            e.button.x = x;
+            e.button.y = y;
+            e.button.down = type == SDL_EVENT_MOUSE_BUTTON_DOWN;
+        }
+        app::require_sdl(SDL_PushEvent(&e), "Queue editor pointer");
+        events(session, ui, host);
+    };
+    const auto view = session.editing().view();
+    const double x = double(view.width) / 2 - 240, y = double(view.height) / 2 - 80;
+    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, x, y);
+    expect(session.editing().selected() == core::EntityId{1}, "Editor selection failed");
+    mouse(SDL_EVENT_MOUSE_MOTION, x + 40, y - 20);
+    mouse(SDL_EVENT_MOUSE_BUTTON_UP, x + 40, y - 20);
+    expect(session.editing().document().particles()[0].fields.initial_position ==
+               math::Vec2{-2.5, 1.25},
+           "Editor drag failed");
+    draw("smoke-editor.bmp");
+    key(SDLK_Z, session, ui, host, SDL_KMOD_CTRL);
+    expect(session.editing().document().particles()[0].fields.initial_position == math::Vec2{-3, 1},
+           "Undo failed");
+    key(SDLK_Y, session, ui, host, SDL_KMOD_CTRL);
+    key(SDLK_Z, session, ui, host, SDL_KMOD_CTRL);
+    key(SDLK_TAB, session, ui, host);
+    SDL_Event text{};
+    text.type = SDL_EVENT_TEXT_INPUT;
+    text.text.text = "2.5";
+    app::require_sdl(SDL_PushEvent(&text), "Queue property value");
+    events(session, ui, host);
+    key(SDLK_RETURN, session, ui, host);
+    expect(session.editing().document().particles()[0].fields.mass == 2.5, "Property entry failed");
+    key(SDLK_Z, session, ui, host, SDL_KMOD_CTRL);
+    key(SDLK_TAB, session, ui, host);
+    for (int i = 0; i < 7; ++i)
+        key(SDLK_TAB, session, ui, host);
+    SDL_Event gravity{};
+    gravity.type = SDL_EVENT_TEXT_INPUT;
+    gravity.text.text = "-5";
+    app::require_sdl(SDL_PushEvent(&gravity), "Queue gravity value");
+    events(session, ui, host);
+    key(SDLK_RETURN, session, ui, host);
+    expect(session.editing().document().gravity().y == -5, "Scrolled gravity property failed");
+    draw("smoke-properties.bmp");
+    key(SDLK_Z, session, ui, host, SDL_KMOD_CTRL);
+    key(SDLK_N, session, ui, host);
+    expect(session.editing().document().particles().size() == 4, "Create failed");
+    key(SDLK_DELETE, session, ui, host);
+    expect(session.editing().document().particles().size() == 3, "Delete failed");
+    session = *app::Session::create().value();
+    ui = app::EditorUI{};
+    checked(session.resize(host.canvas_extent()));
     draw("smoke-initial.bmp");
-    key(SDLK_SPACE, session);
+    key(SDLK_SPACE, session, ui, host);
     checked(session.tick(1.0 / 128));
-    key(SDLK_SPACE, session);
+    key(SDLK_SPACE, session, ui, host);
     checked(session.tick(1));
     expect(session.snapshot().time() == 1.0 / 128, "Pause advanced time");
-    key(SDLK_RIGHT, session);
+    key(SDLK_RIGHT, session, ui, host);
     expect(session.snapshot().time() == 2.0 / 128, "Single step failed");
-    key(SDLK_R, session);
+    key(SDLK_R, session, ui, host);
     expect(session.snapshot().time() == 0 && !session.running(), "Reset failed");
-    key(SDLK_SPACE, session);
+    key(SDLK_SPACE, session, ui, host);
     for (int i = 0; i < 128; ++i)
         checked(session.tick(1.0 / 128));
-    key(SDLK_SPACE, session);
+    key(SDLK_SPACE, session, ui, host);
     expect(session.snapshot().time() == 1, "Run did not reach one second");
     draw("smoke-advanced.bmp");
     const auto before = session.snapshot();
@@ -110,8 +162,9 @@ void smoke(app::Session &session, app::Host &host) {
     SDL_Event quit{};
     quit.type = SDL_EVENT_QUIT;
     app::require_sdl(SDL_PushEvent(&quit), "Queue close");
-    expect(!events(session), "Close event ignored");
-    std::cout << "PASS: native upload, controls, resize, minimize/restore, display moves, close\n";
+    expect(!events(session, ui, host), "Close event ignored");
+    std::cout << "PASS: editor selection/drag/history/property/create/delete, native upload, "
+                 "simulation controls, resize, minimize/restore, display moves, close\n";
 }
 } // namespace
 int main(int argc, char **argv) {
@@ -135,19 +188,23 @@ int main(int argc, char **argv) {
             throw std::runtime_error(initial.error()->message);
         auto session = *initial.value();
         app::Host host(fail_window);
+        app::EditorUI ui;
         if (smoke_mode) {
-            smoke(session, host);
+            smoke(session, host, ui);
             return 0;
         }
         auto previous = std::chrono::steady_clock::now();
         std::string last_error;
-        while (events(session)) {
+        while (events(session, ui, host)) {
             const auto now = std::chrono::steady_clock::now();
             checked(session.tick(std::chrono::duration<double>(now - previous).count()));
             previous = now;
             const auto result =
-                session.draw(host.extent(), renderer::render, [&](const renderer::Frame &f) {
-                    return host.present(f, nullptr, fail_texture);
+                session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
+                    return host.present(f, nullptr, fail_texture, [&](SDL_Renderer *r) {
+                        ui.paint(r, session, host.extent(),
+                                 SDL_GetWindowDisplayScale(host.window()));
+                    });
                 });
             if (result.error()) {
                 if (fail_texture) {

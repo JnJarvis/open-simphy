@@ -1,4 +1,6 @@
 #include "sdl_host.hpp"
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <stdexcept>
 namespace opensim::app {
@@ -19,9 +21,10 @@ Host::Host(bool fail_window) {
     require_sdl(SDL_Init(SDL_INIT_VIDEO), "Initialize video");
     if (fail_window)
         throw std::runtime_error("Create window: injected failure");
-    window_.reset(SDL_CreateWindow("Open Simphy", 960, 640,
+    window_.reset(SDL_CreateWindow("Open Simphy", 1200, 760,
                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY));
     require_sdl(bool(window_), "Create window");
+    require_sdl(SDL_SetWindowMinimumSize(window_.get(), 800, 680), "Set minimum editor size");
     device_.reset(SDL_CreateRenderer(window_.get(), nullptr));
     require_sdl(bool(device_), "Create renderer");
     require_sdl(
@@ -37,11 +40,20 @@ renderer::Extent Host::extent() const {
         return {0, 0};
     return {static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h)};
 }
+renderer::Extent Host::canvas_extent() const {
+    const auto size = extent();
+    if (!size.width || !size.height)
+        return {0, 0};
+    const float scale = std::max(1.0f, SDL_GetWindowDisplayScale(window_.get()));
+    const auto panel = static_cast<std::uint32_t>(std::ceil(280 * scale));
+    return {size.width > panel ? size.width - panel : 0, size.height};
+}
 void Host::title(const std::string &text) {
     require_sdl(SDL_SetWindowTitle(window_.get(), text.c_str()), "Set title");
 }
 core::Result<void> Host::present(const renderer::Frame &frame, const char *capture,
-                                 bool fail_texture) {
+                                 bool fail_texture,
+                                 const std::function<void(SDL_Renderer *)> &paint) {
     const renderer::Extent size{frame.width(), frame.height()};
     if (fail_texture)
         return core::Result<void>::failure({core::Code::internal_error,
@@ -77,10 +89,14 @@ core::Result<void> Host::present(const renderer::Frame &frame, const char *captu
         std::memcpy(static_cast<std::uint8_t *>(pixels) + std::size_t(y) * pitch,
                     frame.bytes().data() + std::size_t(y) * frame.stride(), frame.stride());
     SDL_UnlockTexture(texture_.get());
+    const SDL_FRect destination{0, 0, static_cast<float>(frame.width()),
+                                static_cast<float>(frame.height())};
     if (!SDL_SetRenderDrawColor(device_.get(), 16, 20, 28, 255) ||
         !SDL_RenderClear(device_.get()) ||
-        !SDL_RenderTexture(device_.get(), texture_.get(), nullptr, nullptr))
+        !SDL_RenderTexture(device_.get(), texture_.get(), nullptr, &destination))
         return failure("Copy frame");
+    if (paint)
+        paint(device_.get());
     if (capture) {
         std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> surface(
             SDL_RenderReadPixels(device_.get(), nullptr), SDL_DestroySurface);

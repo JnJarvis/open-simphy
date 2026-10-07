@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL3/SDL.h>
+#include <functional>
 #include <memory>
 #include <opensim/renderer/renderer.hpp>
 #include <string>
@@ -21,8 +22,10 @@ class Host {
     explicit Host(bool fail_window = false);
     [[nodiscard]] SDL_Window *window() const { return window_.get(); }
     [[nodiscard]] renderer::Extent extent() const;
+    renderer::Extent canvas_extent() const;
     core::Result<void> present(const renderer::Frame &, const char *capture = nullptr,
-                               bool fail_texture = false);
+                               bool fail_texture = false,
+                               const std::function<void(SDL_Renderer *)> &paint = {});
     void title(const std::string &text);
 };
 void require_sdl(bool ok, const char *operation);

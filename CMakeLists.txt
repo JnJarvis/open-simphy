@@ -31,9 +31,9 @@ endif()
 
 # Explicit topological order. Missing CMakeLists are allowed only for placeholders.
 set(_opensim_modules core math scene collision constraints physics visualization
-    analysis serialization compat renderer)
+    analysis serialization compat renderer editor)
 if(OPENSIM_BUILD_APP)
-    list(APPEND _opensim_modules editor platform app)
+    list(APPEND _opensim_modules platform app)
 endif()
 foreach(_module IN LISTS _opensim_modules)
     if(EXISTS "${PROJECT_SOURCE_DIR}/src/${_module}/CMakeLists.txt")

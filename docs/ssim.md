@@ -120,3 +120,11 @@ tracers, all body-controller properties, graphs/events, optics, circuits or3D.
 Required missing features still prevent playback: opening and displaying a file
 are not evidence that its entire simulation executes. The bundled coverage remains
 2/67 until those additional behaviors are implemented and tested.
+
+For the independently authored geometry/elastic native check:
+```text
+python tests/compatibility/ssim/INT-009-native.py build/elastic-smoke.ssim
+opensim_demo --smoke-elastic build/elastic-smoke.ssim
+```
+This checks spring extension and rope bounds through actual mouse events, then
+Play/Reset/callback behavior. It is synthetic evidence, separate from bundled coverage.

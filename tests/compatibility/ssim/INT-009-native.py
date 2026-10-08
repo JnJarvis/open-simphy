@@ -1,6 +1,6 @@
 """Independently authored native smoke fixture; no SimPHY XML/assets copied.
 Usage: python tests/compatibility/ssim/INT-009-native.py build/elastic-smoke.ssim
-Run opensim_demo --smoke-rigid against the resulting archive.
+Run opensim_demo --smoke-elastic against the resulting archive.
 """
 import sys
 import zipfile

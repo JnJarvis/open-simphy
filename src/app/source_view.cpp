@@ -135,7 +135,12 @@ void SourceView::drag(math::Vec2 target) {
                          len = std::hypot(dx, dy);
             if (len < 1e-6)
                 return;
-            target = {j.local_b.x + dx * j.length / len, j.local_b.y + dy * j.length / len};
+            double distance = j.length;
+            if (j.limit)
+                distance = std::clamp(len, j.minimum, j.maximum);
+            else if (j.spring || j.stiffness > 0 || j.damping_coefficient >= 0)
+                continue;
+            target = {j.local_b.x + dx * distance / len, j.local_b.y + dy * distance / len};
             break;
         }
     checked(world_->relocate(*dragging_, target));

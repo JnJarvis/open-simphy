@@ -43,3 +43,7 @@ Real Body and joints text body has 79 authored fixtures. Extend per-body budget
 64 ->256, retain aggregate4096, validate both source and canonical boundaries.
 ParticleSystem/tracers are required behaviors, so the loader explicitly rejects
 them until their runtime exists instead of accidentally playing only rigid bodies.
+
+App drag must distinguish elastic links from rods: springs extend freely, slack
+rope endpoints clamp to active distance bounds, rigid rods retain length. Native
+--smoke-elastic exercises actual mouse events and validates both before playback.

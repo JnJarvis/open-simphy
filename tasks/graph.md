@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-006 is approved and merged. INT-007 continuous circle contacts, viewport navigation and responsive Open are in review. The bundled audit reports 1/67 startup profiles supported by the current circle backend. INT-008 is READY for general rigid fixtures/common constraints, with serial ownership and independent-baseline rules. Full controllers, optics, circuits, 3D and scripting compatibility remain further work.
+INT-006 is approved and merged. INT-007 continuous contacts, viewport navigation and responsive Open remain in review. INT-008 adds general rigid fixtures, contacts, hinge/winding constraints and live friction controls; all 92 local tests and 14 platform jobs pass. The real Newton Cradle and Static and Kinetic Friction run; the bundled audit still identifies missing features in the other 65 of 67 files. Both implementation workers are stopped; their branches await independent review and merge. Full controllers, remaining joints, optics, circuits, 3D and scripting compatibility remain further work.
 
-DONE: 27 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 2 | BLOCKED: 2
+DONE: 27 | REVIEW: 3 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
 
 ```mermaid
 flowchart TD
@@ -40,7 +40,7 @@ flowchart TD
   SCENE_003["SCENE-003: Specify compound rigid bodies and immutable body snapshots<br/>REVIEW"]
   INT_006["INT-006: Optimize imported rendering and correct cradle collision transfer<br/>DONE"]
   INT_007["INT-007: Continuous circle contacts, viewport navigation and responsive Open<br/>REVIEW"]
-  INT_008["INT-008: General imported rigid fixtures and common 2D constraints<br/>READY"]
+  INT_008["INT-008: General imported rigid fixtures and common 2D constraints<br/>REVIEW"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001

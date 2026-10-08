@@ -8,23 +8,23 @@ scene. Failed or canceled opens retain the previous scene/source project.
 
 The app has two explicit modes:
 
-- **Experimental 2D rigid mechanics:** circles, rectangles, convex polygons and
-  compound fixtures, finite static planes, rigid distance joints, hinges and winding
-  joints can play, step, reset and be dragged. A bounded JavaScript bridge
+- **Experimental 2D rigid mechanics:** circles, rectangles, exact convex pieces of simple polygons and
+  compound fixtures, finite static planes, rigid/elastic distance, spring, rope,
+  hinge, winding and weld joints can play, step, reset and be dragged. A bounded JavaScript bridge
   reconstructs supported startup-created copies and button actions. The supplied
   Newton Cradle shows the original ball, five colored textured copies, suspensions,
   its description and working Reset Cradle button. Pull a ball outward/upward,
   release it and press Play. Motion transfers through real circle contacts.
 - **Source preview:** unsupported profiles retain the original archive, outlines
   and feature report. They cannot play. This currently includes the supplied
-  charge/prismatic, resonance/spring, optics and circuit examples. The supplied
+  charge/prismatic, resonance/line-controller, optics and circuit examples. The supplied
   Static and Kinetic Friction is supported, including its three sliders and RESET
   callback.
 
 The mechanics profile is experimental. It does not reproduce every source solver
 setting or all JavaScript APIs. Collision callbacks/sounds, dynamic scripting after
-startup, unsupported force/controller types, concave/large polygons without
-decomposition and additional joints/domains remain unsupported. Force modes 0/1/2
+startup, unsupported force/controller types, holes/crossing boundaries and geometry beyond
+the supported resource envelope, plus additional joints/domains remain unsupported. Force modes 0/1/2
 and property index 4 (friction) are supported; coefficient mixing preserves the
 source geometric-mean/minimum/maximum preferences independently. Unknown APIs and resource failures retain source
 preview rather than inventing replacement particles. See the

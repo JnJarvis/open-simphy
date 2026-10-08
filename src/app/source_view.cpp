@@ -7,9 +7,11 @@
 #define STBI_ONLY_PNG
 #define STBI_MAX_DIMENSIONS 8192
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <set>
 #include <sstream>
 #include <stb_image.h>
 #include <stdexcept>
@@ -414,6 +416,14 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
             fallback.push_back(f);
         }
         const auto &fixtures = b.fixtures.empty() ? fallback : b.fixtures;
+        std::set<std::array<double, 4>> polygon_edges;
+        if (fixtures.size() > 1)
+            for (const auto &fixture : fixtures)
+                for (std::size_t k = 0; k < fixture.vertices.size(); ++k) {
+                    auto a = fixture.vertices[k],
+                         end = fixture.vertices[(k + 1) % fixture.vertices.size()];
+                    polygon_edges.insert({a.x, a.y, end.x, end.y});
+                }
         double body_minx = 1e30, body_maxx = -1e30, body_miny = 1e30, body_maxy = -1e30;
         for (const auto &f : fixtures) {
             if (f.vertices.empty()) {
@@ -466,16 +476,7 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
             }
             for (std::size_t edge = 0; edge < points.size(); ++edge) {
                 const auto a = points[edge], end = points[(edge + 1) % points.size()];
-                bool internal = false;
-                if (!f.vertices.empty())
-                    for (const auto &other : fixtures) {
-                        if (&other == &f)
-                            continue;
-                        for (std::size_t k = 0; k < other.vertices.size(); ++k)
-                            if (other.vertices[k] == end &&
-                                other.vertices[(k + 1) % other.vertices.size()] == a)
-                                internal = true;
-                    }
+                const bool internal = polygon_edges.contains({end.x, end.y, a.x, a.y});
                 if (!internal)
                     require_sdl(SDL_RenderLine(r, outline[edge].x, outline[edge].y,
                                                outline[edge + 1].x, outline[edge + 1].y),

@@ -19,6 +19,9 @@ bodies = ['<Body Id="g"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body>',
           body('b', 'notch ball', (4, 0), circle),
           body('w1', 'weld A', (-3, 3), circle),
           body('w2', 'weld B', (-2, 3), circle)]
+if "--dense" in sys.argv[2:]:
+    shapes = "".join(f'<Fixture><Shape xsi:type="Rectangle"><LocalCenter x="{x*.25-2}" y="{y*.25-2}"/><Width>.15</Width><Height>.15</Height></Shape><Friction>.3</Friction><Restitution>0</Restitution></Fixture>' for x in range(16) for y in range(16))
+    bodies.append('<Body Id="dense" Name="256-piece compound"><Transform><Translation x="7" y="3"/><Rotation>0</Rotation></Transform><Mass><LocalCenter x="0" y="0"/><Type>INFINITE</Type><Mass>1</Mass><Inertia>1</Inertia></Mass><Fixtures>' + shapes + '</Fixtures><Velocity x="0" y="0"/><AngularVelocity>0</AngularVelocity></Body>')
 joints = '<Joint xsi:type="SpringJoint"><BodyId1>s</BodyId1><BodyId2>g</BodyId2><Anchor1 x="-3" y="-1"/><Anchor2 x="-3" y="1"/><distance>2</distance><SpringConstant>30</SpringConstant><DampingRatio>1</DampingRatio></Joint>'
 joints += '<Joint xsi:type="RopeJoint"><BodyId1>r</BodyId1><BodyId2>g</BodyId2><Anchor1 x="0" y="-1"/><Anchor2 x="0" y="1"/><UpperLimit>3</UpperLimit><UpperLimitEnabled>true</UpperLimitEnabled></Joint>'
 joints += '<Joint xsi:type="WeldJoint"><BodyId1>w1</BodyId1><BodyId2>w2</BodyId2><Anchor x="-2.5" y="3"/><ReferenceAngle>0</ReferenceAngle></Joint>'

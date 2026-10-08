@@ -1,11 +1,10 @@
 # Task dependency chart
 
-Updated 2026-10-08 from [registry.json](registry.json). Registry status is authoritative.
+Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-DONE: 22 | REVIEW: 1 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
+INT-003 workspace merged. COMPAT-004 delivery direction merged. INT-004 implements real SSIM opening/source preview; final CI pending.
 
-INT-003 has a locally tested workspace; the CI probe timeout is repaired and all 14 native CI jobs passed. It awaits review.
-COMPAT-003 real SSIM inspection is merged. Import translation and file adapters remain future work.
+DONE: 24 | REVIEW: 0 | IN_PROGRESS: 1 | READY: 1 | BLOCKED: 2
 
 ```mermaid
 flowchart TD
@@ -34,7 +33,9 @@ flowchart TD
   IO_002["IO-002: Implement bounded native document codec<br/>DONE"]
   PLAT_001["PLAT-001: Specify bounded reads and safe file replacement<br/>DONE"]
   COMPAT_003["COMPAT-003: Inspect real SSIM archives and bounded container validation<br/>DONE"]
-  INT_003["INT-003: Build application workspace for interface feedback<br/>REVIEW"]
+  INT_003["INT-003: Build application workspace for interface feedback<br/>DONE"]
+  COMPAT_004["COMPAT-004: Define SSIM opening and rigid-body migration<br/>DONE"]
+  INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>IN_PROGRESS"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -76,4 +77,8 @@ flowchart TD
   SCENE_002 --> IO_002
   IO_001 --> PLAT_001
   INT_002 --> INT_003
+  COMPAT_003 --> COMPAT_004
+  INT_003 --> COMPAT_004
+  COMPAT_004 --> INT_004
+  INT_003 --> INT_004
 ```

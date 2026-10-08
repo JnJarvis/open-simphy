@@ -808,7 +808,9 @@
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [],
-      "blocks": [],
+      "blocks": [
+        "COMPAT-004"
+      ],
       "gates": [],
       "allowed_paths": [
         "research/tools/",
@@ -832,13 +834,16 @@
       "id": "INT-003",
       "title": "Build application workspace for interface feedback",
       "stage": 2,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
         "INT-002"
       ],
-      "blocks": [],
+      "blocks": [
+        "COMPAT-004",
+        "INT-004"
+      ],
       "gates": [],
       "allowed_paths": [
         "src/app/",
@@ -857,6 +862,76 @@
       "description": "tasks/items/INT-003.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-003.md",
+      "reviewer": "user",
+      "merged_commit": "ee0988e5e02ca20040f5c236a8c2eb918b68ddde"
+    },
+    {
+      "id": "COMPAT-004",
+      "title": "Define SSIM opening and rigid-body migration",
+      "stage": 6,
+      "status": "DONE",
+      "priority": 0,
+      "owner": "codex-worker",
+      "dependencies": [
+        "COMPAT-003",
+        "INT-003"
+      ],
+      "blocks": [
+        "INT-004"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "rfcs/COMPAT-004-ssim-opening.md",
+        "spec/ssim-delivery.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/research-intake.md",
+        "spec/testing.md",
+        "research/SSIM_INSPECTION.md",
+        "research/FILE_FORMAT.md",
+        "research/EVIDENCE_REVIEW.md"
+      ],
+      "description": "tasks/items/COMPAT-004.md",
+      "block_reason": null,
+      "completion_report": "tasks/reports/COMPAT-004.md",
+      "reviewer": "user",
+      "merged_commit": "a2251713b799d4b5b486f8758752b88274adc33f"
+    },
+    {
+      "id": "INT-004",
+      "title": "Open real SSIM archives and inspect project contents",
+      "stage": 6,
+      "status": "IN_PROGRESS",
+      "priority": 0,
+      "owner": "codex-worker",
+      "dependencies": [
+        "COMPAT-004",
+        "INT-003"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/compat/",
+        "src/app/",
+        "tests/compatibility/ssim/",
+        "CMakeLists.txt",
+        "cmake/OpenSimSSIM.cmake",
+        "cmake/OpenSimSDL.cmake",
+        "spec/contracts/ssim-reader.md",
+        "docs/ssim.md",
+        "docs/demo.md",
+        "README.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "research/SSIM_INSPECTION.md",
+        "rfcs/COMPAT-004-ssim-opening.md"
+      ],
+      "description": "tasks/items/INT-004.md",
+      "block_reason": null,
+      "completion_report": null,
       "reviewer": null,
       "merged_commit": null
     }

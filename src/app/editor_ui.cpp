@@ -1,4 +1,5 @@
 #include "editor_ui.hpp"
+#include "grid.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
@@ -6,9 +7,8 @@
 #include <sstream>
 namespace opensim::app {
 namespace {
-const char *labels[] = {"Mass (kg)",        "Position X (m)",   "Position Y (m)",
-                        "Velocity X (m/s)", "Velocity Y (m/s)", "Radius (m)",
-                        "Gravity X (m/s2)", "Gravity Y (m/s2)"};
+const char *labels[] = {"Mass (kg)",   "Pos X (m)",  "Pos Y (m)",  "Vel X (m/s)",
+                        "Vel Y (m/s)", "Radius (m)", "g X (m/s2)", "g Y (m/s2)"};
 const scene::Particle *selected(const Session &s) {
     for (const auto &p : s.editing().display_document().particles())
         if (p.id == s.editing().selected())
@@ -43,7 +43,7 @@ double value(const Session &s, int field) {
 std::string number(double n, int precision = 6) {
     std::ostringstream out;
     out.imbue(std::locale::classic());
-    out << std::setprecision(precision) << n;
+    out << std::setprecision(precision) << (n == 0 ? 0 : n);
     return out.str();
 }
 void text(SDL_Renderer *r, float x, float y, const std::string &s) {
@@ -79,15 +79,14 @@ void EditorUI::edit_field(int field, Session &session, Host &host) {
         message_ = "Select a particle first.";
         return;
     }
-    objects_tab_ = false;
     field_ = field;
     const float available = host.workspace().property_height();
-    panel_scroll_ = std::clamp(panel_scroll_, 0.0f, std::max(0.0f, 352 - available));
-    const float top = static_cast<float>(field) * 44;
+    panel_scroll_ = std::clamp(panel_scroll_, 0.0f, std::max(0.0f, 224 - available));
+    const float top = static_cast<float>(field) * 28;
     if (top < panel_scroll_)
         panel_scroll_ = top;
-    if (top + 40 > panel_scroll_ + available)
-        panel_scroll_ = top + 40 - available;
+    if (top + 28 > panel_scroll_ + available)
+        panel_scroll_ = top + 28 - available;
     buffer_ = number(value(session, field), 17);
     replace_text_ = true;
     require_sdl(SDL_StartTextInput(host.window()), "Start property input");
@@ -100,7 +99,7 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
         e.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
         report(s.cancel_drag());
         const float available = host.workspace().property_height();
-        panel_scroll_ = std::clamp(panel_scroll_, 0.0f, std::max(0.0f, 352 - available));
+        panel_scroll_ = std::clamp(panel_scroll_, 0.0f, std::max(0.0f, 224 - available));
         end_text(host);
         report(s.resize(host.canvas_extent()));
         return true;
@@ -250,7 +249,6 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
         last_pointer_ = *mapped.value();
         const auto layout = host.workspace();
         const double uix = last_pointer_.x / layout.scale, uiy = last_pointer_.y / layout.scale;
-        const double panel = layout.width - layout.right;
         const auto local = layout.local(last_pointer_);
         if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
             if (help_) {
@@ -265,14 +263,9 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
                     action(button, s, host);
                 return true;
             }
-            if (uix >= panel && uiy >= 120 && uiy < 146 && layout.left == 0) {
-                objects_tab_ = uix >= panel + layout.right / 2;
-                return true;
-            }
-            const bool list = (layout.left > 0 && uix < layout.left) ||
-                              (layout.left == 0 && objects_tab_ && uix >= panel);
+            const bool list = uix < layout.left && uiy < 172 + layout.list_height();
             if (list) {
-                if (uiy >= 172 && uiy < layout.height - 46 && s.authoring()) {
+                if (uiy >= 172 && uiy < 172 + layout.list_height() && s.authoring()) {
                     const auto particles = s.editing().document().particles();
                     scene_scroll_ = std::clamp(
                         scene_scroll_, 0.0f,
@@ -283,9 +276,11 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
                 }
                 return true;
             }
-            if (uix >= panel) {
-                const int field = static_cast<int>((uiy - 184 + panel_scroll_) / 44);
-                if (uiy >= 184 && uiy < layout.height - 58 && field >= 0 && field < 8)
+            if (uix < layout.left) {
+                const int field =
+                    static_cast<int>((uiy - layout.property_y() + panel_scroll_) / 28);
+                if (uiy >= layout.property_y() && uiy < layout.height - 58 && field >= 0 &&
+                    field < 8)
                     edit_field(field, s, host);
                 return true;
             }
@@ -323,17 +318,15 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
         const double px = last_pointer_.x / layout.scale, py = last_pointer_.y / layout.scale;
         if (py < 112 || py >= layout.height - 32)
             return true;
-        const float panel = layout.width - layout.right;
-        if ((layout.left > 0 && px < layout.left) ||
-            (layout.left == 0 && objects_tab_ && px >= panel)) {
+        if (px < layout.left && py < 172 + layout.list_height()) {
             const auto count = s.editing().document().particles().size();
             scene_scroll_ = std::clamp(scene_scroll_ - e.wheel.y * 32, 0.0f,
                                        std::max(0.0f, float(count) * 32 - layout.list_height()));
             return true;
         }
-        if (px >= panel) {
-            panel_scroll_ = std::clamp(panel_scroll_ - e.wheel.y * 44, 0.0f,
-                                       std::max(0.0f, 352 - layout.property_height()));
+        if (px < layout.left) {
+            panel_scroll_ = std::clamp(panel_scroll_ - e.wheel.y * 28, 0.0f,
+                                       std::max(0.0f, 224 - layout.property_height()));
             return true;
         }
         if (!layout.contains(last_pointer_))
@@ -378,7 +371,7 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     const auto layout = Workspace::layout(extent, scale);
     scale = layout.scale;
     require_sdl(SDL_SetRenderScale(r, scale, scale), "Scale workspace");
-    const float w = layout.width, h = layout.height, panel = w - layout.right;
+    const float w = layout.width, h = layout.height, panel = 0;
     const auto clipped_text = [&](float x, float y, const std::string &value, float width) {
         text(r, x, y, value.substr(0, static_cast<std::size_t>(std::max(0.0f, width / 8))));
     };
@@ -429,29 +422,31 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     color(r, 23, 29, 40);
     box(r, 0, 90, w, 22);
     color(r, 145, 161, 184);
-    text(r, layout.left + 12, 97, "2D VIEWPORT");
+    text(r, layout.left + 12, 90, "2D");
     color(r, 105, 219, 202);
-    clipped_text(layout.left + 122, 97,
+    clipped_text(layout.left + 50, 90,
                  std::string(s.authoring() ? "EDIT" : (s.running() ? "RUNNING" : "PAUSED")) +
                      "  t=" + number(s.snapshot().time(), 4) + " s",
-                 panel - layout.left - 130);
+                 w - layout.left - 130);
+    // Rulers use physical camera coordinates, just like picking and the grid.
+    const auto view = s.editing().view();
+    color(r, 32, 34, 37);
+    box(r, layout.left, 112, 64, h - 144);
+    color(r, 190, 194, 199);
+    for (const auto &tick : grid_ticks(view.center.x, view.pixels_per_meter, layout.canvas.width))
+        if (tick.major)
+            text(r, (float(layout.x) + float(tick.pixel)) / scale, 103, number(tick.world, 3));
+    for (const auto &tick : grid_ticks(-view.center.y, view.pixels_per_meter, layout.canvas.height))
+        if (tick.major)
+            clipped_text(layout.left + 2, (float(layout.y) + float(tick.pixel)) / scale,
+                         number(-tick.world, 3), 62);
     color(r, 24, 31, 43);
     box(r, panel, 112, layout.right, h - 144);
     if (layout.left > 0)
         box(r, 0, 112, layout.left, h - 144);
-    if (layout.left == 0) {
-        color(r, objects_tab_ ? 29 : 47, objects_tab_ ? 38 : 64, objects_tab_ ? 52 : 82);
-        box(r, panel + 6, 120, layout.right / 2 - 8, 26);
-        color(r, objects_tab_ ? 47 : 29, objects_tab_ ? 64 : 38, objects_tab_ ? 82 : 52);
-        box(r, panel + layout.right / 2, 120, layout.right / 2 - 6, 26);
-        color(r, 222, 233, 246);
-        text(r, panel + 12, 129, "Properties");
-        text(r, panel + layout.right / 2 + 6, 129, "Objects");
-    } else {
-        color(r, 216, 227, 242);
-        text(r, panel + 14, 130, "PROPERTIES");
-    }
-    const bool show_list = layout.left > 0 || objects_tab_;
+    color(r, 216, 227, 242);
+    text(r, 14, layout.property_y() - 36, "PROPERTIES");
+    const bool show_list = layout.left > 0;
     if (show_list) {
         const float x = layout.left > 0 ? 0 : panel;
         const float width = layout.left > 0 ? layout.left : layout.right;
@@ -469,7 +464,7 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
                        std::max(0.0f, float(particles.size()) * 32 - layout.list_height()));
         for (std::size_t i = 0; i < particles.size(); ++i) {
             const float y = 172 + float(i) * 32 - scroll;
-            if (y + 30 < 172 || y > h - 46)
+            if (y + 30 < 172 || y > 172 + layout.list_height())
                 continue;
             const bool chosen = s.editing().selected() == particles[i].id;
             if (chosen) {
@@ -488,42 +483,42 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
             text(r, x + 14, 184, "Add your first particle");
         }
         color(r, 134, 152, 178);
-        text(r, x + 14, h - 44, "N: add / Del: remove");
     }
-    if (layout.left > 0 || !objects_tab_) {
+    if (layout.left > 0) {
         color(r, 134, 152, 178);
-        clipped_text(panel + 14, 160,
+        clipped_text(panel + 14, layout.property_y() - 16,
                      s.editing().selected()
                          ? "Particle #" + std::to_string(s.editing().selected()->value)
                          : "Select an object",
                      layout.right - 28);
-        const SDL_Rect clip{static_cast<int>(panel), 182, static_cast<int>(layout.right),
+        const SDL_Rect clip{static_cast<int>(panel), static_cast<int>(layout.property_y()),
+                            static_cast<int>(layout.right),
                             static_cast<int>(layout.property_height() + 2)};
         require_sdl(SDL_SetRenderClipRect(r, &clip), "Clip properties");
         const float scroll =
-            std::clamp(panel_scroll_, 0.0f, std::max(0.0f, 352 - layout.property_height()));
+            std::clamp(panel_scroll_, 0.0f, std::max(0.0f, 224 - layout.property_height()));
         for (int i = 0; i < 8; ++i) {
-            const float y = 184 + float(i) * 44 - scroll;
+            const float y = layout.property_y() + float(i) * 28 - scroll;
             color(r, 151, 169, 193);
-            text(r, panel + 14, y, labels[i]);
+            clipped_text(panel + 10, y + 9, labels[i], layout.right * .53f - 14);
             if (i == field_)
                 color(r, 47, 79, 94);
             else
                 color(r, 32, 43, 60);
-            box(r, panel + 10, y + 12, layout.right - 20, 28);
+            box(r, panel + layout.right * .53f, y + 2, layout.right * .47f - 10, 24);
             color(r, 230, 238, 249);
-            clipped_text(panel + 18, y + 22,
+            clipped_text(panel + layout.right * .53f + 6, y + 9,
                          i == field_ ? buffer_ + "_"
                                      : ((i < 6 && !selected(s)) ? "--" : number(value(s, i))),
-                         layout.right - 36);
+                         layout.right * .47f - 22);
         }
         require_sdl(SDL_SetRenderClipRect(r, nullptr), "Restore property clip");
-        if (352 > layout.property_height()) {
+        if (224 > layout.property_height()) {
             const float track = layout.property_height();
-            const float thumb = std::max(12.0f, track * track / 352);
-            const float offset = (track - thumb) * scroll / (352 - track);
+            const float thumb = std::max(12.0f, track * track / 224);
+            const float offset = (track - thumb) * scroll / (224 - track);
             color(r, 81, 105, 128);
-            box(r, w - 5, 184 + offset, 3, thumb);
+            box(r, layout.left - 5, layout.property_y() + offset, 3, thumb);
         }
         color(r, 134, 152, 178);
         text(r, panel + 12, h - 44, "Scroll / Tab: next field");

@@ -15,13 +15,12 @@ struct Workspace {
                                 : 1.0f;
         const float width = static_cast<float>(output.width) / scale;
         const float height = static_cast<float>(output.height) / scale;
-        const float left = width >= 850 ? 180.0f : 0.0f;
-        const float right = std::min(240.0f, width * .42f);
-        const auto x = std::min(output.width, static_cast<std::uint32_t>(std::ceil(left * scale)));
+        const float left = std::min(260.0f, width * .40f);
+        const float right = left;
+        const auto x =
+            std::min(output.width, static_cast<std::uint32_t>(std::ceil((left + 64) * scale)));
         const auto y = std::min(output.height, static_cast<std::uint32_t>(std::ceil(112 * scale)));
-        const auto end_x =
-            output.width -
-            std::min(output.width, static_cast<std::uint32_t>(std::ceil(right * scale)));
+        const auto end_x = output.width;
         const auto end_y =
             output.height -
             std::min(output.height, static_cast<std::uint32_t>(std::ceil(32 * scale)));
@@ -34,7 +33,8 @@ struct Workspace {
     }
     math::Vec2 local(math::Vec2 point) const { return {point.x - x, point.y - y}; }
     float button_width() const { return std::min(82.0f, std::max(0.0f, width - 24) / 9); }
-    float property_height() const { return std::max(0.0f, height - 242); }
-    float list_height() const { return std::max(0.0f, height - 218); }
+    float property_y() const { return 172 + list_height() + 46; }
+    float property_height() const { return std::max(0.0f, height - 58 - property_y()); }
+    float list_height() const { return std::max(0.0f, std::min(96.0f, height * .15f)); }
 };
 } // namespace opensim::app

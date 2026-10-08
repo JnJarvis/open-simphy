@@ -5,7 +5,7 @@ namespace opensim::app {
 class EditorUI {
     int field_ = -1;
     float panel_scroll_ = 0, scene_scroll_ = 0;
-    bool objects_tab_ = false, help_ = false;
+    bool help_ = false;
     std::string buffer_, message_ = "Click a particle to select; drag to move. Scroll to zoom.";
     bool replace_text_ = true;
     math::Vec2 last_pointer_{};

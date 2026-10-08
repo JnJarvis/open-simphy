@@ -42,9 +42,10 @@ window between scales cancels an active drag before refreshing coordinate mappin
 
 ## Workspace layout for feedback
 
-The left Scene Objects panel selects particles by identity. The right Properties
-panel edits selected objects and world gravity. At compact window sizes, Objects
-and Properties share tabs on the right; scroll the list to reach additional objects.
+The left Scene Objects panel selects particles by identity, above the Properties
+table for selected objects and world gravity. Both areas scroll independently in
+small windows. The viewport has adaptive major/minor grid lines and meter rulers;
+they follow camera pan and zoom and do not change physics or enable snapping.
 Home returns the camera to the initial center and scale. Help or F1 opens a guide;
 Escape closes the guide without exiting. Disabled-looking edit/history controls
 reflect simulation mode, selection and history availability.

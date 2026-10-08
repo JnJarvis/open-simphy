@@ -1,4 +1,5 @@
 #include "sdl_host.hpp"
+#include "grid.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -49,7 +50,8 @@ void Host::title(const std::string &text) {
 }
 core::Result<void> Host::present(const renderer::Frame &frame, const char *capture,
                                  bool fail_texture,
-                                 const std::function<void(SDL_Renderer *)> &paint) {
+                                 const std::function<void(SDL_Renderer *)> &paint,
+                                 renderer::Camera camera) {
     const renderer::Extent size{frame.width(), frame.height()};
     if (fail_texture)
         return core::Result<void>::failure({core::Code::internal_error,
@@ -84,6 +86,17 @@ core::Result<void> Host::present(const renderer::Frame &frame, const char *captu
     for (std::uint32_t y = 0; y < frame.height(); ++y)
         std::memcpy(static_cast<std::uint8_t *>(pixels) + std::size_t(y) * pitch,
                     frame.bytes().data() + std::size_t(y) * frame.stride(), frame.stride());
+    const auto put = [&](std::uint32_t x, std::uint32_t y, bool major) {
+        grid_pixel(static_cast<std::uint8_t *>(pixels) + std::size_t(y) * pitch +
+                       std::size_t(x) * 4,
+                   major);
+    };
+    for (const auto &tick : grid_ticks(camera.center.x, camera.pixels_per_meter, size.width))
+        for (std::uint32_t y = 0; y < size.height; ++y)
+            put(static_cast<std::uint32_t>(tick.pixel), y, tick.major);
+    for (const auto &tick : grid_ticks(-camera.center.y, camera.pixels_per_meter, size.height))
+        for (std::uint32_t x = 0; x < size.width; ++x)
+            put(x, static_cast<std::uint32_t>(tick.pixel), tick.major);
     SDL_UnlockTexture(texture_.get());
     const auto layout = workspace();
     const SDL_FRect destination{static_cast<float>(layout.x), static_cast<float>(layout.y),

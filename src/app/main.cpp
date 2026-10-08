@@ -39,9 +39,12 @@ void expect(bool value, const char *message) {
 void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     const auto draw = [&](const char *capture = nullptr) {
         checked(session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
-            return host.present(f, capture, false, [&](SDL_Renderer *r) {
-                ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
-            });
+            return host.present(
+                f, capture, false,
+                [&](SDL_Renderer *r) {
+                    ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
+                },
+                {session.editing().view().center, session.editing().view().pixels_per_meter});
         }));
     };
     events(session, ui, host);
@@ -83,8 +86,8 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
            "Undo failed");
     key(SDLK_Y, session, ui, host, SDL_KMOD_CTRL);
     key(SDLK_Z, session, ui, host, SDL_KMOD_CTRL);
-    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, (layout.width - layout.right + 40) * layout.scale,
-          206 * layout.scale);
+    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * layout.scale,
+          (layout.property_y() + 14) * layout.scale);
     SDL_Event text{};
     text.type = SDL_EVENT_TEXT_INPUT;
     text.text.text = "2.5";
@@ -178,11 +181,8 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     expect(session.snapshot() == before, "Display move changed world");
     key(SDLK_R, session, ui, host);
     const auto compact = host.workspace();
-    if (compact.left == 0) {
-        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, (compact.width - compact.right / 4) * compact.scale,
-              130 * compact.scale);
-        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, (compact.width - compact.right + 40) * compact.scale,
-              214 * compact.scale);
+    if (compact.left > 0) {
+        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * compact.scale, 214 * compact.scale);
         expect(session.editing().selected() == core::EntityId{2},
                "Compact object tab selection failed");
         for (int i = 0; i < 30; ++i)
@@ -192,8 +192,8 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
         wheel.wheel.y = -1000;
         app::require_sdl(SDL_PushEvent(&wheel), "Queue object list scroll");
         events(session, ui, host);
-        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, (compact.width - compact.right + 40) * compact.scale,
-              (compact.height - 47) * compact.scale);
+        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * compact.scale,
+              (172 + compact.list_height() - 3) * compact.scale);
         expect(session.editing().selected() == session.editing().document().particles().back().id,
                "Scrolled object list did not reach final object");
         draw("smoke-compact.bmp");
@@ -240,10 +240,13 @@ int main(int argc, char **argv) {
             previous = now;
             const auto result =
                 session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
-                    return host.present(f, nullptr, fail_texture, [&](SDL_Renderer *r) {
-                        ui.paint(r, session, host.extent(),
-                                 SDL_GetWindowDisplayScale(host.window()));
-                    });
+                    return host.present(f, nullptr, fail_texture,
+                                        [&](SDL_Renderer *r) {
+                                            ui.paint(r, session, host.extent(),
+                                                     SDL_GetWindowDisplayScale(host.window()));
+                                        },
+                                        {session.editing().view().center,
+                                         session.editing().view().pixels_per_meter});
                 });
             if (result.error()) {
                 if (fail_texture) {

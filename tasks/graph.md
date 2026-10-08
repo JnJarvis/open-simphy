@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry status is authoritative.
 
-DONE: 22 | REVIEW: 0 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 3
+DONE: 22 | REVIEW: 0 | IN_PROGRESS: 1 | READY: 1 | BLOCKED: 2
 
-INT-003 has a locally tested workspace; remote failure diagnosis and fresh CI await GitHub sign-in.
+INT-003 has a locally tested workspace; the CI probe timeout is repaired and fresh native CI is running.
 COMPAT-003 real SSIM inspection is merged. Import translation and file adapters remain future work.
 
 ```mermaid
@@ -34,7 +34,7 @@ flowchart TD
   IO_002["IO-002: Implement bounded native document codec<br/>DONE"]
   PLAT_001["PLAT-001: Specify bounded reads and safe file replacement<br/>DONE"]
   COMPAT_003["COMPAT-003: Inspect real SSIM archives and bounded container validation<br/>DONE"]
-  INT_003["INT-003: Build application workspace for interface feedback<br/>BLOCKED"]
+  INT_003["INT-003: Build application workspace for interface feedback<br/>IN_PROGRESS"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001

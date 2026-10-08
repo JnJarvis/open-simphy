@@ -28,3 +28,5 @@ permission/ACL policy and testable filesystem coverage, headless platform build
 registration, fault injection plus real native temporary-file tests. Then app
 integration. Unsupported filesystem behavior must fail explicitly; no generic
 fallback that deletes the original file first. No crash-recovery guarantee.
+
+User approved on2026-10-07. DONE, merged as ab2f5108f7b55f1ab1fef9e1922c370bfe046057. Previous pending-review notes are superseded.

@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-003 workspace merged. COMPAT-004 delivery direction merged. INT-004 implements real SSIM opening/source preview; final CI pending.
+INT-003 workspace merged. COMPAT-004 delivery direction merged. INT-004 implements real SSIM opening/source preview; all 14 final native CI jobs passed; awaiting review.
 
-DONE: 24 | REVIEW: 0 | IN_PROGRESS: 1 | READY: 1 | BLOCKED: 2
+DONE: 24 | REVIEW: 1 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
 
 ```mermaid
 flowchart TD
@@ -35,7 +35,7 @@ flowchart TD
   COMPAT_003["COMPAT-003: Inspect real SSIM archives and bounded container validation<br/>DONE"]
   INT_003["INT-003: Build application workspace for interface feedback<br/>DONE"]
   COMPAT_004["COMPAT-004: Define SSIM opening and rigid-body migration<br/>DONE"]
-  INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>IN_PROGRESS"]
+  INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>REVIEW"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001

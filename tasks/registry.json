@@ -902,7 +902,7 @@
       "id": "INT-004",
       "title": "Open real SSIM archives and inspect project contents",
       "stage": 6,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -931,7 +931,7 @@
       ],
       "description": "tasks/items/INT-004.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/INT-004.md",
       "reviewer": null,
       "merged_commit": null
     }

@@ -1,6 +1,7 @@
 """Independently authored native smoke fixture; no SimPHY XML/assets copied.
 Usage: python tests/compatibility/ssim/INT-009-native.py build/elastic-smoke.ssim
 Run opensim_demo --smoke-elastic against the resulting archive.
+Use --clock to exercise opensim_demo --smoke-clock (startup7/reset0 seconds).
 """
 import sys
 import zipfile
@@ -26,6 +27,8 @@ joints = '<Joint xsi:type="SpringJoint"><BodyId1>s</BodyId1><BodyId2>g</BodyId2>
 joints += '<Joint xsi:type="RopeJoint"><BodyId1>r</BodyId1><BodyId2>g</BodyId2><Anchor1 x="0" y="-1"/><Anchor2 x="0" y="1"/><UpperLimit>3</UpperLimit><UpperLimitEnabled>true</UpperLimitEnabled></Joint>'
 joints += '<Joint xsi:type="WeldJoint"><BodyId1>w1</BodyId1><BodyId2>w2</BodyId2><Anchor x="-2.5" y="3"/><ReferenceAngle>0</ReferenceAngle></Joint>'
 script = "function reset(){for(const name of ['spring','rope','notch ball','weld A','weld B'])World.getBody(name).reset();}"
+if "--clock" in sys.argv[2:]:
+    script = "World.setSimulationTime(7);" + script.replace(".reset();}", ".reset();World.setSimulationTime(0);}")
 gui = '<desktop><button text="Reset" action="reset()" rectbounds="20,20,120,32"/><textarea text="Synthetic elastic, rope, weld and concave-notch smoke" rectbounds="20,70,300,50"/></desktop>'
 xml = '<Simulation version="4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><World><Gravity x="0" y="-10"/><Bodies>' + ''.join(bodies) + '</Bodies><Joints>' + joints + '</Joints><ScriptManager><Script><![CDATA[' + script + ']]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[' + gui + ']]></GuiXML></GuiManager></World></Simulation>'
 output = Path(sys.argv[1])

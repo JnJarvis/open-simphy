@@ -294,7 +294,7 @@ void verify_imported_cradle(const scene::Mechanism &definition) {
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
     bool benchmark = false, benchmark_legacy = false;
-    bool smoke_mechanics = false, smoke_rigid = false, smoke_elastic = false;
+    bool smoke_mechanics = false, smoke_rigid = false, smoke_elastic = false, smoke_clock = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
@@ -317,6 +317,8 @@ int main(int argc, char **argv) {
                         auto c = source.controls(world->snapshot());
                         if (c.error())
                             throw std::runtime_error(c.error()->message);
+                        if (c.value()->time)
+                            checked(world->set_time(*c.value()->time));
                         checked(world->forces(c.value()->forces));
                         for (const auto &[id, mu] : c.value()->friction)
                             checked(world->friction(id, mu));
@@ -339,6 +341,7 @@ int main(int argc, char **argv) {
                     std::cout << fixtures << " hinges=" << source.definition().hinges.size()
                               << " windings=" << source.definition().windings.size()
                               << " welds=" << source.definition().welds.size()
+                              << " slides=" << source.definition().slides.size()
                               << " time=" << final.time << " travel=" << travel << '\n';
                     return true;
                 } catch (const std::exception &e) {
@@ -388,10 +391,12 @@ int main(int argc, char **argv) {
             return count && !failed ? 0 : 1;
         } else if (arg == "--open" && i + 1 < argc)
             open_path = argv[++i];
-        else if ((arg == "--smoke-rigid" || arg == "--smoke-elastic") && i + 1 < argc) {
+        else if ((arg == "--smoke-rigid" || arg == "--smoke-elastic" || arg == "--smoke-clock") &&
+                 i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_rigid = true;
             smoke_elastic = arg == "--smoke-elastic";
+            smoke_clock = arg == "--smoke-clock";
         } else if (arg == "--smoke-mechanism" && i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_mechanics = true;
@@ -453,6 +458,12 @@ int main(int argc, char **argv) {
                     });
                 }));
             if (smoke_rigid) {
+                if (smoke_clock) {
+                    auto *clock_view = ui.mechanical();
+                    expect(clock_view && clock_view->snapshot().time == 7,
+                           "Source startup clock was lost or ignored");
+                    std::cout << "PASS: source startup clock7 applied to actual runtime\n";
+                }
                 auto *view = ui.mechanical();
                 expect(view != nullptr, "Required rigid source profile unavailable");
                 if (smoke_elastic) {

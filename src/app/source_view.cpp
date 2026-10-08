@@ -111,6 +111,7 @@ void SourceView::replace_world() {
     auto w = physics::Mechanism::create(source_.definition());
     if (w.error())
         throw std::runtime_error(w.error()->message);
+    apply_controls(**w.value());
     world_ = *w.value();
     running_ = false;
     remainder_ = 0;
@@ -311,13 +312,18 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
     }
     return true;
 }
-void SourceView::step() {
-    const auto controls = source_.controls(world_->snapshot());
+void SourceView::apply_controls(physics::Mechanism &world) {
+    const auto controls = source_.controls(world.snapshot());
     if (controls.error())
         throw std::runtime_error(controls.error()->message);
-    checked(world_->forces(controls.value()->forces));
+    if (controls.value()->time)
+        checked(world.set_time(*controls.value()->time));
+    checked(world.forces(controls.value()->forces));
     for (const auto &[id, mu] : controls.value()->friction)
-        checked(world_->friction(id, mu));
+        checked(world.friction(id, mu));
+}
+void SourceView::step() {
+    apply_controls(*world_);
     checked(world_->step());
 }
 void SourceView::tick(double dt) {

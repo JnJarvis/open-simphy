@@ -245,7 +245,10 @@ class Body {
  getVelocity(){return new Vector2(this.d.velocity.x,this.d.velocity.y);}
 }
 function __local(body,p){const x=p.x-body.d.center.x,y=p.y-body.d.center.y,c=Math.cos(body.d.angle),s=Math.sin(body.d.angle);return {x:c*x+s*y,y:-s*x+c*y};}
+var __requestedTime=null,T=0,t=0;
 const World={
+ setSimulationTime(time){if(typeof time!=='number'||!Number.isFinite(time)||time<0||time>1e9)throw Error('Invalid simulation time');__requestedTime=time;T=time;t=time;},
+ getSimulationTime(){return T;},
  clear(){__bodies=__bodies.filter(b=>!b.spawned);__links=__links.filter(j=>!j.spawned);},
  getBody(name){const b=__bodies.find(b=>b.name===name);if(!b)throw Error('Missing body '+name);return new Body(b);},
  createCopy(body){if(__bodies.length>=256)throw Error('Body budget');const b=JSON.parse(JSON.stringify(body.d));b.id=__next++;b.spawned=true;__bodies.push(b);return new Body(b);},
@@ -974,9 +977,12 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
         scene::MechanismSnapshot initial;
         for (const auto &b : p->definition.bodies)
             initial.bodies.push_back({b.id, b.center, b.velocity, b.angle, b.angular_velocity});
+        auto requested = field(p->context, global.value, "__requestedTime");
         const auto controls = candidate.controls(initial);
         if (controls.error())
             throw std::runtime_error(controls.error()->message);
+        JS_SetPropertyStr(p->context, global.value, "__requestedTime",
+                          JS_DupValue(p->context, requested.value));
         return core::Result<MechanicalSource>::success(MechanicalSource(std::move(p)));
     } catch (const std::exception &e) {
         return core::Result<MechanicalSource>::failure({core::Code::unsupported_feature,
@@ -1037,8 +1043,17 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
             throw std::runtime_error("Reopen source after failed controller");
         SourceControls result;
         Value global(impl_->context, JS_GetGlobalObject(impl_->context));
-        put(impl_->context, global.value, "T", state.time);
-        put(impl_->context, global.value, "t", state.time);
+        auto requested = field(impl_->context, global.value, "__requestedTime");
+        if (!JS_IsNull(requested.value)) {
+            result.time = number(impl_->context, requested.value);
+            if (*result.time < 0 || *result.time > 1e9)
+                throw std::runtime_error("Invalid source simulation time");
+        }
+        const double time = result.time.value_or(state.time);
+        if (!std::isfinite(time) || time < 0)
+            throw std::runtime_error("Invalid runtime simulation time");
+        put(impl_->context, global.value, "T", time);
+        put(impl_->context, global.value, "t", time);
         const auto expression = [&](const std::string &code) {
             Value n(impl_->context, impl_->eval("(" + code + ")"));
             return number(impl_->context, n.value);
@@ -1075,6 +1090,7 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
                 throw std::runtime_error("Force expression envelope");
             result.forces.push_back(f);
         }
+        JS_SetPropertyStr(impl_->context, global.value, "__requestedTime", JS_NULL);
         return core::Result<SourceControls>::success(std::move(result));
     } catch (const std::exception &e) {
         impl_->poisoned = true;

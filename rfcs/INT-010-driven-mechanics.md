@@ -42,3 +42,11 @@ sliders retain their scalar binding; app skips their rendering and hit testing.
 Finite hidden layout bounds may be nonpositive since no display rectangle is
 used. Public Gui.create("slider") numerical probe confirms source defaults
 minimum=0, maximum=10, value=5; explicit attributes override those values.
+
+SourceControls adds optional time command (0..1e9 seconds). Source clock setters
+stage a finite command; successful controls evaluation consumes it once. Creation
+preflight restores the staged command so app construction receives it. Expressions
+in the same batch see the requested time. App applies time before forces/step and
+also when constructing the replacement runtime after a source reset callback.
+World.getSimulationTime reads the interpreter's current simulation time; neither
+source nor physics accesses a host clock. Failed evaluation never publishes a batch.

@@ -183,6 +183,34 @@ TEST_CASE("Hidden slider bindings survive unusable display bounds and inherit vi
     REQUIRE(changed.value()->forces.at(0).force.x == 7.8);
     REQUIRE(s.set_slider(2, 3).error());
 }
+TEST_CASE("Source clock requests survive startup preflight and are consumed once",
+          "[compatibility][INT-010]") {
+    auto p = rigid_project(
+        rectangle,
+        R"(<BodyController type="ForceController" enabled="true" bodyid="a"><xExpr>World.getSimulationTime()</xExpr><yExpr>T</yExpr><ExtForcePoint x="0" y="0"/><ForceMode>0</ForceMode></BodyController>)",
+        "World.setSimulationTime(7);function reset(){World.setSimulationTime(0);}");
+    auto r = compat::MechanicalSource::create(p);
+    REQUIRE(r.value());
+    auto s = *r.value();
+    scene::MechanismSnapshot state;
+    state.bodies.push_back({{1}, {}, {}, 0, 0});
+    auto first = s.controls(state);
+    REQUIRE(first.value());
+    REQUIRE(first.value()->time == 7);
+    REQUIRE(first.value()->forces.at(0).force == math::Vec2{7, 7});
+    state.time = 7.5;
+    auto next = s.controls(state);
+    REQUIRE(next.value());
+    REQUIRE_FALSE(next.value()->time);
+    REQUIRE(next.value()->forces.at(0).force == math::Vec2{7.5, 7.5});
+    REQUIRE(s.apply_action("reset()").has_value());
+    auto reset = s.controls(state);
+    REQUIRE(reset.value());
+    REQUIRE(reset.value()->time == 0);
+    REQUIRE(reset.value()->forces.at(0).force == math::Vec2{});
+    REQUIRE(s.apply_action("World.setSimulationTime(-1)").error());
+    REQUIRE(compat::MechanicalSource::create(project("World.setSimulationTime(Infinity)")).error());
+}
 TEST_CASE("General rectangle, nested sliders, force/friction controllers and reset callback",
           "[compatibility][rigid]") {
     auto p = rigid_project(

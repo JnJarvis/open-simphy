@@ -17,6 +17,7 @@ struct SourceWidget {
     double minimum = 0, maximum = 1, value = 0;
 };
 struct SourceControls {
+    std::optional<double> time;
     std::vector<scene::AppliedForce> forces;
     std::map<core::EntityId, double> friction;
 };

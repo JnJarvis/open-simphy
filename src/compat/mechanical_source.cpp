@@ -407,11 +407,8 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 throw std::runtime_error("Body budget");
             auto fixture = fixtures.first_child();
 
-            auto shape = fixture.child("Shape");
-
             if (mode != "NORMAL" && mode != "INFINITE" && mode != "FIXED_ANGULAR_VELOCITY")
                 throw std::runtime_error("Unsupported source mass mode");
-            auto local = point(shape.child("LocalCenter"));
             auto com = point(mass.child("LocalCenter"));
 
             double angle =

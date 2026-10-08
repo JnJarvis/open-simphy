@@ -262,8 +262,25 @@ int main(int argc, char **argv) {
         if (!open_path.empty() && !ui.open_file(open_path, session))
             throw std::runtime_error(ui.message());
         if (!smoke_source.empty()) {
-            expect(ui.open_file(smoke_source, session), "Real source open failed");
+            SDL_Event dropped{};
+            dropped.type = SDL_EVENT_DROP_FILE;
+            dropped.drop.data = smoke_source.c_str();
+            expect(ui.event(dropped, session, host) && ui.source_open(),
+                   "Real source file-drop open failed");
             const auto title = ui.source_title();
+            const auto corrupt_path =
+                std::filesystem::temp_directory_path() /
+                ("opensim-smoke-invalid-" + std::to_string(SDL_GetTicksNS()) + ".ssim");
+            {
+                std::ofstream bad(corrupt_path, std::ios::binary);
+                bad << "not a ZIP archive";
+            }
+            const auto corrupt_u8 = corrupt_path.u8string();
+            const std::string corrupt(reinterpret_cast<const char *>(corrupt_u8.data()),
+                                      corrupt_u8.size());
+            expect(!ui.open_file(corrupt, session), "Corrupt ZIP accepted");
+            std::filesystem::remove(corrupt_path);
+            expect(ui.source_title() == title, "Corrupt open changed source");
             const auto retained = session.editing().document();
             expect(!ui.open_file(smoke_source + ".missing", session), "Missing project accepted");
             expect(ui.source_title() == title && session.editing().document() == retained,
@@ -325,7 +342,7 @@ int main(int argc, char **argv) {
         }
     } catch (const std::exception &error) {
         std::cerr << "Open Simphy: " << error.what() << '\n';
-        if (!smoke_mode && !fail_window && !fail_texture)
+        if (!smoke_mode && smoke_source.empty() && !fail_window && !fail_texture)
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Open Simphy", error.what(), nullptr);
         return 1;
     }

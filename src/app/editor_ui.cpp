@@ -98,7 +98,7 @@ bool EditorUI::open_file(const std::string &path, Session &session) {
         message_ = result.error()->message;
         return false;
     }
-    auto next = std::move(*result.value());
+    auto next = *result.value();
     report(session.cancel_drag());
     report(session.set_running(false));
     source_ = std::move(next);

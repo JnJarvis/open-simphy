@@ -1,14 +1,15 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <charconv>
 #include <cmath>
 #include <cstring>
+#include <locale>
 #include <miniz.h>
 #include <numbers>
 #include <opensim/compat/ssim.hpp>
 #include <pugixml.hpp>
 #include <set>
+#include <sstream>
 namespace opensim::compat {
 namespace {
 core::Result<Project> reject(const std::string &reason) {
@@ -104,9 +105,12 @@ bool utf8(std::span<const std::uint8_t> bytes) {
     return true;
 }
 bool scalar(const char *text, double &value) {
-    const auto size = std::strlen(text);
-    auto result = std::from_chars(text, text + size, value);
-    return result.ec == std::errc{} && result.ptr == text + size && std::isfinite(value);
+    std::istringstream input(text);
+    input.imbue(std::locale::classic());
+    if (!(input >> value) || !std::isfinite(value))
+        return false;
+    input >> std::ws;
+    return input.eof();
 }
 bool vector(pugi::xml_node node, math::Vec2 &v) {
     return node && scalar(node.attribute("x").value(), v.x) &&

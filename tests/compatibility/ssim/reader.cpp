@@ -91,9 +91,8 @@ TEST_CASE("SSIM rejects malformed archives names missing XML and broken CRC") {
     auto cut = bytes;
     cut.resize(cut.size() - 10);
     CHECK(compat::inspect_ssim(cut).error());
-    const auto found = std::search(bytes.begin(), bytes.end(),
-                                   reinterpret_cast<const std::uint8_t *>("Real shapes"),
-                                   reinterpret_cast<const std::uint8_t *>("Real shapes") + 11);
+    constexpr std::string_view marker = "Real shapes";
+    const auto found = std::search(bytes.begin(), bytes.end(), marker.begin(), marker.end());
     REQUIRE(found != bytes.end());
     *found = 'X';
     CHECK(compat::inspect_ssim(bytes).error());

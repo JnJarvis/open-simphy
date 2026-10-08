@@ -27,7 +27,8 @@ No guessed force/controller/unknown-body-mode translation. Failure never publish
 an invalid definition. Source settings not reproduced exactly are explicitly reported.
 
 physics::Mechanism owns a private Box2D3.1.1 solver; create validates and converts
-to float only at this backend boundary. It uses fixed dt, eight substeps, no sleep,
+to float only at this backend boundary. It uses fixed dt split into eight complete world microsteps (each refreshes contacts
+and restitution), no sleep,
 continuous collision handling, explicit imported mass/inertia and circle materials.
 Float backend is intentional and not a change to canonical binary64 values.
 Snapshot owns time and circle samples (IDs/center/velocity/angle/angular velocity).

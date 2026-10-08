@@ -87,7 +87,8 @@ scene::MechanismSnapshot Mechanism::snapshot() const { return impl_->published; 
 core::Result<void> Mechanism::step() {
     if (impl_->poisoned || impl_->steps >= 9007199254740991ULL)
         return bad("Reset invalid or exhausted mechanism runtime");
-    b2World_Step(impl_->world, static_cast<float>(impl_->initial.fixed_dt), 8);
+    for (unsigned substep = 0; substep < 8; ++substep)
+        b2World_Step(impl_->world, static_cast<float>(impl_->initial.fixed_dt / 8), 1);
     ++impl_->steps;
     scene::MechanismSnapshot next;
     next.time = double(impl_->steps) * impl_->initial.fixed_dt;

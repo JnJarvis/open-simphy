@@ -37,6 +37,8 @@ class Host {
                                bool fail_texture = false,
                                const std::function<void(SDL_Renderer *)> &paint = {},
                                renderer::Camera camera = {{0, 0}, 80});
+    core::Result<void> present_overlay(const std::function<void(SDL_Renderer *)> &,
+                                       const char *capture = nullptr, bool fail_texture = false);
     void request_open();
     std::optional<std::string> take_open();
     void title(const std::string &text);

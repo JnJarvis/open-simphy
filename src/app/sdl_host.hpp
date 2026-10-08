@@ -1,4 +1,5 @@
 #pragma once
+#include "workspace.hpp"
 #include <SDL3/SDL.h>
 #include <functional>
 #include <memory>
@@ -23,9 +24,11 @@ class Host {
     [[nodiscard]] SDL_Window *window() const { return window_.get(); }
     [[nodiscard]] renderer::Extent extent() const;
     renderer::Extent canvas_extent() const;
+    Workspace workspace() const;
     core::Result<void> present(const renderer::Frame &, const char *capture = nullptr,
                                bool fail_texture = false,
-                               const std::function<void(SDL_Renderer *)> &paint = {});
+                               const std::function<void(SDL_Renderer *)> &paint = {},
+                               renderer::Camera camera = {{0, 0}, 80});
     void title(const std::string &text);
 };
 void require_sdl(bool ok, const char *operation);

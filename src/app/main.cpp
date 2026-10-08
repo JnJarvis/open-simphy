@@ -39,9 +39,12 @@ void expect(bool value, const char *message) {
 void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     const auto draw = [&](const char *capture = nullptr) {
         checked(session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
-            return host.present(f, capture, false, [&](SDL_Renderer *r) {
-                ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
-            });
+            return host.present(
+                f, capture, false,
+                [&](SDL_Renderer *r) {
+                    ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
+                },
+                {session.editing().view().center, session.editing().view().pixels_per_meter});
         }));
     };
     events(session, ui, host);
@@ -67,7 +70,9 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
         events(session, ui, host);
     };
     const auto view = session.editing().view();
-    const double x = double(view.width) / 2 - 240, y = double(view.height) / 2 - 80;
+    const auto layout = host.workspace();
+    const double x = layout.x + double(view.width) / 2 - 240,
+                 y = layout.y + double(view.height) / 2 - 80;
     mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, x, y);
     expect(session.editing().selected() == core::EntityId{1}, "Editor selection failed");
     mouse(SDL_EVENT_MOUSE_MOTION, x + 40, y - 20);
@@ -81,7 +86,8 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
            "Undo failed");
     key(SDLK_Y, session, ui, host, SDL_KMOD_CTRL);
     key(SDLK_Z, session, ui, host, SDL_KMOD_CTRL);
-    key(SDLK_TAB, session, ui, host);
+    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * layout.scale,
+          (layout.property_y() + 14) * layout.scale);
     SDL_Event text{};
     text.type = SDL_EVENT_TEXT_INPUT;
     text.text.text = "2.5";
@@ -106,6 +112,20 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     expect(session.editing().document().particles().size() == 4, "Create failed");
     key(SDLK_DELETE, session, ui, host);
     expect(session.editing().document().particles().size() == 3, "Delete failed");
+    if (layout.left > 0) {
+        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * layout.scale, 214 * layout.scale);
+        expect(session.editing().selected() == core::EntityId{2}, "Object list selection failed");
+    }
+    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, (12 + 3.5 * layout.button_width()) * layout.scale,
+          60 * layout.scale);
+    expect(session.editing().document().particles().size() == 4, "Toolbar Add failed");
+    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, (12 + 4.5 * layout.button_width()) * layout.scale,
+          60 * layout.scale);
+    expect(session.editing().document().particles().size() == 3, "Toolbar Delete failed");
+    key(SDLK_F1, session, ui, host);
+    draw("smoke-help.bmp");
+    key(SDLK_ESCAPE, session, ui, host);
+    draw("smoke-workspace.bmp");
     session = *app::Session::create().value();
     ui = app::EditorUI{};
     checked(session.resize(host.canvas_extent()));
@@ -159,6 +179,25 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
                   << " output=" << extent.width << "x" << extent.height << '\n';
     }
     expect(session.snapshot() == before, "Display move changed world");
+    key(SDLK_R, session, ui, host);
+    const auto compact = host.workspace();
+    if (compact.left > 0) {
+        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * compact.scale, 214 * compact.scale);
+        expect(session.editing().selected() == core::EntityId{2},
+               "Compact object tab selection failed");
+        for (int i = 0; i < 30; ++i)
+            key(SDLK_N, session, ui, host);
+        SDL_Event wheel{};
+        wheel.type = SDL_EVENT_MOUSE_WHEEL;
+        wheel.wheel.y = -1000;
+        app::require_sdl(SDL_PushEvent(&wheel), "Queue object list scroll");
+        events(session, ui, host);
+        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, 40 * compact.scale,
+              (172 + compact.list_height() - 3) * compact.scale);
+        expect(session.editing().selected() == session.editing().document().particles().back().id,
+               "Scrolled object list did not reach final object");
+        draw("smoke-compact.bmp");
+    }
     SDL_Event quit{};
     quit.type = SDL_EVENT_QUIT;
     app::require_sdl(SDL_PushEvent(&quit), "Queue close");
@@ -201,10 +240,13 @@ int main(int argc, char **argv) {
             previous = now;
             const auto result =
                 session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
-                    return host.present(f, nullptr, fail_texture, [&](SDL_Renderer *r) {
-                        ui.paint(r, session, host.extent(),
-                                 SDL_GetWindowDisplayScale(host.window()));
-                    });
+                    return host.present(f, nullptr, fail_texture,
+                                        [&](SDL_Renderer *r) {
+                                            ui.paint(r, session, host.extent(),
+                                                     SDL_GetWindowDisplayScale(host.window()));
+                                        },
+                                        {session.editing().view().center,
+                                         session.editing().view().pixels_per_meter});
                 });
             if (result.error()) {
                 if (fail_texture) {
@@ -217,9 +259,9 @@ int main(int argc, char **argv) {
             } else
                 last_error.clear();
             std::ostringstream title;
-            title << "Open Simphy | " << (session.running() ? "Running" : "Paused")
+            title << "Open Simphy - Untitled scene | " << (session.running() ? "Running" : "Paused")
                   << " | t=" << std::fixed << std::setprecision(3) << session.snapshot().time()
-                  << " s | Space: play/pause | Right: step | R: reset | Esc: exit";
+                  << " s | Workspace preview";
             if (!last_error.empty())
                 title << " | " << last_error;
             host.title(title.str());

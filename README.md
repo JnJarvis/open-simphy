@@ -1,9 +1,10 @@
 # Open Simphy - C++ particle simulation
 
 A modular, independent open-source simulator project with a working Windows
-particle demo. The current slice models free particles under uniform gravity:
-play/pause, single-step, reset, CPU circles/lines, and an SDL desktop host.
-No collisions, editor, project-file support or SimPHY compatibility is claimed.
+workspace preview. The current slice models free particles under uniform gravity,
+with a real editor, toolbar, scene list, viewport and property inspector.
+The native document codec exists; Save/Open UI, collisions and SimPHY import
+support are not implemented yet. This is an early application, not a finished product.
 
 ## Try the demo
 
@@ -24,8 +25,8 @@ The engine, renderer and app controller have native Windows/Linux/macOS headless
 checks. A separate [desktop workflow](.github/workflows/desktop.yml) builds the
 SDL executable on all three systems in Debug and Release. Those jobs check
 packaging inputs and failure paths with a dummy video driver, not interactive
-window behavior. Normal-scale Windows window smoke has passed. High-DPI and
-mixed-scale checks remain outstanding; Linux/macOS desktop support is not yet
+window behavior. Windows smoke has passed at normal and150% display scaling. Mixed-monitor
+checks remain outstanding; Linux/macOS desktop support is not yet
 validated. See [integration evidence](tasks/reports/INT-001.md).
 
 ## Headless development

@@ -832,7 +832,7 @@
       "id": "INT-003",
       "title": "Build application workspace for interface feedback",
       "stage": 2,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -856,7 +856,7 @@
       ],
       "description": "tasks/items/INT-003.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/INT-003.md",
       "reviewer": null,
       "merged_commit": null
     }

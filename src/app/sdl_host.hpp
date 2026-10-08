@@ -26,6 +26,7 @@ class Host {
     Device device_{nullptr, SDL_DestroyRenderer};
     Texture texture_{nullptr, SDL_DestroyTexture};
     renderer::Extent texture_extent_{};
+    std::string open_location_;
 
   public:
     explicit Host(bool fail_window = false);

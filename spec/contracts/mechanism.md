@@ -56,3 +56,13 @@ circle velocity transfer; constrained pendulum length/energy bounds; reset exact
 initial publication; drag/release; script-generated bodies/colors/constraints;
 unknown API/loop timeout/over-limit rollback; assets/gui actions; actual seven-file
 corpus classification and native visual comparison without importing fixtures into Git.
+
+INT-007 refines the eight-microstep minimum with a speed/radius bound: no circle
+travels more than one quarter of the smallest nonsensor radius per world step.
+Maximum 4096 microsteps per canonical step; excessive cost poisons the world and
+retains its previous publication until reset, rather than silently skipping contact.
+This is bounded discrete refinement, not universal time-of-impact proof for all
+allowed extreme sizes/speeds. Relocate sweeps against enabled circle pairs and
+stops at the first obstacle; sensors, masks and connected-joint exceptions remain.
+Paused placement changes position without advancing time; live dragging does not
+pause the other bodies. It does not provide particle-authoring collisions.

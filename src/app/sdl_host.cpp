@@ -1,8 +1,11 @@
 #include "sdl_host.hpp"
 #include "grid.hpp"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstring>
+#include <filesystem>
+#include <iostream>
 #include <stdexcept>
 namespace opensim::app {
 namespace {
@@ -22,6 +25,8 @@ Host::Host(bool fail_window) {
     require_sdl(SDL_Init(SDL_INIT_VIDEO), "Initialize video");
     if (fail_window)
         throw std::runtime_error("Create window: injected failure");
+    if (const char *base = SDL_GetBasePath())
+        open_location_ = base;
     window_.reset(SDL_CreateWindow("Open Simphy", 1440, 900,
                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY));
     require_sdl(bool(window_), "Create window");
@@ -46,10 +51,13 @@ Workspace Host::workspace() const {
 }
 renderer::Extent Host::canvas_extent() const { return workspace().canvas; }
 void Host::request_open() {
-    std::lock_guard lock(open_->mutex);
-    if (open_->pending)
-        return;
-    open_->pending = true;
+    {
+        std::lock_guard lock(open_->mutex);
+        if (open_->pending)
+            return;
+        open_->pending = true;
+    }
+    const auto started = std::chrono::steady_clock::now();
     static const SDL_DialogFileFilter filters[]{{"SimPHY project", "ssim"}};
     auto *state = new std::shared_ptr<OpenRequest>(open_);
     SDL_ShowOpenFileDialog(
@@ -60,12 +68,20 @@ void Host::request_open() {
             (*handle)->pending = false;
             (*handle)->path = files && files[0] ? files[0] : "";
         },
-        state, window_.get(), filters, 1, nullptr, false);
+        state, window_.get(), filters, 1, open_location_.empty() ? nullptr : open_location_.c_str(),
+        false);
+    std::cerr << "Open Simphy: file picker dispatched in "
+              << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() -
+                                                           started)
+                     .count()
+              << " ms\n";
 }
 std::optional<std::string> Host::take_open() {
     std::lock_guard lock(open_->mutex);
     auto path = std::move(open_->path);
     open_->path.reset();
+    if (path && !path->empty())
+        open_location_ = *path;
     return path;
 }
 void Host::title(const std::string &text) {

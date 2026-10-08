@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <box2d/box2d.h>
 #include <cmath>
 #include <map>
@@ -87,8 +88,30 @@ scene::MechanismSnapshot Mechanism::snapshot() const { return impl_->published; 
 core::Result<void> Mechanism::step() {
     if (impl_->poisoned || impl_->steps >= 9007199254740991ULL)
         return bad("Reset invalid or exhausted mechanism runtime");
-    for (unsigned substep = 0; substep < 8; ++substep)
-        b2World_Step(impl_->world, static_cast<float>(impl_->initial.fixed_dt / 8), 1);
+    double remaining = impl_->initial.fixed_dt;
+    double radius = 1000;
+    for (const auto &b : impl_->initial.bodies)
+        if (!b.sensor)
+            radius = std::min(radius, b.radius);
+    unsigned substeps = 0;
+    while (remaining > impl_->initial.fixed_dt * 1e-10) {
+        if (++substeps > 4096) {
+            impl_->poisoned = true;
+            return bad("Continuous collision step budget exceeded; reset required");
+        }
+        double speed = 0;
+        for (const auto &[id, body] : impl_->bodies) {
+            static_cast<void>(id);
+            const auto v = b2Body_GetLinearVelocity(body);
+            speed = std::max(speed, std::hypot(double(v.x), double(v.y)));
+        }
+        speed += std::hypot(impl_->initial.gravity.x, impl_->initial.gravity.y) *
+                 impl_->initial.fixed_dt * 100;
+        const double h = std::min(
+            {remaining, impl_->initial.fixed_dt / 8, .25 * radius / std::max(speed, 1e-12)});
+        b2World_Step(impl_->world, static_cast<float>(h), 1);
+        remaining -= h;
+    }
     ++impl_->steps;
     scene::MechanismSnapshot next;
     next.time = double(impl_->steps) * impl_->initial.fixed_dt;
@@ -119,6 +142,40 @@ core::Result<void> Mechanism::relocate(core::EntityId id, math::Vec2 p) {
         if (b.id == id) {
             if (b.static_body)
                 return bad("Cannot drag a static body");
+            const auto original = value(b2Body_GetPosition(impl_->bodies.at(id)));
+            const auto delta = p - original;
+            const double travel = math::dot(delta, delta);
+            double fraction = 1;
+            if (!b.sensor && travel > 0) {
+                for (const auto &other : impl_->initial.bodies) {
+                    if (other.id == id || other.sensor || !(b.category & other.mask) ||
+                        !(other.category & b.mask))
+                        continue;
+                    bool connected = false;
+                    for (const auto &j : impl_->initial.links)
+                        if (!j.collide_connected && ((j.body_a == id && j.body_b == other.id) ||
+                                                     (j.body_b == id && j.body_a == other.id)))
+                            connected = true;
+                    if (connected)
+                        continue;
+                    const auto center = value(b2Body_GetPosition(impl_->bodies.at(other.id)));
+                    const auto offset = original - center;
+                    const double radius_sum = b.radius + other.radius;
+                    const double c = math::dot(offset, offset) - radius_sum * radius_sum;
+                    const double approach = math::dot(offset, delta);
+                    if (c < -1e-5 && approach < 0) {
+                        fraction = 0;
+                        continue;
+                    }
+                    const double disc = approach * approach - travel * c;
+                    if (approach >= 0 || disc < 0)
+                        continue;
+                    const double contact = (-approach - std::sqrt(disc)) / travel;
+                    if (contact >= -1e-6 && contact <= fraction)
+                        fraction = std::max(0.0, contact - 1e-5 / std::sqrt(travel));
+                }
+            }
+            p = original + delta * fraction;
             auto native_id = impl_->bodies.at(id);
             b2Body_SetTransform(native_id, native(p), b2Body_GetRotation(native_id));
             b2Body_SetLinearVelocity(native_id, {0, 0});

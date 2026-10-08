@@ -20,7 +20,8 @@ class SourceView {
     bool running_ = false;
     float list_scroll_ = 0;
     std::optional<core::EntityId> selected_, dragging_;
-    bool resume_drag_ = false;
+    Uint8 pan_button_ = 0;
+    math::Vec2 pan_pointer_{};
     std::string status_ =
         "Experimental simulation: collision sounds and some scripted events are not supported yet.";
     void replace_world();
@@ -30,6 +31,7 @@ class SourceView {
   public:
     explicit SourceView(compat::MechanicalSource);
     bool event(const SDL_Event &, Host &);
+    void zoom_at(double, math::Vec2, const Workspace &);
     void tick(double);
     void paint(SDL_Renderer *, renderer::Extent, float);
     scene::MechanismSnapshot snapshot() const { return world_->snapshot(); }

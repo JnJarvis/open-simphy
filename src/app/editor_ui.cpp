@@ -100,6 +100,7 @@ void EditorUI::edit_field(int field, Session &session, Host &host) {
     message_ = "Type a number, Enter to apply, Escape to cancel.";
 }
 bool EditorUI::open_file(const std::string &path, Session &session) {
+    changed_ = true;
     auto result = read_project(utf8_path(path));
     if (result.error()) {
         const auto &error = *result.error();
@@ -131,6 +132,8 @@ bool EditorUI::open_file(const std::string &path, Session &session) {
     mechanical_ = std::move(mechanical);
     source_ = std::move(next);
     source_scroll_ = 0;
+    preview_zoom_ = 1;
+    preview_pan_ = {};
     message_ = mechanical_ ? "Source opened with experimental circle mechanics."
                            : "SSIM source opened. Unsupported mechanics remain preview-only.";
     std::cerr << "Open Simphy: opened " << std::quoted(path)
@@ -185,6 +188,54 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
             return true;
         }
     }
+    if (!mechanical_ &&
+        (e.type == SDL_EVENT_MOUSE_MOTION || e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+         e.type == SDL_EVENT_MOUSE_BUTTON_UP || e.type == SDL_EVENT_WINDOW_FOCUS_LOST)) {
+        if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
+            pan_button_ = 0;
+            SDL_CaptureMouse(false);
+        } else {
+            int ww = 0, wh = 0;
+            SDL_GetWindowSize(host.window(), &ww, &wh);
+            const auto raw = e.type == SDL_EVENT_MOUSE_MOTION ? math::Vec2{e.motion.x, e.motion.y}
+                                                              : math::Vec2{e.button.x, e.button.y};
+            const auto mapped = physical_pointer(raw, {double(ww), double(wh)}, host.extent());
+            if (mapped.value()) {
+                const auto p = *mapped.value();
+                const auto l = host.workspace();
+                const bool inside = source_
+                                        ? p.x / l.scale >= std::min(340.0f, l.width * .45f) &&
+                                              p.y / l.scale >= 100 && p.y / l.scale < l.height - 32
+                                        : l.contains(p);
+                if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+                    (e.button.button == SDL_BUTTON_RIGHT || e.button.button == SDL_BUTTON_MIDDLE) &&
+                    inside) {
+                    pan_button_ = e.button.button;
+                    pan_pointer_ = p;
+                    SDL_CaptureMouse(true);
+                    return true;
+                }
+                if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == pan_button_) {
+                    pan_button_ = 0;
+                    SDL_CaptureMouse(false);
+                    return true;
+                }
+                if (e.type == SDL_EVENT_MOUSE_MOTION && pan_button_) {
+                    const auto d = p - pan_pointer_;
+                    pan_pointer_ = p;
+                    if (source_)
+                        preview_pan_ = preview_pan_ + d * (1.0 / double(l.scale));
+                    else {
+                        auto view = s.editing().view();
+                        view.center.x -= d.x / view.pixels_per_meter;
+                        view.center.y += d.y / view.pixels_per_meter;
+                        report(s.navigate(view));
+                    }
+                    return true;
+                }
+            }
+        }
+    }
     if (source_) {
         if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
             mechanical_.reset();
@@ -193,8 +244,31 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
         }
         if (mechanical_)
             return mechanical_->event(e, host);
-        if (e.type == SDL_EVENT_MOUSE_WHEEL)
-            source_scroll_ = std::max(0.0f, source_scroll_ - e.wheel.y * 24);
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_HOME) {
+            preview_pan_ = {};
+            preview_zoom_ = 1;
+        }
+        if (e.type == SDL_EVENT_MOUSE_WHEEL) {
+            int ww = 0, wh = 0;
+            SDL_GetWindowSize(host.window(), &ww, &wh);
+            const auto l = host.workspace();
+            const auto p = physical_pointer({e.wheel.mouse_x, e.wheel.mouse_y},
+                                            {double(ww), double(wh)}, host.extent());
+            if (p.value()) {
+                const double x = p.value()->x / l.scale, y = p.value()->y / l.scale,
+                             sidebar = std::min(340.0f, l.width * .45f);
+                if (x < sidebar)
+                    source_scroll_ = std::max(0.0f, source_scroll_ - e.wheel.y * 24);
+                else if (y >= 100 && y < l.height - 32) {
+                    const double before = preview_zoom_;
+                    preview_zoom_ =
+                        std::clamp(preview_zoom_ * std::pow(1.2, double(e.wheel.y)), .01, 1000.0);
+                    const math::Vec2 delta{x - (sidebar + (l.width - sidebar) / 2),
+                                           y - (100 + (l.height - 132) / 2)};
+                    preview_pan_ = delta - (delta - preview_pan_) * (preview_zoom_ / before);
+                }
+            }
+        }
         return true;
     }
     if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST || e.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
@@ -434,9 +508,13 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
         if (!layout.contains(last_pointer_))
             return true;
         auto view = s.editing().view();
-        view.pixels_per_meter =
-            std::clamp(view.pixels_per_meter * (e.wheel.y > 0 ? 1.25 : (e.wheel.y < 0 ? .8 : 1)),
-                       1.0 / 1024, 4096.0);
+        const auto center = math::Vec2{layout.x + double(layout.canvas.width) / 2,
+                                       layout.y + double(layout.canvas.height) / 2};
+        const math::Vec2 delta{last_pointer_.x - center.x, center.y - last_pointer_.y};
+        const auto before = view.center + delta * (1 / view.pixels_per_meter);
+        view.pixels_per_meter = std::clamp(
+            view.pixels_per_meter * std::pow(1.25, double(e.wheel.y)), 1.0 / 1024, 4096.0);
+        view.center = before - delta * (1 / view.pixels_per_meter);
         report(s.navigate(view));
     }
     return true;
@@ -726,10 +804,15 @@ void EditorUI::paint_source(SDL_Renderer *r, renderer::Extent extent, float scal
                      std::max(1.0f, l.height - 180) / std::max(1.0, ymax - ymin));
         const auto point = [&](math::Vec2 v) {
             return SDL_FPoint{
-                float(sidebar + (l.width - sidebar) / 2 + (v.x - (xmin + xmax) / 2) * factor),
-                float(100 + (l.height - 132) / 2 - (v.y - (ymin + ymax) / 2) * factor)};
+                float(sidebar + (l.width - sidebar) / 2 +
+                      (v.x - (xmin + xmax) / 2) * factor * preview_zoom_ + preview_pan_.x),
+                float(100 + (l.height - 132) / 2 -
+                      (v.y - (ymin + ymax) / 2) * factor * preview_zoom_ + preview_pan_.y)};
         };
-        color(r, 84, 199, 230);
+        const SDL_Rect geometry_clip{int(sidebar), 100, int(l.width - sidebar),
+                                     int(l.height - 132)};
+        require_sdl(SDL_SetRenderClipRect(r, &geometry_clip), "Clip preview geometry");
+        color(r, 190, 190, 190);
         for (const auto &shape : p.outlines) {
             std::vector<SDL_FPoint> points;
             for (auto v : shape.points)
@@ -739,6 +822,7 @@ void EditorUI::paint_source(SDL_Renderer *r, renderer::Extent extent, float scal
             require_sdl(SDL_RenderLines(r, points.data(), static_cast<int>(points.size())),
                         "Draw source outlines");
         }
+        require_sdl(SDL_SetRenderClipRect(r, nullptr), "Restore preview geometry clip");
     } else {
         color(r, 190, 202, 218);
         label(sidebar + 16, 120, "No supported fixture outlines", l.width - sidebar - 32);
@@ -746,7 +830,8 @@ void EditorUI::paint_source(SDL_Renderer *r, renderer::Extent extent, float scal
     color(r, 20, 24, 29);
     box(r, 0, l.height - 32, l.width, 32);
     color(r, 213, 224, 236);
-    label(12, l.height - 20, "Ctrl+O: open / Esc: return / Wheel: report | " + message_,
+    label(12, l.height - 20,
+          "Ctrl+O: open / Esc: return / Wheel: zoom / Right drag: pan / Home: fit | " + message_,
           l.width - 24);
 }
 } // namespace opensim::app

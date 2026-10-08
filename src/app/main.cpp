@@ -10,17 +10,25 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
 using namespace opensim;
 namespace {
 void checked(const core::Result<void> &result) {
     if (result.error())
         throw std::runtime_error(result.error()->message);
 }
-bool events(app::Session &session, app::EditorUI &ui, app::Host &host) {
+bool events(app::Session &session, app::EditorUI &ui, app::Host &host, bool *dirty = nullptr) {
     SDL_Event event{};
-    while (SDL_PollEvent(&event))
+    while (SDL_PollEvent(&event)) {
+        if (dirty && (event.type != SDL_EVENT_MOUSE_MOTION || event.motion.state))
+            *dirty = true;
         if (!ui.event(event, session, host))
             return false;
+    }
     return true;
 }
 void key(SDL_Keycode code, app::Session &session, app::EditorUI &ui, app::Host &host,
@@ -232,7 +240,7 @@ void verify_imported_cradle(const scene::Mechanism &definition) {
             throw std::runtime_error(result.error()->message);
         auto world = *result.value();
         double initial_energy = 0;
-        for (unsigned i = 5 - count; i < 5; ++i) {
+        for (unsigned i = 5; i-- > 5 - count;) {
             const auto &j = links[i];
             checked(world->relocate(j.body_a, {j.local_b.x + j.length * std::sin(.5),
                                                j.local_b.y - j.length * std::cos(.5)}));
@@ -293,11 +301,37 @@ void verify_imported_cradle(const scene::Mechanism &definition) {
 } // namespace
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
-    bool benchmark = false, benchmark_legacy = false;
+    bool benchmark = false, benchmark_legacy = false, smoke_open = false;
     bool smoke_mechanics = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
+        if (arg == "--capabilities-directory" && i + 1 < argc) {
+            const auto path = app::utf8_path(argv[++i]);
+            unsigned total = 0, runnable = 0;
+            for (const auto &entry : std::filesystem::recursive_directory_iterator(path))
+                if (entry.is_regular_file() && entry.path().extension() == ".ssim") {
+                    ++total;
+                    auto project = app::read_project(entry.path());
+                    if (project.error()) {
+                        std::cout << entry.path().filename().string() << " | READ ERROR | "
+                                  << project.error()->message << '\n';
+                        continue;
+                    }
+                    auto mechanism = compat::MechanicalSource::create(*project.value());
+                    if (mechanism.error())
+                        std::cout << entry.path().filename().string() << " | PREVIEW | "
+                                  << mechanism.error()->message << '\n';
+                    else {
+                        ++runnable;
+                        std::cout << entry.path().filename().string() << " | CIRCLE MECHANICS | "
+                                  << mechanism.value()->definition().bodies.size() << '\n';
+                    }
+                }
+            std::cout << "TOTAL=" << total << " circle_mechanics=" << runnable
+                      << " other_profiles=" << total - runnable << '\n';
+            return total ? 0 : 1;
+        }
         if ((arg == "--inspect" || arg == "--inspect-directory") && i + 1 < argc) {
             const auto inspect = [](const std::filesystem::path &path) {
                 auto parsed = app::read_project(path);
@@ -335,7 +369,9 @@ int main(int argc, char **argv) {
             open_path = argv[++i];
             benchmark = true;
             benchmark_legacy = arg == "--benchmark-legacy";
-        } else if (arg == "--smoke")
+        } else if (arg == "--smoke-open-dialog")
+            smoke_open = true;
+        else if (arg == "--smoke")
             smoke_mode = true;
         else if (arg == "--fail-window")
             fail_window = true;
@@ -389,6 +425,70 @@ int main(int argc, char **argv) {
             if (auto *view = ui.mechanical(); view && smoke_mechanics) {
                 expect(!view->definition().bodies.empty(), "Empty mechanical source");
                 verify_imported_cradle(view->definition());
+                const auto lnav = host.workspace();
+                int ww = 0, wh = 0;
+                SDL_GetWindowSize(host.window(), &ww, &wh);
+                const math::Vec2 pointer{lnav.x + double(lnav.canvas.width) * .65,
+                                         lnav.y + double(lnav.canvas.height) * .4};
+                const auto world_at = [&](math::Vec2 p) {
+                    const auto c = view->camera();
+                    const double z = view->zoom() * lnav.scale;
+                    return math::Vec2{c.x + (p.x - lnav.x - double(lnav.canvas.width) / 2) / z,
+                                      c.y - (p.y - lnav.y - double(lnav.canvas.height) / 2) / z};
+                };
+                const auto before = world_at(pointer);
+                const double old_zoom = view->zoom();
+                SDL_Event wheel{};
+                wheel.type = SDL_EVENT_MOUSE_WHEEL;
+                wheel.wheel.y = 2;
+                wheel.wheel.mouse_x = float(pointer.x * ww / host.extent().width);
+                wheel.wheel.mouse_y = float(pointer.y * wh / host.extent().height);
+                ui.event(wheel, session, host);
+                expect(view->zoom() > old_zoom, "Source wheel did not zoom");
+                const auto after = world_at(pointer);
+                expect(std::hypot(before.x - after.x, before.y - after.y) < 1e-6,
+                       "Zoom moved world point under cursor");
+                const auto pan = [&](SDL_EventType type, math::Vec2 p) {
+                    SDL_Event e{};
+                    e.type = type;
+                    const auto x = float(p.x * ww / host.extent().width),
+                               y = float(p.y * wh / host.extent().height);
+                    if (type == SDL_EVENT_MOUSE_MOTION) {
+                        e.motion.x = x;
+                        e.motion.y = y;
+                    } else {
+                        e.button.x = x;
+                        e.button.y = y;
+                        e.button.button = SDL_BUTTON_RIGHT;
+                    }
+                    ui.event(e, session, host);
+                };
+                const auto start_camera = view->camera();
+                pan(SDL_EVENT_MOUSE_BUTTON_DOWN, pointer);
+                pan(SDL_EVENT_MOUSE_MOTION, {pointer.x + 60, pointer.y + 30});
+                pan(SDL_EVENT_MOUSE_BUTTON_UP, {pointer.x + 60, pointer.y + 30});
+                expect(std::abs(view->camera().x - start_camera.x +
+                                60 / (view->zoom() * lnav.scale)) < 1e-6,
+                       "Viewport horizontal pan failed");
+                expect(std::abs(view->camera().y - start_camera.y -
+                                30 / (view->zoom() * lnav.scale)) < 1e-6,
+                       "Viewport vertical pan failed");
+                key(SDLK_HOME, session, ui, host);
+                for (float density : {1.0f, 1.5f}) {
+                    const auto layout = app::Workspace::layout({2160, 1350}, density);
+                    const auto c = view->camera();
+                    const double z = view->zoom();
+                    const math::Vec2 p{layout.x + double(layout.canvas.width) / 2 + 120 * density,
+                                       layout.y + double(layout.canvas.height) / 2 - 60 * density};
+                    view->zoom_at(1, p, layout);
+                    expect(std::abs(view->camera().x - c.x - 20 / z) < 1e-8 &&
+                               std::abs(view->camera().y - c.y - 10 / z) < 1e-8,
+                           "Density-aware zoom coordinate failed");
+                    key(SDLK_HOME, session, ui, host);
+                }
+                std::cout << "PASS: source cursor-anchored zoom at 100/150% coordinates and "
+                             "right-drag pan\n";
+
                 key(SDLK_SPACE, session, ui, host);
                 ui.tick(view->definition().fixed_dt);
                 expect(view->snapshot().time > 0, "Imported Play did not advance");
@@ -431,6 +531,12 @@ int main(int argc, char **argv) {
                                    "Imported pointer unexpectedly closed");
                         };
                         mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, pixel(body.center));
+                        key(SDLK_SPACE, session, ui, host);
+                        const auto drag_time = view->snapshot().time;
+                        ui.tick(view->definition().fixed_dt);
+                        expect(view->running() && view->snapshot().time > drag_time,
+                               "Holding a dragged ball paused collisions");
+                        key(SDLK_SPACE, session, ui, host);
                         mouse(SDL_EVENT_MOUSE_MOTION, pixel({body.center.x + joint.length * .5,
                                                              body.center.y + joint.length * .15}));
                         mouse(SDL_EVENT_MOUSE_BUTTON_UP,
@@ -500,6 +606,61 @@ int main(int argc, char **argv) {
                 << "PASS: real source preview, failed open retention, return to authored scene\n";
             return 0;
         }
+        if (smoke_open) {
+#ifdef _WIN32
+            // Exercise immediate error callback; dispatch must not hold its callback mutex.
+            SDL_SetHint(SDL_HINT_FILE_DIALOG_DRIVER, "invalid-test-driver");
+            host.request_open();
+            expect(host.take_open().has_value(), "Immediate dialog error callback failed");
+            SDL_ResetHint(SDL_HINT_FILE_DIALOG_DRIVER);
+            for (int attempt = 0; attempt < 2; ++attempt) {
+                const auto started = std::chrono::steady_clock::now();
+                host.request_open();
+                HWND dialog = nullptr;
+                while (std::chrono::steady_clock::now() - started < std::chrono::seconds(10)) {
+                    events(session, ui, host);
+                    EnumWindows(
+                        [](HWND w, LPARAM ptr) -> BOOL {
+                            DWORD pid = 0;
+                            GetWindowThreadProcessId(w, &pid);
+                            wchar_t name[64]{};
+                            GetClassNameW(w, name, 64);
+                            if (pid == GetCurrentProcessId() && IsWindowVisible(w) &&
+                                std::wstring_view(name) == L"#32770") {
+                                *reinterpret_cast<HWND *>(ptr) = w;
+                                return FALSE;
+                            }
+                            return TRUE;
+                        },
+                        reinterpret_cast<LPARAM>(&dialog));
+                    if (dialog)
+                        break;
+                    SDL_Delay(5);
+                }
+                expect(dialog != nullptr, "File picker did not appear within ten seconds");
+                std::cout << "OPEN visible_ms="
+                          << std::chrono::duration<double, std::milli>(
+                                 std::chrono::steady_clock::now() - started)
+                                 .count()
+                          << '\n';
+                PostMessageW(dialog, WM_CLOSE, 0, 0);
+                bool completed = false;
+                for (int i = 0; i < 1000; ++i) {
+                    events(session, ui, host);
+                    if (host.take_open().has_value()) {
+                        completed = true;
+                        break;
+                    }
+                    SDL_Delay(5);
+                }
+                expect(completed, "Cancelled dialog did not complete");
+            }
+            std::cout << "PASS: file picker appears, cancel and immediate error callback\n";
+            return 0;
+#else
+            throw std::runtime_error("Automated native dialog visibility check is Windows-only");
+#endif
+        }
         if (smoke_mode) {
             smoke(session, host, ui);
             return 0;
@@ -548,8 +709,11 @@ int main(int argc, char **argv) {
         }
         auto previous = std::chrono::steady_clock::now();
         std::string last_error;
-        while (events(session, ui, host)) {
+        bool dirty = true;
+        while (events(session, ui, host, &dirty)) {
             ui.poll_open(session, host);
+            const bool changed = ui.take_changed();
+            dirty = dirty || changed;
             const auto now = std::chrono::steady_clock::now();
             checked(session.tick(std::chrono::duration<double>(now - previous).count()));
             ui.tick(std::chrono::duration<double>(now - previous).count());
@@ -557,8 +721,17 @@ int main(int argc, char **argv) {
             const auto paint = [&](SDL_Renderer *r) {
                 ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
             };
+            if (!host.extent().width || !host.extent().height) {
+                SDL_Delay(16);
+                continue;
+            }
+            if (!dirty && !session.running() && (!ui.mechanical() || !ui.mechanical()->running())) {
+                SDL_Delay(8);
+                continue;
+            }
+            dirty = false;
             const auto result =
-                ui.mechanical()
+                ui.source_open()
                     ? host.present_overlay(paint, nullptr, fail_texture)
                     : session.draw(host.canvas_extent(), renderer::render,
                                    [&](const renderer::Frame &f) {

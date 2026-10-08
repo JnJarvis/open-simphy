@@ -90,14 +90,34 @@ void SourceView::drag(math::Vec2 target) {
     for (const auto &j : source_.definition().links)
         if (j.body_a == *dragging_ && !j.body_b.valid() &&
             std::hypot(j.local_a.x, j.local_a.y) < 1e-6) {
-            const double dx = target.x - j.local_b.x, dy = target.y - j.local_b.y,
-                         len = std::hypot(dx, dy);
-            if (len < 1e-6)
-                return;
-            target = {j.local_b.x + dx * j.length / len, j.local_b.y + dy * j.length / len};
-            break;
+            auto state = world_->snapshot();
+            const auto &current = *std::find_if(state.bodies.begin(), state.bodies.end(),
+                                                [&](const auto &b) { return b.id == *dragging_; });
+            const double desired = std::atan2(target.x - j.local_b.x, j.local_b.y - target.y);
+            const double initial =
+                std::atan2(current.center.x - j.local_b.x, j.local_b.y - current.center.y);
+            const double delta = std::remainder(desired - initial, 2 * std::numbers::pi);
+            const unsigned count = static_cast<unsigned>(std::ceil(std::abs(delta) / .01));
+            for (unsigned i = 1; i <= count; ++i) {
+                const double a = initial + delta * i / count;
+                const math::Vec2 p{j.local_b.x + j.length * std::sin(a),
+                                   j.local_b.y - j.length * std::cos(a)};
+                checked(world_->relocate(*dragging_, p));
+                auto moved = world_->snapshot();
+                const auto &b = *std::find_if(moved.bodies.begin(), moved.bodies.end(),
+                                              [&](const auto &v) { return v.id == *dragging_; });
+                if (std::hypot(b.center.x - p.x, b.center.y - p.y) > 1e-6)
+                    break;
+            }
+            return;
         }
     checked(world_->relocate(*dragging_, target));
+}
+void SourceView::zoom_at(double steps, math::Vec2 pointer, const Workspace &layout) {
+    const auto before = local(pointer, layout);
+    scale_ = std::clamp(scale_ * std::pow(1.2, steps), 1.0, 4096.0);
+    const auto after = local(pointer, layout);
+    camera_ = camera_ + before - after;
 }
 bool SourceView::event(const SDL_Event &e, Host &host) {
     const auto l = host.workspace();
@@ -118,7 +138,8 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
     try {
         if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
             dragging_.reset();
-            running_ = false;
+            pan_button_ = 0;
+            SDL_CaptureMouse(false);
             remainder_ = 0;
         }
         if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat) {
@@ -152,7 +173,9 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                                                   (l.property_y() - 40 - 176)));
                 return true;
             }
-            scale_ = std::clamp(scale_ * (e.wheel.y > 0 ? 1.2 : .833333333), 1.0, 4096.0);
+            if (!pointer.value() || !l.contains(*pointer.value()) || e.wheel.y == 0)
+                return true;
+            zoom_at(e.wheel.y, *pointer.value(), l);
             return true;
         }
         if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
@@ -166,11 +189,31 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                 return true;
             auto p = *mapped.value();
             const double x = p.x / l.scale, y = p.y / l.scale;
+            if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+                (e.button.button == SDL_BUTTON_RIGHT || e.button.button == SDL_BUTTON_MIDDLE) &&
+                l.contains(p)) {
+                pan_button_ = e.button.button;
+                pan_pointer_ = p;
+                SDL_CaptureMouse(true);
+                return true;
+            }
+            if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == pan_button_) {
+                pan_button_ = 0;
+                SDL_CaptureMouse(false);
+                return true;
+            }
+            if (e.type == SDL_EVENT_MOUSE_MOTION && pan_button_) {
+                camera_.x -= (p.x - pan_pointer_.x) / (scale_ * l.scale);
+                camera_.y += (p.y - pan_pointer_.y) / (scale_ * l.scale);
+                pan_pointer_ = p;
+                return true;
+            }
+
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
                 if (dragging_) {
                     drag(local(p, l));
                     dragging_.reset();
-                    running_ = resume_drag_;
+                    SDL_CaptureMouse(false);
                     remainder_ = 0;
                 }
                 return true;
@@ -221,8 +264,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                                 found->radius) {
                             selected_ = b.id;
                             dragging_ = b.id;
-                            resume_drag_ = running_;
-                            running_ = false;
+                            SDL_CaptureMouse(true);
                             drag(world);
                             break;
                         }
@@ -239,7 +281,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
     return true;
 }
 void SourceView::tick(double dt) {
-    if (!running_ || dragging_)
+    if (!running_)
         return;
     remainder_ += std::clamp(dt, 0.0, .25);
     unsigned steps = 0;

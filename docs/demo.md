@@ -181,3 +181,21 @@ The cradle smoke additionally checks one- and two-ball releases through the actu
 imported bodies/materials/joints, output count, quiet middle balls, return swing,
 length stability, overlap and energy. This check expects a five-ball cradle geometry;
 it is a diagnostic command, not a generic simulation compatibility test.
+
+## Viewport navigation and continuous contacts
+
+Wheel zoom keeps the world point beneath the pointer fixed. Right or middle drag
+pans the viewport; Home restores the source view/fit. This works in the imported
+mechanism, source preview and particle editor. Body dragging keeps active playback
+running and stops at enabled circle obstacles; paused dragging preserves paused time.
+The circle backend refines fast motion to avoid skipped small-circle impacts within
+its documented work budget. Explicit sensors/masks/joint collision exclusions remain.
+
+Open dispatch is asynchronous, starts in a local executable folder, then remembers
+the last chosen path. Idle paused frames are not repeatedly rasterized; source
+previews bypass the hidden particle Frame. OS shell initialization can still delay
+visible dialog appearance. On Windows, `opensim_demo --smoke-open-dialog` measures
+actual visibility, cancels the test dialogs and checks an immediate error callback.
+`--capabilities-directory <folder>` explicitly evaluates bounded circle-profile
+initialization and reports unsupported profiles; `--inspect` remains nonexecuting.
+This audit is not a proof of full simulation fidelity for a passing startup profile.

@@ -268,3 +268,58 @@ TEST_CASE("Oblique elastic circle impact matches analytic normal impulse",
                 math::dot(s.bodies[1].velocity, s.bodies[1].velocity) ==
             Catch::Approx(4.25).margin(.03));
 }
+
+TEST_CASE("Fast dynamic circles cannot tunnel through each other",
+          "[unit][mechanism][continuous]") {
+    for (double speed : {100.0, 1000.0}) {
+        scene::Mechanism m;
+        m.gravity = {};
+        m.fixed_dt = 1.0 / 30;
+        scene::CircleBody a;
+        a.id = {1};
+        a.center = {-2, 0};
+        a.velocity = {speed, 0};
+        a.radius = .05;
+        a.mass = 1;
+        a.inertia = .00125;
+        a.friction = 0;
+        auto b = a;
+        b.id = {2};
+        b.center = {2, 0};
+        b.velocity = {-speed, 0};
+        m.bodies = {a, b};
+        auto w = make(m);
+        REQUIRE(w->step().has_value());
+        auto s = w->snapshot();
+        INFO("speed=" << speed << " first=" << s.bodies[0].center.x
+                      << " vx=" << s.bodies[0].velocity.x);
+        REQUIRE(s.bodies[0].velocity.x == Catch::Approx(-speed).epsilon(.002));
+        REQUIRE(s.bodies[1].velocity.x == Catch::Approx(speed).epsilon(.002));
+        REQUIRE(s.bodies[0].center.x < s.bodies[1].center.x);
+    }
+}
+TEST_CASE("Paused swept placement cannot drag a circle through an obstacle",
+          "[unit][mechanism][continuous]") {
+    scene::Mechanism m;
+    m.gravity = {};
+    scene::CircleBody a;
+    a.id = {1};
+    a.center = {-2, 0};
+    auto b = a;
+    b.id = {2};
+    b.center = {0, 0};
+    b.static_body = true;
+    m.bodies = {a, b};
+    auto w = make(m);
+    REQUIRE(w->relocate({1}, {2, 0}).has_value());
+    auto s = w->snapshot();
+    REQUIRE(s.time == 0);
+    REQUIRE(s.bodies[0].center.x <= -1);
+    REQUIRE(s.bodies[0].velocity == math::Vec2{});
+    REQUIRE(w->relocate({1}, {-2, 1}).has_value());
+    REQUIRE(w->snapshot().bodies[0].center == math::Vec2{-2, 1});
+    m.bodies[1].sensor = true;
+    w = make(m);
+    REQUIRE(w->relocate({1}, {2, 0}).has_value());
+    REQUIRE(w->snapshot().bodies[0].center == math::Vec2{2, 0});
+}

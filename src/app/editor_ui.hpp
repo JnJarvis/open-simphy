@@ -11,10 +11,14 @@ class EditorUI {
     void text(SDL_Renderer *, float, float, const std::string &, float width = 100000) const;
     std::optional<compat::Project> source_;
     float source_scroll_ = 0;
+    double preview_zoom_ = 1;
+    math::Vec2 preview_pan_{}, pan_pointer_{};
+    Uint8 pan_button_ = 0;
     void paint_source(SDL_Renderer *, renderer::Extent, float) const;
     int field_ = -1;
     float panel_scroll_ = 0, scene_scroll_ = 0;
     bool help_ = false;
+    bool changed_ = false;
     std::string buffer_, message_ = "Click a particle to select; drag to move. Scroll to zoom.";
     bool replace_text_ = true;
     math::Vec2 last_pointer_{};
@@ -24,6 +28,11 @@ class EditorUI {
     void action(int, Session &, Host &);
 
   public:
+    bool take_changed() {
+        const bool result = changed_;
+        changed_ = false;
+        return result;
+    }
     void tick(double dt) {
         if (mechanical_)
             mechanical_->tick(dt);

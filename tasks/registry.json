@@ -944,13 +944,15 @@
       "id": "INT-005",
       "title": "Scalable workspace and functional imported circle mechanisms",
       "stage": 3,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
         "INT-004"
       ],
-      "blocks": [],
+      "blocks": [
+        "INT-006"
+      ],
       "gates": [],
       "allowed_paths": [
         "src/app/",
@@ -983,8 +985,8 @@
       "description": "tasks/items/INT-005.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-005.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "80b76cf966633560b2e3e5d1dd709811dd9da6f3"
     },
     {
       "id": "SCENE-003",
@@ -1014,6 +1016,39 @@
       "description": "tasks/items/SCENE-003.md",
       "block_reason": null,
       "completion_report": "tasks/reports/SCENE-003.md",
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "INT-006",
+      "title": "Optimize imported rendering and correct cradle collision transfer",
+      "stage": 3,
+      "status": "IN_PROGRESS",
+      "priority": 0,
+      "owner": "codex-worker",
+      "dependencies": [
+        "INT-005"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/app/",
+        "src/physics/mechanism.cpp",
+        "tests/unit/physics/",
+        "tests/compatibility/ssim/",
+        "docs/demo.md",
+        "docs/ssim.md",
+        "rfcs/INT-006-cradle.md",
+        "spec/contracts/mechanism.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/mechanism.md"
+      ],
+      "description": "tasks/items/INT-006.md",
+      "block_reason": null,
+      "completion_report": "tasks/reports/INT-006.md",
       "reviewer": null,
       "merged_commit": null
     }

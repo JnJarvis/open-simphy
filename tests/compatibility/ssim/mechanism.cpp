@@ -211,6 +211,42 @@ TEST_CASE("Source clock requests survive startup preflight and are consumed once
     REQUIRE(s.apply_action("World.setSimulationTime(-1)").error());
     REQUIRE(compat::MechanicalSource::create(project("World.setSimulationTime(Infinity)")).error());
 }
+TEST_CASE("Prismatic source anchors axis and actual limit motor signs survive ground swapping",
+          "[compatibility][INT-010]") {
+    const std::string joint =
+        R"(<Joint xsi:type="PrismaticJoint"><BodyId1>a</BodyId1><BodyId2>ground</BodyId2><Anchor1 x="0" y="2"/><Anchor2 x="1" y="0"/><Axis x="0" y="2"/><ReferenceAngle>1.5707963267948966</ReferenceAngle><LimitEnabled>true</LimitEnabled><LowerLimit>0</LowerLimit><UpperLimit>3</UpperLimit><MotorEnabled>true</MotorEnabled><MotorSpeed>2</MotorSpeed><MaximumMotorForce>10</MaximumMotorForce><CollisionAllowed>true</CollisionAllowed></Joint>)";
+    auto r = compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 1, 90, joint));
+    REQUIRE(r.value());
+    const auto s = r.value()->definition().slides.at(0);
+    REQUIRE_FALSE(s.body_a.valid());
+    REQUIRE(s.body_b == core::EntityId{1});
+    REQUIRE(s.local_a == math::Vec2{1, 0});
+    REQUIRE(std::abs(s.local_b.x - 1) < 1e-12);
+    REQUIRE(std::abs(s.local_b.y) < 1e-12);
+    REQUIRE(s.axis == math::Vec2{0, 1});
+    REQUIRE(s.reference == 1.5707963267948966);
+    REQUIRE(s.lower == 0);
+    REQUIRE(s.upper == 3);
+    REQUIRE(s.limit);
+    REQUIRE(s.motor);
+    REQUIRE(s.speed == 2);
+    REQUIRE(s.max_force == 10);
+    REQUIRE(s.lock_rotation);
+    REQUIRE(s.collide_connected);
+    const std::string reversed =
+        R"(<Joint xsi:type="PrismaticJoint"><BodyId1>ground</BodyId1><BodyId2>a</BodyId2><Anchor1 x="1" y="0"/><Anchor2 x="0" y="2"/><Axis x="0" y="1"/><ReferenceAngle>-1.5707963267948966</ReferenceAngle><LimitEnabled>true</LimitEnabled><LowerLimit>-3</LowerLimit><UpperLimit>0</UpperLimit><MotorEnabled>true</MotorEnabled><MotorSpeed>-2</MotorSpeed><MaximumMotorForce>10</MaximumMotorForce><CollisionAllowed>true</CollisionAllowed></Joint>)";
+    auto reversed_result =
+        compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 1, 90, reversed));
+    REQUIRE(reversed_result.value());
+    const auto other = reversed_result.value()->definition().slides.at(0);
+    REQUIRE(other.local_a == s.local_a);
+    REQUIRE(other.local_b == s.local_b);
+    REQUIRE(other.axis == s.axis);
+    REQUIRE(other.reference == s.reference);
+    REQUIRE(other.lower == s.lower);
+    REQUIRE(other.upper == s.upper);
+    REQUIRE(other.speed == s.speed);
+}
 TEST_CASE("General rectangle, nested sliders, force/friction controllers and reset callback",
           "[compatibility][rigid]") {
     auto p = rigid_project(

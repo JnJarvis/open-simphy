@@ -50,3 +50,14 @@ in the same batch see the requested time. App applies time before forces/step an
 also when constructing the replacement runtime after a source reset callback.
 World.getSimulationTime reads the interpreter's current simulation time; neither
 source nor physics accesses a host clock. Failed evaluation never publishes a batch.
+
+Approved prismatic public probes: constructor world anchors(1,2)/(3,4), world
+axis(0,1), body angles .3/.7 return the same world anchors/axis and reference-.4.
+getJointTranslation reports +2 but getJointSpeed for B velocity(0,2) reports -2.
+Actual limit response uses A-B: B initial y2 with source limits0..1 goes to .005,
+limits-3..-1 leave y2, limits-1..3 go to1.005. Positive source motor moves B negative.
+Translate actual response, not that inconsistent getter: canonical B-A limits
+are -sourceUpper..-sourceLower, motor speed=-sourceSpeed, reference=-sourceReference.
+When source B is fixtureless ground swap endpoints/anchors, reverse signs again,
+and account for any original ground rotation absent from canonical ground. Axis
+comes from source world getAxis and is rotated into canonical A's frame once.

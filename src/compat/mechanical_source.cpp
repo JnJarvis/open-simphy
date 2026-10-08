@@ -680,7 +680,8 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 continue;
             const std::string jt = node.attribute("xsi:type").value();
             if (jt != "DistanceJoint" && jt != "RevoluteJoint" && jt != "SpindleJoint" &&
-                jt != "SpringJoint" && jt != "RopeJoint" && jt != "WeldJoint" && jt != "LineJoint")
+                jt != "SpringJoint" && jt != "RopeJoint" && jt != "WeldJoint" &&
+                jt != "LineJoint" && jt != "PrismaticJoint")
                 throw std::runtime_error("Unsupported joint profile: " + jt);
             const double source_frequency = scalar(node.child("Frequency"));
             if (source_frequency < 0 || (source_frequency != 0 && jt != "DistanceJoint" &&
@@ -688,6 +689,54 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 throw std::runtime_error("Unsupported elastic parameters for joint: " + jt);
             auto ia = ids.find(node.child("BodyId1").child_value()),
                  ib = ids.find(node.child("BodyId2").child_value());
+            if (jt == "PrismaticJoint") {
+                if (ia == ids.end() || ib == ids.end())
+                    throw std::runtime_error("Unresolved prismatic endpoints");
+                const bool swap = !ib->second;
+                const unsigned a_id = swap ? ib->second : ia->second,
+                               b_id = swap ? ia->second : ib->second;
+                if (!b_id)
+                    throw std::runtime_error("Prismatic needs an explicit body");
+                auto a = point(node.child(swap ? "Anchor2" : "Anchor1")),
+                     b = point(node.child(swap ? "Anchor1" : "Anchor2"));
+                auto axis = point(node.child("Axis"));
+                const double length = std::hypot(axis.x, axis.y);
+                if (length < 1e-9)
+                    throw std::runtime_error("Invalid prismatic axis");
+                axis = {axis.x / length, axis.y / length};
+                if (a_id) {
+                    const auto com = centers.at(a_id);
+                    a = rotate({a.x - com.x, a.y - com.y}, -angles.at(a_id));
+                    axis = rotate(axis, -angles.at(a_id));
+                }
+                const auto com = centers.at(b_id);
+                b = rotate({b.x - com.x, b.y - com.y}, -angles.at(b_id));
+                scene::SlideLink s;
+                s.id = {4097ULL + joint++};
+                s.body_a = {a_id};
+                s.body_b = {b_id};
+                s.local_a = a;
+                s.local_b = b;
+                s.axis = axis;
+                s.lock_rotation = true;
+                const double sign = swap ? 1 : -1;
+                s.reference = sign * scalar(node.child("ReferenceAngle"));
+                if (!a_id)
+                    s.reference += source_angles.at(swap ? ib->first : ia->first);
+                s.limit = node.child("LimitEnabled").text().as_bool(false);
+                if (s.limit) {
+                    const double lower = scalar(node.child("LowerLimit")),
+                                 upper = scalar(node.child("UpperLimit"));
+                    s.lower = swap ? lower : -upper;
+                    s.upper = swap ? upper : -lower;
+                }
+                s.motor = node.child("MotorEnabled").text().as_bool(false);
+                s.speed = sign * scalar(node.child("MotorSpeed"));
+                s.max_force = scalar(node.child("MaximumMotorForce"));
+                s.collide_connected = node.child("CollisionAllowed").text().as_bool(false);
+                p->definition.slides.push_back(s);
+                continue;
+            }
             if (jt == "LineJoint") {
                 if (ia == ids.end() || ib == ids.end() || !ib->second)
                     throw std::runtime_error("Unresolved line joint endpoints");

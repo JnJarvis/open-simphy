@@ -2,8 +2,11 @@
 #include "sdl_host.hpp"
 #include "session.hpp"
 #include "source_project.hpp"
+#include "text.hpp"
 namespace opensim::app {
 class EditorUI {
+    mutable std::unique_ptr<TextRenderer> text_;
+    void text(SDL_Renderer *, float, float, const std::string &, float width = 100000) const;
     std::optional<compat::Project> source_;
     float source_scroll_ = 0;
     void paint_source(SDL_Renderer *, renderer::Extent, float) const;

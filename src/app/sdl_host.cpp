@@ -120,12 +120,20 @@ core::Result<void> Host::present(const renderer::Frame &frame, const char *captu
     for (const auto &tick : grid_ticks(-camera.center.y, camera.pixels_per_meter, size.height))
         for (std::uint32_t x = 0; x < size.width; ++x)
             put(x, static_cast<std::uint32_t>(tick.pixel), tick.major);
+    // Recolor only canonical clear pixels in this mutable upload copy.
+    for (std::uint32_t y = 0; y < size.height; ++y)
+        for (std::uint32_t x = 0; x < size.width; ++x) {
+            auto *p =
+                static_cast<std::uint8_t *>(pixels) + std::size_t(y) * pitch + std::size_t(x) * 4;
+            if (p[0] == 16 && p[1] == 20 && p[2] == 28 && p[3] == 255)
+                p[0] = p[1] = p[2] = 42;
+        }
     SDL_UnlockTexture(texture_.get());
     const auto layout = workspace();
     const SDL_FRect destination{static_cast<float>(layout.x), static_cast<float>(layout.y),
                                 static_cast<float>(frame.width()),
                                 static_cast<float>(frame.height())};
-    if (!SDL_SetRenderDrawColor(device_.get(), 16, 20, 28, 255) ||
+    if (!SDL_SetRenderDrawColor(device_.get(), 42, 42, 42, 255) ||
         !SDL_RenderClear(device_.get()) ||
         !SDL_RenderTexture(device_.get(), texture_.get(), nullptr, &destination))
         return failure("Copy frame");

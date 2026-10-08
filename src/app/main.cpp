@@ -126,6 +126,12 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     draw("smoke-help.bmp");
     key(SDLK_ESCAPE, session, ui, host);
     draw("smoke-workspace.bmp");
+    // Exercise a different raster density without changing the user's desktop settings.
+    checked(session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
+        return host.present(f, "smoke-font-150.bmp", false,
+                            [&](SDL_Renderer *r) { ui.paint(r, session, host.extent(), 1.5f); });
+    }));
+    draw("smoke-font-return.bmp");
     session = *app::Session::create().value();
     ui = app::EditorUI{};
     checked(session.resize(host.canvas_extent()));

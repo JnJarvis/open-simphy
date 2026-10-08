@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <iostream>
 #include <locale>
 #include <sstream>
 namespace opensim::app {
@@ -46,11 +47,9 @@ std::string number(double n, int precision = 6) {
     out << std::setprecision(precision) << (n == 0 ? 0 : n);
     return out.str();
 }
-void text(SDL_Renderer *r, float x, float y, const std::string &s) {
-    require_sdl(SDL_RenderDebugText(r, x, y, s.c_str()), "Draw editor text");
-}
 void color(SDL_Renderer *r, Uint8 red, Uint8 green, Uint8 blue) {
-    require_sdl(SDL_SetRenderDrawColor(r, red, green, blue, 255), "Set UI color");
+    const Uint8 gray = static_cast<Uint8>((unsigned(red) + green + blue) / 3);
+    require_sdl(SDL_SetRenderDrawColor(r, gray, gray, gray, 255), "Set UI color");
 }
 void box(SDL_Renderer *r, float x, float y, float w, float h) {
     const SDL_FRect rect{x, y, w, h};
@@ -61,8 +60,16 @@ core::Result<void> input_error(const char *message) {
         {core::Code::invalid_argument, core::Severity::error, message, {}, "app.property"});
 }
 } // namespace
+void EditorUI::text(SDL_Renderer *r, float x, float y, const std::string &s, float width) const {
+    if (!text_)
+        text_ = std::make_unique<TextRenderer>(r);
+    text_->draw(x, y - 4, s, width);
+}
 void EditorUI::report(const core::Result<void> &result) {
     message_ = result.error() ? result.error()->message : "Ready";
+    if (const auto *error = result.error())
+        std::cerr << "Open Simphy [" << core::code_name(error->code) << "] "
+                  << error->path.value_or("app") << ": " << error->message << std::endl;
 }
 void EditorUI::end_text(Host &host) {
     if (field_ >= 0)
@@ -95,7 +102,11 @@ void EditorUI::edit_field(int field, Session &session, Host &host) {
 bool EditorUI::open_file(const std::string &path, Session &session) {
     auto result = read_project(utf8_path(path));
     if (result.error()) {
-        message_ = result.error()->message;
+        const auto &error = *result.error();
+        message_ = error.message;
+        std::cerr << "Open Simphy: cannot open " << std::quoted(path) << " ["
+                  << core::code_name(error.code) << "] " << error.path.value_or("ssim") << ": "
+                  << error.message << std::endl;
         return false;
     }
     auto next = *result.value();
@@ -104,6 +115,18 @@ bool EditorUI::open_file(const std::string &path, Session &session) {
     source_ = std::move(next);
     source_scroll_ = 0;
     message_ = "SSIM source opened. Physics support is still being built.";
+    std::cerr << "Open Simphy: opened " << std::quoted(path)
+              << " for source preview only; rigid-body simulation is not implemented."
+              << " Outlines=" << source_->outlines.size()
+              << ", omitted=" << source_->omitted_outlines
+              << ", nonempty scripts=" << source_->scripts << '\n';
+    for (const auto &[name, count] : source_->shapes)
+        std::cerr << "  Shape " << name << ": " << count << '\n';
+    for (const auto &[name, count] : source_->joints)
+        std::cerr << "  Joint " << name << ": " << count << " (simulation unavailable)\n";
+    for (const auto &reason : source_->diagnostics)
+        std::cerr << "  Preview limitation: " << reason << '\n';
+    std::cerr << std::flush;
     return true;
 }
 void EditorUI::poll_open(Session &session, Host &host) {
@@ -427,7 +450,7 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     require_sdl(SDL_SetRenderScale(r, scale, scale), "Scale workspace");
     const float w = layout.width, h = layout.height, panel = 0;
     const auto clipped_text = [&](float x, float y, const std::string &value, float width) {
-        text(r, x, y, value.substr(0, static_cast<std::size_t>(std::max(0.0f, width / 8))));
+        text(r, x, y, value, width);
     };
     color(r, 19, 24, 33);
     box(r, 0, 0, w, 38);
@@ -436,7 +459,7 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     color(r, 173, 185, 204);
     text(r, 128, 15, source_ ? "/  SSIM source" : "/  Untitled scene");
     color(r, 107, 123, 145);
-    text(r, w - 144, 15, "WORKSPACE PREVIEW");
+    text(r, w - 172, 15, "WORKSPACE PREVIEW");
     color(r, 29, 36, 49);
     box(r, 0, 38, w, 52);
     const char *buttons[] = {s.running() ? "Pause" : "Play",
@@ -489,7 +512,7 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     color(r, 190, 194, 199);
     for (const auto &tick : grid_ticks(view.center.x, view.pixels_per_meter, layout.canvas.width))
         if (tick.major)
-            text(r, (float(layout.x) + float(tick.pixel)) / scale, 103, number(tick.world, 3));
+            text(r, (float(layout.x) + float(tick.pixel)) / scale, 98, number(tick.world, 3));
     for (const auto &tick : grid_ticks(-view.center.y, view.pixels_per_meter, layout.canvas.height))
         if (tick.major)
             clipped_text(layout.left + 2, (float(layout.y) + float(tick.pixel)) / scale,
@@ -621,9 +644,9 @@ void EditorUI::paint_source(SDL_Renderer *r, renderer::Extent extent, float scal
     const auto label = [&](float x, float y, const std::string &value, float width) {
         std::string safe = value;
         for (auto &c : safe)
-            if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) >= 127)
+            if (static_cast<unsigned char>(c) < 32)
                 c = '?';
-        text(r, x, y, safe.substr(0, static_cast<std::size_t>(std::max(0.0f, width / 8))));
+        text(r, x, y, safe, width);
     };
     label(12, 50, p.title.empty() ? "Untitled SSIM" : p.title, l.width - 24);
     color(r, 244, 190, 93);

@@ -496,3 +496,28 @@ TEST_CASE("Hinge angular limits stop a motor at the declared bound", "[unit][rig
     REQUIRE(w->snapshot().bodies[0].angle == Catch::Approx(-.3).margin(.02));
     REQUIRE(std::abs(w->snapshot().bodies[0].angular_velocity) < .02);
 }
+
+TEST_CASE("Circle versus rectangular plane wall reflects an elastic normal impact",
+          "[unit][rigid]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    scene::CircleBody circle;
+    circle.id = {1};
+    circle.radius = .25;
+    circle.center = {-2, 0};
+    circle.velocity = {2, 0};
+    circle.friction = 0;
+    circle.restitution = 1;
+    scene::CircleBody wall;
+    wall.id = {2};
+    wall.static_body = true;
+    wall.fixtures = {box(.5, 5)};
+    wall.fixtures[0].restitution = 1;
+    m.bodies = {circle, wall};
+    auto w = make(m);
+    for (int i = 0; i < 90; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].velocity.x == Catch::Approx(-2).margin(.02));
+    REQUIRE(std::abs(w->snapshot().bodies[0].velocity.y) < .001);
+    REQUIRE(w->snapshot().bodies[1].center == wall.center);
+}

@@ -3,8 +3,9 @@
 A modular, independent open-source simulator project with a working Windows
 workspace preview. The current slice models free particles under uniform gravity,
 with a real editor, toolbar, scene list, viewport and property inspector.
-The native document codec exists; Save/Open UI, collisions and SimPHY import
-support are not implemented yet. This is an early application, not a finished product.
+The native document codec exists. The app can open real `.ssim` archives for
+source inspection and partial geometry preview; executable SimPHY import,
+collisions and native Save/Open are still being built. See [SSIM opening](docs/ssim.md). This is an early application, not a finished product.
 
 ## Try the demo
 

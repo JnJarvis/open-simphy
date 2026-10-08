@@ -127,3 +127,7 @@ Automated integration tests cover 100/125/150/200 percent and asymmetric coordin
 ratios; these do not substitute for actual monitor testing. The local editor was
 also exercised on a real Windows display reporting scale1.5. Mixed-monitor and
 Linux/macOS interactive smoke remain separate hardware checks.
+
+Open... / Ctrl+O / file drop opens a real SSIM source preview. Escape returns to
+the authored scene. See [SSIM controls and limits](ssim.md); imported projects
+require future body/collision/joint support before they can play.

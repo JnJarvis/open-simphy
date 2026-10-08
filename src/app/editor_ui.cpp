@@ -92,9 +92,63 @@ void EditorUI::edit_field(int field, Session &session, Host &host) {
     require_sdl(SDL_StartTextInput(host.window()), "Start property input");
     message_ = "Type a number, Enter to apply, Escape to cancel.";
 }
+bool EditorUI::open_file(const std::string &path, Session &session) {
+    auto result = read_project(utf8_path(path));
+    if (result.error()) {
+        message_ = result.error()->message;
+        return false;
+    }
+    auto next = *result.value();
+    report(session.cancel_drag());
+    report(session.set_running(false));
+    source_ = std::move(next);
+    source_scroll_ = 0;
+    message_ = "SSIM source opened. Physics support is still being built.";
+    return true;
+}
+void EditorUI::poll_open(Session &session, Host &host) {
+    if (auto path = host.take_open(); path && !path->empty()) {
+        end_text(host);
+        open_file(*path, session);
+    }
+}
 bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
     if (e.type == SDL_EVENT_QUIT || e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
         return false;
+    if (e.type == SDL_EVENT_DROP_FILE) {
+        end_text(host);
+        open_file(e.drop.data, s);
+        return true;
+    }
+    if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat && e.key.key == SDLK_O &&
+        (e.key.mod & SDL_KMOD_CTRL)) {
+        end_text(host);
+        host.request_open();
+        return true;
+    }
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
+        int window_w = 0, window_h = 0;
+        require_sdl(SDL_GetWindowSize(host.window(), &window_w, &window_h),
+                    "Query Open button coordinates");
+        const auto l = host.workspace();
+        const auto point = physical_pointer({e.button.x, e.button.y},
+                                            {double(window_w), double(window_h)}, host.extent());
+        if (point.value() && point.value()->x / l.scale >= 12 && point.value()->x / l.scale < 92 &&
+            point.value()->y / l.scale >= 4 && point.value()->y / l.scale < 32) {
+            end_text(host);
+            host.request_open();
+            return true;
+        }
+    }
+    if (source_) {
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
+            source_.reset();
+            message_ = "Returned to authored scene.";
+        }
+        if (e.type == SDL_EVENT_MOUSE_WHEEL)
+            source_scroll_ = std::max(0.0f, source_scroll_ - e.wheel.y * 24);
+        return true;
+    }
     if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST || e.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ||
         e.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) {
         report(s.cancel_drag());
@@ -378,9 +432,9 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     color(r, 19, 24, 33);
     box(r, 0, 0, w, 38);
     color(r, 105, 219, 202);
-    text(r, 16, 15, "OPEN SIMPHY");
+    text(r, 16, 15, "Open...");
     color(r, 173, 185, 204);
-    text(r, 128, 15, "/  Untitled scene");
+    text(r, 128, 15, source_ ? "/  SSIM source" : "/  Untitled scene");
     color(r, 107, 123, 145);
     text(r, w - 144, 15, "WORKSPACE PREVIEW");
     color(r, 29, 36, 49);
@@ -527,6 +581,11 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     box(r, 0, h - 32, w, 32);
     color(r, 196, 211, 230);
     clipped_text(12, h - 20, message_, w - 24);
+    if (source_) {
+        paint_source(r, extent, scale);
+        require_sdl(SDL_SetRenderScale(r, 1, 1), "Restore source scale");
+        return;
+    }
     if (help_) {
         const float hw = std::min(520.0f, w - 32), hx = (w - hw) / 2,
                     hy = std::max(116.0f, (h - 264) / 2);
@@ -543,7 +602,7 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
                                "N: add   Delete: remove   Ctrl+Z/Y: history",
                                "Wheel: zoom   WASD: pan   Home: reset view",
                                "Properties: type, Enter applies, Esc cancels",
-                               "Save/Open and more object types are coming.",
+                               "Ctrl+O: open SSIM source / drop a project",
                                "F1, Escape or click to close this guide."};
         for (int i = 0; i < 9; ++i) {
             color(r, 195, 210, 231);
@@ -551,5 +610,92 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
         }
     }
     require_sdl(SDL_SetRenderScale(r, 1, 1), "Restore physical-pixel rendering");
+}
+void EditorUI::paint_source(SDL_Renderer *r, renderer::Extent extent, float scale) const {
+    const auto l = Workspace::layout(extent, scale);
+    const auto &p = *source_;
+    const float sidebar = std::min(340.0f, l.width * .45f);
+    color(r, 24, 29, 35);
+    box(r, 0, 38, l.width, l.height - 38);
+    color(r, 224, 231, 239);
+    const auto label = [&](float x, float y, const std::string &value, float width) {
+        std::string safe = value;
+        for (auto &c : safe)
+            if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) >= 127)
+                c = '?';
+        text(r, x, y, safe.substr(0, static_cast<std::size_t>(std::max(0.0f, width / 8))));
+    };
+    label(12, 50, p.title.empty() ? "Untitled SSIM" : p.title, l.width - 24);
+    color(r, 244, 190, 93);
+    text(r, 12, 74, "SOURCE PREVIEW / simulation unavailable");
+    color(r, 31, 34, 38);
+    box(r, sidebar, 100, l.width - sidebar, l.height - 132);
+    std::vector<std::string> rows{"Version: " + p.version,
+                                  "Archive members: " + std::to_string(p.members.size()),
+                                  "Fixture outlines: " + std::to_string(p.outlines.size()),
+                                  "Omitted outlines: " + std::to_string(p.omitted_outlines),
+                                  "Nonempty scripts: " + std::to_string(p.scripts),
+                                  "SHAPES"};
+    for (const auto &[name, count] : p.shapes)
+        rows.push_back(name + ": " + std::to_string(count));
+    rows.push_back("JOINTS");
+    for (const auto &[name, count] : p.joints)
+        rows.push_back(name + ": " + std::to_string(count));
+    rows.push_back("ALL SOURCE ELEMENTS");
+    for (const auto &[name, count] : p.elements)
+        rows.push_back(name + ": " + std::to_string(count));
+    rows.push_back("ARCHIVE MEMBERS");
+    rows.insert(rows.end(), p.members.begin(), p.members.end());
+    rows.push_back("PREVIEW LIMITATIONS");
+    rows.insert(rows.end(), p.diagnostics.begin(), p.diagnostics.end());
+    const SDL_Rect clip{0, 100, static_cast<int>(sidebar),
+                        static_cast<int>(std::max(0.0f, l.height - 132))};
+    require_sdl(SDL_SetRenderClipRect(r, &clip), "Clip source report");
+    const float scroll = std::clamp(source_scroll_, 0.0f,
+                                    std::max(0.0f, float(rows.size()) * 24 - (l.height - 132)));
+    for (std::size_t i = 0; i < rows.size(); ++i) {
+        const float y = 112 + float(i) * 24 - scroll;
+        if (y < 88 || y > l.height - 32)
+            continue;
+        color(r, 186, 202, 218);
+        label(12, y, rows[i], sidebar - 20);
+    }
+    require_sdl(SDL_SetRenderClipRect(r, nullptr), "Restore source clip");
+    if (!p.outlines.empty()) {
+        double xmin = 1e30, xmax = -1e30, ymin = 1e30, ymax = -1e30;
+        for (const auto &shape : p.outlines)
+            for (auto v : shape.points) {
+                xmin = std::min(xmin, v.x);
+                xmax = std::max(xmax, v.x);
+                ymin = std::min(ymin, v.y);
+                ymax = std::max(ymax, v.y);
+            }
+        const double factor =
+            std::min(std::max(1.0f, l.width - sidebar - 40) / std::max(1.0, xmax - xmin),
+                     std::max(1.0f, l.height - 180) / std::max(1.0, ymax - ymin));
+        const auto point = [&](math::Vec2 v) {
+            return SDL_FPoint{
+                float(sidebar + (l.width - sidebar) / 2 + (v.x - (xmin + xmax) / 2) * factor),
+                float(100 + (l.height - 132) / 2 - (v.y - (ymin + ymax) / 2) * factor)};
+        };
+        color(r, 84, 199, 230);
+        for (const auto &shape : p.outlines) {
+            std::vector<SDL_FPoint> points;
+            for (auto v : shape.points)
+                points.push_back(point(v));
+            if (shape.closed)
+                points.push_back(points.front());
+            require_sdl(SDL_RenderLines(r, points.data(), static_cast<int>(points.size())),
+                        "Draw source outlines");
+        }
+    } else {
+        color(r, 190, 202, 218);
+        label(sidebar + 16, 120, "No supported fixture outlines", l.width - sidebar - 32);
+    }
+    color(r, 20, 24, 29);
+    box(r, 0, l.height - 32, l.width, 32);
+    color(r, 213, 224, 236);
+    label(12, l.height - 20, "Ctrl+O: open / Esc: return / Wheel: report | " + message_,
+          l.width - 24);
 }
 } // namespace opensim::app

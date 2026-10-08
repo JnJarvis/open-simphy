@@ -1,8 +1,12 @@
 #pragma once
 #include "sdl_host.hpp"
 #include "session.hpp"
+#include "source_project.hpp"
 namespace opensim::app {
 class EditorUI {
+    std::optional<compat::Project> source_;
+    float source_scroll_ = 0;
+    void paint_source(SDL_Renderer *, renderer::Extent, float) const;
     int field_ = -1;
     float panel_scroll_ = 0, scene_scroll_ = 0;
     bool help_ = false;
@@ -15,6 +19,10 @@ class EditorUI {
     void action(int, Session &, Host &);
 
   public:
+    bool open_file(const std::string &, Session &);
+    void poll_open(Session &, Host &);
+    std::string source_title() const { return source_ ? source_->title : std::string{}; }
+    bool source_open() const { return source_.has_value(); }
     bool event(const SDL_Event &, Session &, Host &);
     void paint(SDL_Renderer *, const Session &, renderer::Extent, float scale) const;
     const std::string &message() const { return message_; }

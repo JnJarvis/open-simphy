@@ -45,6 +45,29 @@ Workspace Host::workspace() const {
     return Workspace::layout(extent(), SDL_GetWindowDisplayScale(window_.get()));
 }
 renderer::Extent Host::canvas_extent() const { return workspace().canvas; }
+void Host::request_open() {
+    std::lock_guard lock(open_->mutex);
+    if (open_->pending)
+        return;
+    open_->pending = true;
+    static const SDL_DialogFileFilter filters[]{{"SimPHY project", "ssim"}};
+    auto *state = new std::shared_ptr<OpenRequest>(open_);
+    SDL_ShowOpenFileDialog(
+        [](void *data, const char *const *files, int) {
+            std::unique_ptr<std::shared_ptr<OpenRequest>> handle(
+                static_cast<std::shared_ptr<OpenRequest> *>(data));
+            std::lock_guard guard((*handle)->mutex);
+            (*handle)->pending = false;
+            (*handle)->path = files && files[0] ? files[0] : "";
+        },
+        state, window_.get(), filters, 1, nullptr, false);
+}
+std::optional<std::string> Host::take_open() {
+    std::lock_guard lock(open_->mutex);
+    auto path = std::move(open_->path);
+    open_->path.reset();
+    return path;
+}
 void Host::title(const std::string &text) {
     require_sdl(SDL_SetWindowTitle(window_.get(), text.c_str()), "Set title");
 }

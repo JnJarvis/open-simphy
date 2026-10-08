@@ -207,10 +207,41 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
 }
 } // namespace
 int main(int argc, char **argv) {
+    std::string open_path, smoke_source;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
-        if (arg == "--smoke")
+        if ((arg == "--inspect" || arg == "--inspect-directory") && i + 1 < argc) {
+            const auto inspect = [](const std::filesystem::path &path) {
+                auto parsed = app::read_project(path);
+                if (parsed.error()) {
+                    std::cerr << path.filename().string() << ": " << parsed.error()->message
+                              << '\n';
+                    return false;
+                }
+                const auto &p = *parsed.value();
+                std::cout << path.filename().string() << " version=" << p.version
+                          << " members=" << p.members.size() << " outlines=" << p.outlines.size()
+                          << " scripts=" << p.scripts << '\n';
+                return true;
+            };
+            const auto path = app::utf8_path(argv[++i]);
+            if (arg == "--inspect")
+                return inspect(path) ? 0 : 1;
+            unsigned count = 0, failed = 0;
+            for (const auto &entry : std::filesystem::recursive_directory_iterator(path))
+                if (entry.is_regular_file() && entry.path().extension() == ".ssim") {
+                    ++count;
+                    if (!inspect(entry.path()))
+                        ++failed;
+                }
+            std::cout << "Archives=" << count << " rejected=" << failed << '\n';
+            return count && !failed ? 0 : 1;
+        } else if (arg == "--open" && i + 1 < argc)
+            open_path = argv[++i];
+        else if (arg == "--smoke-source" && i + 1 < argc)
+            smoke_source = argv[++i];
+        else if (arg == "--smoke")
             smoke_mode = true;
         else if (arg == "--fail-window")
             fail_window = true;
@@ -228,6 +259,45 @@ int main(int argc, char **argv) {
         auto session = *initial.value();
         app::Host host(fail_window);
         app::EditorUI ui;
+        if (!open_path.empty() && !ui.open_file(open_path, session))
+            throw std::runtime_error(ui.message());
+        if (!smoke_source.empty()) {
+            SDL_Event dropped{};
+            dropped.type = SDL_EVENT_DROP_FILE;
+            dropped.drop.data = smoke_source.c_str();
+            expect(ui.event(dropped, session, host) && ui.source_open(),
+                   "Real source file-drop open failed");
+            const auto title = ui.source_title();
+            const auto corrupt_path =
+                std::filesystem::temp_directory_path() /
+                ("opensim-smoke-invalid-" + std::to_string(SDL_GetTicksNS()) + ".ssim");
+            {
+                std::ofstream bad(corrupt_path, std::ios::binary);
+                bad << "not a ZIP archive";
+            }
+            const auto corrupt_u8 = corrupt_path.u8string();
+            const std::string corrupt(reinterpret_cast<const char *>(corrupt_u8.data()),
+                                      corrupt_u8.size());
+            expect(!ui.open_file(corrupt, session), "Corrupt ZIP accepted");
+            std::filesystem::remove(corrupt_path);
+            expect(ui.source_title() == title, "Corrupt open changed source");
+            const auto retained = session.editing().document();
+            expect(!ui.open_file(smoke_source + ".missing", session), "Missing project accepted");
+            expect(ui.source_title() == title && session.editing().document() == retained,
+                   "Failed open changed source or scene");
+            checked(session.draw(
+                host.canvas_extent(), renderer::render, [&](const renderer::Frame &frame) {
+                    return host.present(frame, "smoke-source.bmp", false, [&](SDL_Renderer *r) {
+                        ui.paint(r, session, host.extent(),
+                                 SDL_GetWindowDisplayScale(host.window()));
+                    });
+                }));
+            key(SDLK_ESCAPE, session, ui, host);
+            expect(!ui.source_open(), "Could not return to authored scene");
+            std::cout
+                << "PASS: real source preview, failed open retention, return to authored scene\n";
+            return 0;
+        }
         if (smoke_mode) {
             smoke(session, host, ui);
             return 0;
@@ -235,6 +305,7 @@ int main(int argc, char **argv) {
         auto previous = std::chrono::steady_clock::now();
         std::string last_error;
         while (events(session, ui, host)) {
+            ui.poll_open(session, host);
             const auto now = std::chrono::steady_clock::now();
             checked(session.tick(std::chrono::duration<double>(now - previous).count()));
             previous = now;
@@ -259,9 +330,11 @@ int main(int argc, char **argv) {
             } else
                 last_error.clear();
             std::ostringstream title;
-            title << "Open Simphy - Untitled scene | " << (session.running() ? "Running" : "Paused")
-                  << " | t=" << std::fixed << std::setprecision(3) << session.snapshot().time()
-                  << " s | Workspace preview";
+            title << "Open Simphy - "
+                  << (ui.source_open() ? ui.source_title() + " | SSIM source preview"
+                                       : "Untitled scene")
+                  << " | " << (session.running() ? "Running" : "Paused") << " | t=" << std::fixed
+                  << std::setprecision(3) << session.snapshot().time() << " s | Workspace preview";
             if (!last_error.empty())
                 title << " | " << last_error;
             host.title(title.str());
@@ -269,7 +342,7 @@ int main(int argc, char **argv) {
         }
     } catch (const std::exception &error) {
         std::cerr << "Open Simphy: " << error.what() << '\n';
-        if (!smoke_mode && !fail_window && !fail_texture)
+        if (!smoke_mode && smoke_source.empty() && !fail_window && !fail_texture)
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Open Simphy", error.what(), nullptr);
         return 1;
     }

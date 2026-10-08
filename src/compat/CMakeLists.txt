@@ -1,0 +1,7 @@
+enable_language(C)
+include(OpenSimSSIM)
+opensim_setup_ssim()
+opensim_add_module(compat SOURCES ssim.cpp HEADERS include/opensim/compat/ssim.hpp PUBLIC_DEPS core math)
+target_link_libraries(opensim_compat PRIVATE miniz pugixml::pugixml)
+set(OPENSIM_MINIZ_NOTICE "${OPENSIM_MINIZ_NOTICE}" CACHE INTERNAL "miniz license")
+set(OPENSIM_PUGIXML_NOTICE "${OPENSIM_PUGIXML_NOTICE}" CACHE INTERNAL "pugixml license")

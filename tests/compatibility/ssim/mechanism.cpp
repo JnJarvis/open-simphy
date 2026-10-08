@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
+#include <cmath>
 #include <miniz.h>
 #include <opensim/compat/mechanical_source.hpp>
 using namespace opensim;
@@ -65,4 +66,16 @@ TEST_CASE("Bounded source scripts reject unknown APIs and runaway code",
     REQUIRE(compat::MechanicalSource::create(
                 project("let a=[];while(true)a.push('a'.repeat(1000000));"))
                 .error());
+}
+
+TEST_CASE("Script distance anchors use the body's rotated local frame",
+          "[compatibility][mechanism]") {
+    auto result = compat::MechanicalSource::create(
+        project("var b=World.getBody('ball');b.d.angle=Math.PI/2;World.addDistanceJoint(b,null,new "
+                "Vector2(1,0),new Vector2(1,3));"));
+    REQUIRE(result.value());
+    const auto &j = result.value()->definition().links.front();
+    REQUIRE(std::abs(j.local_a.x) < 1e-12);
+    REQUIRE(std::abs(j.local_a.y + 1) < 1e-12);
+    REQUIRE(j.local_b == math::Vec2{1, 3});
 }

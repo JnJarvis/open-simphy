@@ -314,10 +314,10 @@ int main(int argc, char **argv) {
                 if (!view->definition().links.empty()) {
                     const auto &joint = view->definition().links.back();
                     if (!joint.body_b.valid()) {
-                        const auto initial = view->snapshot();
-                        const auto body =
-                            *std::find_if(initial.bodies.begin(), initial.bodies.end(),
-                                          [&](const auto &b) { return b.id == joint.body_a; });
+                        const auto cradle_initial = view->snapshot();
+                        const auto body = *std::find_if(
+                            cradle_initial.bodies.begin(), cradle_initial.bodies.end(),
+                            [&](const auto &b) { return b.id == joint.body_a; });
                         const auto l = host.workspace();
                         const auto pixel = [&](math::Vec2 p) {
                             return math::Vec2{l.x + double(l.canvas.width) / 2 +
@@ -366,7 +366,7 @@ int main(int argc, char **argv) {
                             const auto state = view->snapshot();
                             for (const auto &b : state.bodies)
                                 if (b.id != body.id)
-                                    for (const auto &old : initial.bodies)
+                                    for (const auto &old : cradle_initial.bodies)
                                         if (old.id == b.id && std::abs(old.center.y) < 10)
                                             other_motion = std::max(
                                                 other_motion, std::abs(b.center.x - old.center.x));

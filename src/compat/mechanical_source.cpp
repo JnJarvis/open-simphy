@@ -144,11 +144,12 @@ class Body {
  setPosition(v){this.d.center={x:v.x,y:v.y};this.d.velocity={x:0,y:0};}
  getVelocity(){return new Vector2(this.d.velocity.x,this.d.velocity.y);}
 }
+function __local(body,p){const x=p.x-body.d.center.x,y=p.y-body.d.center.y,c=Math.cos(body.d.angle),s=Math.sin(body.d.angle);return {x:c*x+s*y,y:-s*x+c*y};}
 const World={
  clear(){__bodies=__bodies.filter(b=>!b.spawned);__links=__links.filter(j=>!j.spawned);},
  getBody(name){const b=__bodies.find(b=>b.name===name);if(!b)throw Error('Missing body '+name);return new Body(b);},
  createCopy(body){if(__bodies.length>=256)throw Error('Body budget');const b=JSON.parse(JSON.stringify(body.d));b.id=__next++;b.spawned=true;__bodies.push(b);return new Body(b);},
- addDistanceJoint(a,b,p,q){if(__links.length>=1024)throw Error('Joint budget');const j={id:__joint++,a:a.d.id,b:b?b.d.id:0,pa:{x:p.x-a.d.center.x,y:p.y-a.d.center.y},pb:b?{x:q.x-b.d.center.x,y:q.y-b.d.center.y}:{x:q.x,y:q.y},length:Math.hypot(p.x-q.x,p.y-q.y),color:[1,.647,0,1],spawned:true};__links.push(j);return {setColor(c){j.color=c.rgba.slice();}};}
+ addDistanceJoint(a,b,p,q){if(__links.length>=1024)throw Error('Joint budget');const j={id:__joint++,a:a.d.id,b:b?b.d.id:0,pa:__local(a,p),pb:b?__local(b,q):{x:q.x,y:q.y},length:Math.hypot(p.x-q.x,p.y-q.y),color:[1,.647,0,1],spawned:true};__links.push(j);return {setColor(c){j.color=c.rgba.slice();}};}
 };
 const Resources={getSound(name){return {isPlaying(){return false;},play(){throw Error('Collision audio unsupported in experimental mechanics');}};}};
 // No host modules, I/O, network, native handles or clocks are installed.

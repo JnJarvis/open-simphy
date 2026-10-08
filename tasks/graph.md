@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-008 friction/rigid support is approved and merged. INT-009 exact polygon pieces and elastic/rope/weld constraints are in review with102 local tests and14 platform jobs passing. INT-007 navigation/continuous contacts remains separately in review; both workers are stopped. INT-010 driven mechanisms and live body properties awaits the reviewed INT-009 merge. Bundled coverage remains2/67 limited-profile executions; required fields/particles/tracers, other shapes/joints/controllers, scripted widgets/events/graphs, optics/circuits/3D/canvas and source visual/numerical parity remain unfinished. Opening files does not satisfy simulation compatibility.
+INT-009 exact polygon pieces and elastic/rope/weld constraints are approved and merged. INT-010 is in progress: line/prismatic backend, live commands and hidden source controls have111 local tests passing; actual driven source translation and full platform review remain unfinished. INT-007 navigation remains serialized/blocked. INT-011 explicitly scopes charged mechanics, bounded electric/magnetic fields and required callbacks/force displays/tracers after INT-010. Bundled coverage still2/67 limited-profile executions. All other required 2D families remain part of the compatibility objective; opening or partially running a file is not completion.
 
-DONE: 28 | REVIEW: 3 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 3
+DONE: 29 | REVIEW: 1 | IN_PROGRESS: 1 | READY: 1 | BLOCKED: 4
 
 ```mermaid
 flowchart TD
@@ -39,10 +39,11 @@ flowchart TD
   INT_005["INT-005: Scalable workspace and functional imported circle mechanisms<br/>DONE"]
   SCENE_003["SCENE-003: Specify compound rigid bodies and immutable body snapshots<br/>REVIEW"]
   INT_006["INT-006: Optimize imported rendering and correct cradle collision transfer<br/>DONE"]
-  INT_007["INT-007: Continuous circle contacts, viewport navigation and responsive Open<br/>REVIEW"]
+  INT_007["INT-007: Continuous circle contacts, viewport navigation and responsive Open<br/>BLOCKED"]
   INT_008["INT-008: General imported rigid fixtures and common 2D constraints<br/>DONE"]
-  INT_009["INT-009: Exact polygon pieces and elastic rigid constraints<br/>REVIEW"]
-  INT_010["INT-010: Driven mechanisms and live body properties<br/>BLOCKED"]
+  INT_009["INT-009: Exact polygon pieces and elastic rigid constraints<br/>DONE"]
+  INT_011["INT-011: Charged mechanics and electromagnetic fields<br/>BLOCKED"]
+  INT_010["INT-010: Driven mechanisms and live body properties<br/>IN_PROGRESS"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -98,4 +99,5 @@ flowchart TD
   COMPAT_004 --> INT_008
   INT_008 --> INT_009
   INT_009 --> INT_010
+  INT_010 --> INT_011
 ```

@@ -318,6 +318,7 @@ void SourceView::apply_controls(physics::Mechanism &world) {
         throw std::runtime_error(controls.error()->message);
     if (controls.value()->time)
         checked(world.set_time(*controls.value()->time));
+    checked(world.update(controls.value()->updates));
     checked(world.forces(controls.value()->forces));
     for (const auto &[id, mu] : controls.value()->friction)
         checked(world.friction(id, mu));
@@ -615,13 +616,14 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     panel(r, 0, 112, l.left, l.height - 144);
     color(r, {230 / 255.0, 230 / 255.0, 230 / 255.0, 1});
     label(14, 128, "IMPORTED BODIES");
-    label(14, 150,
-          std::to_string(state.bodies.size()) + " bodies / " +
-              std::to_string(
-                  source_.definition().links.size() + source_.definition().hinges.size() +
-                  source_.definition().windings.size() + source_.definition().welds.size()) +
-              " joints",
-          l.left - 24);
+    label(
+        14, 150,
+        std::to_string(state.bodies.size()) + " bodies / " +
+            std::to_string(source_.definition().links.size() + source_.definition().hinges.size() +
+                           source_.definition().windings.size() +
+                           source_.definition().welds.size() + source_.definition().slides.size()) +
+            " joints",
+        l.left - 24);
     float row = 176 - list_scroll_;
     for (const auto &b : source_.definition().bodies) {
         if (row < 176) {

@@ -438,6 +438,8 @@ core::Result<void> Mechanism::set_time(double time) {
 core::Result<void> Mechanism::update(const std::vector<scene::BodyUpdate> &updates) {
     if (impl_->poisoned || updates.size() > 256)
         return bad("Invalid body update budget/runtime");
+    if (updates.empty())
+        return core::Result<void>::success();
     // Validate a complete prospective definition before any backend operation.
     auto candidate = impl_->initial;
     std::set<core::EntityId> seen;

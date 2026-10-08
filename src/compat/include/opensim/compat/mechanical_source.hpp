@@ -18,6 +18,7 @@ struct SourceWidget {
 };
 struct SourceControls {
     std::optional<double> time;
+    std::vector<scene::BodyUpdate> updates;
     std::vector<scene::AppliedForce> forces;
     std::map<core::EntityId, double> friction;
 };

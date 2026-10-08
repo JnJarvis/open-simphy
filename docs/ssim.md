@@ -10,22 +10,28 @@ The app has two explicit modes:
 
 - **Experimental 2D rigid mechanics:** circles, rectangles, exact convex pieces of simple polygons and
   compound fixtures, finite static planes, rigid/elastic distance, spring, rope,
-  hinge, winding and weld joints can play, step, reset and be dragged. A bounded JavaScript bridge
+  hinge, winding, weld, line and prismatic joints can play, step, reset and be dragged. A bounded JavaScript bridge
   reconstructs supported startup-created copies and button actions. The supplied
   Newton Cradle shows the original ball, five colored textured copies, suspensions,
   its description and working Reset Cradle button. Pull a ball outward/upward,
   release it and press Play. Motion transfers through real circle contacts.
 - **Source preview:** unsupported profiles retain the original archive, outlines
   and feature report. They cannot play. This currently includes the supplied
-  charge/prismatic, resonance/line-controller, optics and circuit examples. The supplied
+  charge/field, optics and circuit examples. The supplied
   Static and Kinetic Friction is supported, including its three sliders and RESET
   callback.
+
+Resonance in Action now runs its driven platform and all four spring oscillators,
+with frequency control and reset. Hidden source variables remain available to
+expressions without becoming visible controls.
 
 The mechanics profile is experimental. It does not reproduce every source solver
 setting or all JavaScript APIs. Collision callbacks/sounds, dynamic scripting after
 startup, unsupported force/controller types, holes/crossing boundaries and geometry beyond
 the supported resource envelope, plus additional joints/domains remain unsupported. Force modes 0/1/2
-and property index 4 (friction) are supported; coefficient mixing preserves the
+and property indices 4 (friction), 9/10 (COM position) and 11/12 (velocity) are supported;
+indices 13/14 (angle/angular velocity) currently accept only zero, pending source unit evidence.
+Coefficient mixing preserves the
 source geometric-mean/minimum/maximum preferences independently. Unknown APIs and resource failures retain source
 preview rather than inventing replacement particles. See the
 [profile contract](../spec/contracts/mechanism.md). Source widget buttons honor
@@ -41,6 +47,7 @@ opensim_demo --inspect-directory path/to/local/examples
 opensim_demo --smoke-source path/to/project.ssim
 opensim_demo --smoke-mechanism "path/to/Newton Cradle.ssim"
 opensim_demo --smoke-rigid "path/to/Static and Kinetic Friction.ssim"
+opensim_demo --smoke-driven "path/to/Resonance in Action.ssim"
 opensim_demo --check-mechanics path/to/project.ssim
 opensim_demo --audit-mechanics-directory path/to/local/examples
 ```
@@ -99,8 +106,8 @@ patterns currently use their source fill color; exact source visual/solver parit
 is not claimed. Source plane is a finite 700-wide/50-deep box when no size is given;
 its surface must lie inside the supported world envelope.
 
-The 67-file bundled audit completes ten seconds plus reset for Newton Cradle and
-Static and Kinetic Friction. The other 65 still report missing domains/features.
+The 67-file bundled audit completes 600 stored steps plus reset for Newton Cradle,
+Static and Kinetic Friction and Resonance in Action. The other 64 still report missing domains/features.
 This is general support for these primitives, not a claim of all-file compatibility.
 The coordinator capability matrix records each file's current blocking feature.
 
@@ -115,11 +122,11 @@ textures remain continuous across pieces.
 Authored SpringJoint, frequency-based DistanceJoint, bounded RopeJoint and rigid/
 angular-soft WeldJoint now have runtime implementations and reset behavior. Springs
 use actual stiffness/axial damping and angular lever arms; zero stiffness remains
-free. These do not yet supply line/prismatic constraints, fields, particle systems,
+free. Fields, particle systems,
 tracers, all body-controller properties, graphs/events, optics, circuits or3D.
 Required missing features still prevent playback: opening and displaying a file
 are not evidence that its entire simulation executes. The bundled coverage remains
-2/67 until those additional behaviors are implemented and tested.
+3/67 until those additional behaviors are implemented and tested.
 
 For the independently authored geometry/elastic native check:
 ```text
@@ -128,3 +135,18 @@ opensim_demo --smoke-elastic build/elastic-smoke.ssim
 ```
 This checks spring extension and rope bounds through actual mouse events, then
 Play/Reset/callback behavior. It is synthetic evidence, separate from bundled coverage.
+
+## Driven mechanics (INT-010)
+
+Line constraints leave axial motion and relative rotation free; prismatic constraints
+also lock relative rotation and honor limits/motors. Live body position, velocity,
+material and damping commands preserve the existing world and its joints. Source
+clock requests update actual runtime time, including startup and reset callbacks.
+
+The resonance archive has a saved line-ground UUID absent from its body list. The
+user confirms it runs in SimPHY. A narrow compatibility inference resolves this
+reference only to a unique fixtureless INFINITE FixedAnchorBody at the zero frame;
+other missing endpoints remain errors. This is not a measured original-loader rule.
+Prismatic axis/anchor and limit/motor signs were checked with approved public API
+numerical probes. Nonzero line friction/offset and nonzero angular property
+expressions remain explicit unsupported cases until their semantics are verified.

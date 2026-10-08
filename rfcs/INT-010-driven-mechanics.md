@@ -61,3 +61,19 @@ are -sourceUpper..-sourceLower, motor speed=-sourceSpeed, reference=-sourceRefer
 When source B is fixtureless ground swap endpoints/anchors, reverse signs again,
 and account for any original ground rotation absent from canonical ground. Axis
 comes from source world getAxis and is rotated into canonical A's frame once.
+
+User confirms actual Resonance runs in original SimPHY despite its stale LineJoint
+A UUID. Narrow compatibility inference: an unresolved LineJoint A may alias the
+unique fixtureless INFINITE body named FixedAnchorBody only in its zero origin/
+rotation/COM frame. Missing B, other joint families, ambiguous/transformed defaults
+still fail. This represents the built-in ground reference, never a missing dynamic
+body. Record this inference explicitly, then check real driven behavior.
+
+SourceControls adds a vector of BodyUpdate commands, coalesced per ID in controller
+order. ValueProperties indices9/10 are COM coordinates (m),11/12 velocity(m/s),
+matching public property names, source world axes and measured COM setter semantics.
+13/14 currently accept only exact zero, whose conversion is unambiguous regardless
+of the still unmeasured angular expression units; nonzero requests remain explicit
+unsupported errors. This enables zero rotation locks without guessing other units.
+Apply updates atomically before forces/stepping. Property controllers operate on
+the actual current snapshot, never retained startup coordinates or rebuilt worlds.

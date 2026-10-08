@@ -6,9 +6,10 @@ with a real editor, toolbar, scene list, viewport and property inspector.
 The native document codec exists. The app opens real `.ssim` archives and now has
 an experimental 2D rigid mechanism path: circles, rectangles, convex polygon
 fixtures (including exact pieces for simple concave polygons), finite planes,
-distance/spring/rope/hinge/winding/weld joints and force/friction controls.
-Newton Cradle and Static and Kinetic Friction run with textures, contacts, playback
-and reset. Additional joint/controller families, event scripts, sound, optics,
+distance/spring/rope/hinge/winding/weld/line/prismatic joints and live body controls.
+Newton Cradle, Static and Kinetic Friction and Resonance in Action run with contacts,
+playback and reset. Resonance includes its driven platform and frequency slider.
+Additional joint/controller families, charges/fields, event scripts, sound, optics,
 circuits and 3D remain incomplete. See [SSIM opening](docs/ssim.md). This is an early application,
 not a finished product or a claim of full SimPHY compatibility.
 

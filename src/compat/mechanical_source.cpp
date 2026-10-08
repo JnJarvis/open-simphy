@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <functional>
@@ -269,6 +270,8 @@ struct MechanicalSource::Impl {
     struct Controller {
         core::EntityId body;
         std::string enabled, x, y, friction;
+        std::array<std::string, 15> values;
+        bool properties = false;
         math::Vec2 point{};
         int mode = 0;
         double initial_angle = 0;
@@ -495,6 +498,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
         std::map<unsigned, double> angles;
         std::map<std::string, math::Vec2> local_centers, origins;
         std::map<std::string, double> source_angles;
+        std::vector<std::string> default_ground;
         unsigned index = 0;
         for (auto body : world.child("Bodies").children()) {
             if (std::string(body.name()) != "Body" && std::string(body.name()) != "PlaneBody")
@@ -516,6 +520,10 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 if (mode != "INFINITE")
                     throw std::runtime_error("Dynamic body has no fixtures");
                 ids[key] = 0;
+                if (std::string(body.attribute("Name").value()) == "FixedAnchorBody" &&
+                    local_centers.at(key) == math::Vec2{} && origins.at(key) == math::Vec2{} &&
+                    source_angles.at(key) == 0)
+                    default_ground.push_back(key);
                 continue;
             }
             if (index >= 256)
@@ -738,6 +746,8 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 continue;
             }
             if (jt == "LineJoint") {
+                if (ia == ids.end() && default_ground.size() == 1)
+                    ia = ids.find(default_ground.front());
                 if (ia == ids.end() || ib == ids.end() || !ib->second)
                     throw std::runtime_error("Unresolved line joint endpoints");
                 if (scalar(node.child("LineJointOffset")) != 0 ||
@@ -988,15 +998,19 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 if (c.mode < 0 || c.mode > 2)
                     throw std::runtime_error("Unsupported force mode");
             } else if (kind == "ValuePropertiesController") {
+                c.properties = true;
                 std::istringstream fields(node.attribute("enabled").value());
                 std::string expr;
                 unsigned i = 0;
                 while (std::getline(fields, expr, ';')) {
                     if (!expr.empty() && expr != "null") {
-                        if (i != 4)
+                        if (i != 4 && (i < 9 || i > 14))
                             throw std::runtime_error("Unsupported value property index: " +
                                                      std::to_string(i));
-                        c.friction = expr;
+                        if (i == 4)
+                            c.friction = expr;
+                        else
+                            c.values[i] = expr;
                     }
                     ++i;
                 }
@@ -1004,7 +1018,11 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                     throw std::runtime_error("Property expression budget");
             } else
                 throw std::runtime_error("Unsupported controller: " + kind);
-            if (c.enabled.size() + c.x.size() + c.y.size() + c.friction.size() > 4096)
+            std::size_t expression_size =
+                c.enabled.size() + c.x.size() + c.y.size() + c.friction.size();
+            for (const auto &v : c.values)
+                expression_size += v.size();
+            if (expression_size > 4096)
                 throw std::runtime_error("Controller expression budget");
             p->controllers.push_back(std::move(c));
         }
@@ -1107,12 +1125,51 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
             Value n(impl_->context, impl_->eval("(" + code + ")"));
             return number(impl_->context, n.value);
         };
+        std::map<core::EntityId, scene::BodyUpdate> updates;
         for (const auto &c : impl_->controllers) {
-            if (!c.friction.empty()) {
-                const double mu = expression(c.friction);
-                if (mu < 0 || mu > 1e6)
-                    throw std::runtime_error("Invalid friction expression");
-                result.friction[c.body] = mu;
+            if (c.properties) {
+                if (!c.friction.empty()) {
+                    const double mu = expression(c.friction);
+                    if (mu < 0 || mu > 1e6)
+                        throw std::runtime_error("Invalid friction expression");
+                    result.friction[c.body] = mu;
+                }
+                if (std::any_of(c.values.begin(), c.values.end(),
+                                [](const auto &v) { return !v.empty(); })) {
+                    const auto body = std::find_if(state.bodies.begin(), state.bodies.end(),
+                                                   [&](const auto &b) { return b.id == c.body; });
+                    if (body == state.bodies.end())
+                        throw std::runtime_error("Missing controlled body");
+                    auto &u = updates[c.body];
+                    u.body = c.body;
+                    for (unsigned i = 9; i < 15; ++i) {
+                        if (c.values[i].empty())
+                            continue;
+                        const double value = expression(c.values[i]);
+                        if (i >= 13) {
+                            if (value != 0)
+                                throw std::runtime_error("Nonzero angular property expression "
+                                                         "units require verification");
+                            if (i == 13)
+                                u.angle = 0;
+                            else
+                                u.angular_velocity = 0;
+                        } else {
+                            auto point = i < 11 ? u.center.value_or(body->center)
+                                                : u.velocity.value_or(body->velocity);
+                            if (std::abs(value) > 10000)
+                                throw std::runtime_error("Property expression envelope");
+                            if (i == 9 || i == 11)
+                                point.x = value;
+                            else
+                                point.y = value;
+                            if (i < 11)
+                                u.center = point;
+                            else
+                                u.velocity = point;
+                        }
+                    }
+                }
                 continue;
             }
             Value enabled(impl_->context, impl_->eval("Boolean(" + c.enabled + ")"));
@@ -1138,6 +1195,27 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
             if (std::abs(f.force.x) > 1e9 || std::abs(f.force.y) > 1e9)
                 throw std::runtime_error("Force expression envelope");
             result.forces.push_back(f);
+        }
+        if (!updates.empty()) {
+            auto candidate = impl_->definition;
+            for (const auto &[id, u] : updates) {
+                auto b = std::find_if(candidate.bodies.begin(), candidate.bodies.end(),
+                                      [&](const auto &body) { return body.id == id; });
+                if (b == candidate.bodies.end())
+                    throw std::runtime_error("Missing controlled definition");
+                if (u.center)
+                    b->center = *u.center;
+                if (u.velocity)
+                    b->velocity = *u.velocity;
+                if (u.angle)
+                    b->angle = *u.angle;
+                if (u.angular_velocity)
+                    b->angular_velocity = *u.angular_velocity;
+                result.updates.push_back(u);
+            }
+            auto valid = scene::validate(candidate);
+            if (valid.error())
+                throw std::runtime_error(valid.error()->message);
         }
         JS_SetPropertyStr(impl_->context, global.value, "__requestedTime", JS_NULL);
         return core::Result<SourceControls>::success(std::move(result));

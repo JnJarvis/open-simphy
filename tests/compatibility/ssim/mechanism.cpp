@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <cmath>
@@ -85,7 +86,8 @@ namespace {
 compat::Project rigid_project(std::string shape, std::string controllers = "",
                               std::string script = "", std::string gui = "", double com = 0,
                               double angle = 0, const std::string &joints = "",
-                              const std::string &fields = "") {
+                              const std::string &fields = "", const std::string &ground_name = "",
+                              const std::string &extra_bodies = "") {
     std::string b = body;
     const auto mass_center = b.find("<LocalCenter");
     const auto mass_end = b.find("/>", mass_center);
@@ -95,16 +97,16 @@ compat::Project rigid_project(std::string shape, std::string controllers = "",
               "<Rotation>" + std::to_string(angle) + "</Rotation>");
     const auto begin = b.find("<Shape"), end = b.find("</Shape>", begin);
     b.replace(begin, end + 8 - begin, shape);
-    std::string xml =
-        "<Simulation xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-        "version='4.1'><World><Gravity x='0' y='-10'/><Bodies>" +
-        b +
-        "<Body "
-        "Id=\"ground\"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body></Bodies><Joints>" +
-        joints + "</Joints><BodyControllers>" + controllers +
-        "</BodyControllers><ScriptManager><Script><![CDATA[" + script +
-        "]]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[" + gui +
-        "]]></GuiXML></GuiManager></World>" + fields + "</Simulation>";
+    std::string xml = "<Simulation xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+                      "version='4.1'><World><Gravity x='0' y='-10'/><Bodies>" +
+                      b +
+                      "<Body "
+                      "Id=\"ground\" Name=\"" +
+                      ground_name + "\"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body>" +
+                      extra_bodies + "</Bodies><Joints>" + joints + "</Joints><BodyControllers>" +
+                      controllers + "</BodyControllers><ScriptManager><Script><![CDATA[" + script +
+                      "]]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[" + gui +
+                      "]]></GuiXML></GuiManager></World>" + fields + "</Simulation>";
     mz_zip_archive zip{};
     REQUIRE(mz_zip_writer_init_heap(&zip, 0, 0));
     REQUIRE(
@@ -246,6 +248,64 @@ TEST_CASE("Prismatic source anchors axis and actual limit motor signs survive gr
     REQUIRE(other.lower == s.lower);
     REQUIRE(other.upper == s.upper);
     REQUIRE(other.speed == s.speed);
+}
+TEST_CASE("Default line ground alias is narrow and never invents missing dynamic bodies",
+          "[compatibility][INT-010]") {
+    const std::string line =
+        R"(<Joint xsi:type="LineJoint"><BodyId1>old-ground</BodyId1><BodyId2>a</BodyId2><LocalAnchor x="2" y="3"/><LineAngle>0</LineAngle></Joint>)";
+    REQUIRE(
+        compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 0, 0, line)).error());
+    auto valid = compat::MechanicalSource::create(
+        rigid_project(rectangle, "", "", "", 0, 0, line, "", "FixedAnchorBody"));
+    REQUIRE(valid.value());
+    REQUIRE_FALSE(valid.value()->definition().slides.at(0).body_a.valid());
+    const std::string second =
+        R"(<Body Id="other" Name="FixedAnchorBody"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body>)";
+    REQUIRE(compat::MechanicalSource::create(
+                rigid_project(rectangle, "", "", "", 0, 0, line, "", "FixedAnchorBody", second))
+                .error());
+    auto missing_b = line;
+    missing_b.replace(missing_b.find("<BodyId2>a"), 10, "<BodyId2>missing");
+    REQUIRE(compat::MechanicalSource::create(
+                rigid_project(rectangle, "", "", "", 0, 0, missing_b, "", "FixedAnchorBody"))
+                .error());
+}
+TEST_CASE("Live property commands use current COM and velocity, coalesce, and gate angular units",
+          "[compatibility][INT-010]") {
+    const auto controller = [](std::initializer_list<std::pair<unsigned, std::string>> requested) {
+        std::array<std::string, 15> values;
+        values.fill("null");
+        for (const auto &v : requested)
+            values[v.first] = v.second;
+        std::string list;
+        for (const auto &v : values)
+            list += v + ';';
+        return "<BodyController type='ValuePropertiesController' bodyid='a' enabled='" + list +
+               "'/>";
+    };
+    auto p = rigid_project(
+        rectangle,
+        controller({{10, "2+sin(T)"}, {11, "3"}, {13, "a"}, {14, "a"}}) + controller({{9, "T"}}),
+        "", R"(<desktop><slider name="a" value="0" maximum="1" visible="false"/></desktop>)");
+    auto r = compat::MechanicalSource::create(p);
+    REQUIRE(r.value());
+    auto source = *r.value();
+    scene::MechanismSnapshot state;
+    state.time = 5;
+    state.bodies.push_back({{1}, {10, 20}, {1, 2}, .3, .4});
+    auto c = source.controls(state);
+    REQUIRE(c.value());
+    REQUIRE(c.value()->updates.size() == 1);
+    const auto &u = c.value()->updates[0];
+    REQUIRE(u.center == math::Vec2{5, 2 + std::sin(5.0)});
+    REQUIRE(u.velocity == math::Vec2{3, 2});
+    REQUIRE(u.angle == 0);
+    REQUIRE(u.angular_velocity == 0);
+    REQUIRE(source.set_slider(0, .5).has_value());
+    REQUIRE(source.controls(state).error());
+    REQUIRE(
+        compat::MechanicalSource::create(rigid_project(rectangle, controller({{10, "Infinity"}})))
+            .error());
 }
 TEST_CASE("General rectangle, nested sliders, force/friction controllers and reset callback",
           "[compatibility][rigid]") {

@@ -707,7 +707,7 @@
       "id": "IO-001",
       "title": "Specify bounded native particle persistence",
       "stage": 2,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -731,8 +731,8 @@
       "description": "tasks/items/IO-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/IO-001.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "3a055ba012edeb315bc110bae9f35962a98c5425"
     }
   ]
 }

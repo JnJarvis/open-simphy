@@ -3,10 +3,10 @@
 Updated 2026-10-07 from [registry.json](registry.json). Arrows run from prerequisite
 to dependent task. Status labels are a snapshot; the registry remains authoritative.
 
-DONE: 18 | REVIEW: 1 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
+DONE: 19 | REVIEW: 0 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
 
 - The particle editor demo (INT-002) is merged; this is not a finished product.
-- IO-001 is in REVIEW: native-file contract and transactional persistence proposal.
+- IO-001 is DONE: native-file contract approved and merged; implementation remains future work.
 - COMPAT-001 remains READY and unclaimed for the later small-task worker.
 - INT-001 code is merged; only mixed-scale multi-monitor hardware evidence blocks completion.
 - COMPAT-002 still requires COMPAT-001 and a reviewed research evidence gate.
@@ -34,7 +34,7 @@ flowchart TD
   BUILD_004["BUILD-004: Validate desktop application builds across native platforms<br/>DONE"]
   EDT_001["EDT-001: Specify transactional particle editing, picking and history<br/>DONE"]
   INT_002["INT-002: Build and integrate particle editor<br/>DONE"]
-  IO_001["IO-001: Specify bounded native particle persistence<br/>REVIEW"]
+  IO_001["IO-001: Specify bounded native particle persistence<br/>DONE"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -77,7 +77,7 @@ flowchart TD
   classDef DONE fill:#dcfce7,stroke:#475569,color:#111827
   class BUILD_001,CORE_001,MATH_001,REN_001,BUILD_002,TEST_001,CORE_002,MATH_002,SCENE_001,PHY_001,REN_002,SCENE_002,PHY_002,REN_003,BUILD_003,BUILD_004,EDT_001,INT_002 DONE
   classDef REVIEW fill:#dbeafe,stroke:#475569,color:#111827
-  class IO_001 REVIEW
+  class IO_001 DONE
   classDef READY fill:#fef9c3,stroke:#475569,color:#111827
   class COMPAT_001 READY
   classDef BLOCKED fill:#fee2e2,stroke:#475569,color:#111827

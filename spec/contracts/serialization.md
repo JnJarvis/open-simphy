@@ -1,6 +1,6 @@
 # Native particle document codec v1
 
-Status: PROPOSED under IO-001. Requires independent review before implementation.
+Status: ACCEPTED under IO-001 by user review, 2026-10-07. Implementation requires separately scoped tasks.
 Owner: serialization. Consumers: app and tests. Allowed internal dependencies:
 core, math, scene. No filesystem, SDL, editor, physics, clocks or platform types.
 

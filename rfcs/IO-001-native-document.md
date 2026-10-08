@@ -1,6 +1,6 @@
 # IO-001 RFC: bounded native authoring documents
 
-Status: PROPOSED. Independent contract and affected-consumer approval required.
+Status: ACCEPTED by user, 2026-10-07. Native format remains separate from the required SimPHY-compatible import support.
 See the [complete format and vectors](../spec/contracts/serialization.md).
 
 ## Problem and proposed decision

@@ -32,3 +32,13 @@ policy. Native serialization has a separate versioned schema and independent tes
 
 Export needs its own reverse mapping and fidelity policy. An importer does not
 establish export or round-trip compatibility.
+
+## User clarification: native format and import coverage (2026-10-07)
+
+User requires opening existing .sim files and all other formats SimPHY can open,
+plus a separate custom Open Simphy format designed for performance. Preserve this
+full product goal when scoping research and implementation; current particle-v1
+limits are not final product limits. Establish format/version inventory from
+evidence and test actual translation fidelity. Native format performance needs
+measured encode/decode, size and memory evidence. See adr/IO-001-native-document.md.
+IO-001 is approved and merged; prior review-pending notes are superseded.

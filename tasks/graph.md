@@ -1,15 +1,16 @@
 # Task dependency chart
 
-Updated 2026-10-07 from [registry.json](registry.json). Arrows run from prerequisite
-to dependent task. Status labels are a snapshot; the registry remains authoritative.
+Updated 2026-10-07 from [registry.json](registry.json). Arrows point from prerequisite
+to dependent. Registry status remains authoritative.
 
-DONE: 19 | REVIEW: 0 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
+DONE: 19 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
 
-- The particle editor demo (INT-002) is merged; this is not a finished product.
-- IO-001 is DONE: native-file contract approved and merged; implementation remains future work.
-- COMPAT-001 remains READY and unclaimed for the later small-task worker.
-- INT-001 code is merged; only mixed-scale multi-monitor hardware evidence blocks completion.
-- COMPAT-002 still requires COMPAT-001 and a reviewed research evidence gate.
+- INT-002 editor demo and IO-001 native-file contract are merged.
+- IO-002 codec implementation is in REVIEW; all59 local tests and14 native CI jobs passed.
+- PLAT-001 file-adapter contract is in REVIEW; implementation has not begun.
+- COMPAT-001 remains READY for the later small-task worker.
+- INT-001 is merged but BLOCKED on mixed-monitor hardware evidence.
+- COMPAT-002 remains evidence-gated; full SimPHY-openable format coverage is a product goal.
 
 ```mermaid
 flowchart TD
@@ -35,6 +36,8 @@ flowchart TD
   EDT_001["EDT-001: Specify transactional particle editing, picking and history<br/>DONE"]
   INT_002["INT-002: Build and integrate particle editor<br/>DONE"]
   IO_001["IO-001: Specify bounded native particle persistence<br/>DONE"]
+  IO_002["IO-002: Implement bounded native document codec<br/>REVIEW"]
+  PLAT_001["PLAT-001: Specify bounded reads and safe file replacement<br/>REVIEW"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -72,12 +75,15 @@ flowchart TD
   BUILD_004 --> INT_002
   SCENE_002 --> IO_001
   INT_002 --> IO_001
+  IO_001 --> IO_002
+  SCENE_002 --> IO_002
+  IO_001 --> PLAT_001
   gate_research_available{"research_available: not satisfied"}
   gate_research_available -.-> COMPAT_002
   classDef DONE fill:#dcfce7,stroke:#475569,color:#111827
-  class BUILD_001,CORE_001,MATH_001,REN_001,BUILD_002,TEST_001,CORE_002,MATH_002,SCENE_001,PHY_001,REN_002,SCENE_002,PHY_002,REN_003,BUILD_003,BUILD_004,EDT_001,INT_002 DONE
+  class BUILD_001,CORE_001,MATH_001,REN_001,BUILD_002,TEST_001,CORE_002,MATH_002,SCENE_001,PHY_001,REN_002,SCENE_002,PHY_002,REN_003,BUILD_003,BUILD_004,EDT_001,INT_002,IO_001 DONE
   classDef REVIEW fill:#dbeafe,stroke:#475569,color:#111827
-  class IO_001 DONE
+  class IO_002,PLAT_001 REVIEW
   classDef READY fill:#fef9c3,stroke:#475569,color:#111827
   class COMPAT_001 READY
   classDef BLOCKED fill:#fee2e2,stroke:#475569,color:#111827
@@ -85,20 +91,17 @@ flowchart TD
   classDef IN_PROGRESS fill:#ede9fe,stroke:#475569,color:#111827
 ```
 
-## Persistence follow-ups after contract approval
+## Remaining persistence sequence
 
-These are sequencing proposals, not claimed or READY implementation tasks.
-The coordinator assigns IDs and final scopes after IO-001 acceptance.
+The following unnumbered steps are proposals, not READY tasks.
 
 ```mermaid
 flowchart LR
-  contract["IO-001: approve native-file contract"] --> codec["Implement headless codec and tests"]
-  contract --> file_contract["Specify portable file adapter"]
-  file_contract --> files["Implement and test native file adapters"]
-  codec --> integration["Integrate Save/Open and native workflow tests"]
-  files --> integration
+  codec["IO-002: review and merge codec"] --> app["Scope Save/Open integration"]
+  contract["PLAT-001: review and accept file contract"] --> adapters["Scope native adapters and tests"]
+  adapters --> app
+  app --> smoke["Native save/reopen and failure workflow tests"]
 ```
 
-No future step is unblocked by a proposed contract alone. Platform adapters and
-app integration remain separate from the pure codec; existing architecture edges
-are unchanged. See [architecture](../spec/architecture.md) for the module DAG.
+Codec code alone does not enable Save/Open. Import support stays separate from the
+custom native format. See [architecture](../spec/architecture.md) for module boundaries.

@@ -144,3 +144,10 @@ limits are not final product limits. Establish format/version inventory from
 evidence and test actual translation fidelity. Native format performance needs
 measured encode/decode, size and memory evidence. See adr/IO-001-native-document.md.
 IO-001 is approved and merged; prior review-pending notes are superseded.
+
+## Current persistence review queue
+
+IO-002 codec: codex/io-002 at9aa046a,59/59 local tests and14/14 native jobs passed.
+PLAT-001 contract: codex/plat-001 at6b5d6f4,22 vectors and explicit uncertain file
+replacement outcome. Both REVIEW, not merged; see respective reports. No Save/Open
+UI or .sim importer yet. Graph now includes24 tasks. COMPAT-001 remains unclaimed.

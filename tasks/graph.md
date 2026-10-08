@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-004 source opening merged. INT-005 now includes functional imported circles, distance joints, script initialization/actions, textured bodies and source widgets; Newton Cradle runs experimentally. INT-005 and the broader SCENE-003 compound-body contract remain in review. Other domains, joints, general scripts and full authoring still need implementation.
+INT-005 is approved and merged. INT-006 fixes the reproduced 3 FPS imported view and verifies one-/two-ball collision transfer, quiet middle balls, return swings, energy and overlap. INT-006 and the broader SCENE-003 compound-body contract are in review. Other domains, joints, general scripts and full authoring still need implementation.
 
-DONE: 25 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
+DONE: 26 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
 
 ```mermaid
 flowchart TD
@@ -36,8 +36,9 @@ flowchart TD
   INT_003["INT-003: Build application workspace for interface feedback<br/>DONE"]
   COMPAT_004["COMPAT-004: Define SSIM opening and rigid-body migration<br/>DONE"]
   INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>DONE"]
-  INT_005["INT-005: Scalable workspace and functional imported circle mechanisms<br/>REVIEW"]
+  INT_005["INT-005: Scalable workspace and functional imported circle mechanisms<br/>DONE"]
   SCENE_003["SCENE-003: Specify compound rigid bodies and immutable body snapshots<br/>REVIEW"]
+  INT_006["INT-006: Optimize imported rendering and correct cradle collision transfer<br/>REVIEW"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -87,4 +88,5 @@ flowchart TD
   COMPAT_004 --> SCENE_003
   SCENE_002 --> SCENE_003
   PHY_002 --> SCENE_003
+  INT_005 --> INT_006
 ```

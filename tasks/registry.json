@@ -1023,7 +1023,7 @@
       "id": "INT-006",
       "title": "Optimize imported rendering and correct cradle collision transfer",
       "stage": 3,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [

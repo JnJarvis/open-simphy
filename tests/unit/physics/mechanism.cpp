@@ -10,6 +10,223 @@ std::shared_ptr<physics::Mechanism> make(const scene::Mechanism &m) {
     return *r.value();
 }
 } // namespace
+TEST_CASE("Line constraints retain free axis and rotation in transformed frames",
+          "[unit][mechanism][INT-010]") {
+    for (double angle : {0.0, .7}) {
+        scene::Mechanism m;
+        m.gravity = {};
+        m.fixed_dt = 1.0 / 120;
+        scene::CircleBody a;
+        a.id = {1};
+        a.static_body = true;
+        a.center = {3, 4};
+        a.angle = angle;
+        scene::CircleBody b;
+        b.id = {2};
+        b.center = {3 - 2 * std::sin(angle), 4 + 2 * std::cos(angle)};
+        b.velocity = {std::cos(angle) - 2 * std::sin(angle), std::sin(angle) + 2 * std::cos(angle)};
+        b.angular_velocity = 1;
+        m.bodies = {a, b};
+        scene::SlideLink j;
+        j.id = {1};
+        j.body_a = {1};
+        j.body_b = {2};
+        j.axis = {0, 1};
+        m.slides = {j};
+        auto w = make(m);
+        for (int i = 0; i < 120; ++i)
+            REQUIRE(w->step().has_value());
+        auto s = w->snapshot().bodies[1];
+        const double normal =
+            (s.center.x - 3) * std::cos(angle) + (s.center.y - 4) * std::sin(angle);
+        const double axial =
+            -(s.center.x - 3) * std::sin(angle) + (s.center.y - 4) * std::cos(angle);
+        REQUIRE(normal == Catch::Approx(0).margin(.006));
+        REQUIRE(axial == Catch::Approx(4).margin(.01));
+        REQUIRE(s.angle == Catch::Approx(1).margin(.003));
+    }
+}
+TEST_CASE("Prismatic ground bounds motor and rotation lock", "[unit][mechanism][INT-010]") {
+    scene::Mechanism m;
+    m.gravity = {};
+    scene::CircleBody b;
+    b.id = {1};
+    b.angular_velocity = 3;
+    m.bodies = {b};
+    scene::SlideLink j;
+    j.id = {1};
+    j.body_b = {1};
+    j.lock_rotation = true;
+    j.limit = true;
+    j.lower = -1;
+    j.upper = 1;
+    j.motor = true;
+    j.speed = 2;
+    j.max_force = 100;
+    m.slides = {j};
+    auto w = make(m);
+    for (int i = 0; i < 180; ++i)
+        REQUIRE(w->step().has_value());
+    auto s = w->snapshot().bodies[0];
+    REQUIRE(s.center.x == Catch::Approx(1).margin(.006));
+    REQUIRE(s.center.y == Catch::Approx(0).margin(.006));
+    REQUIRE(s.angle == Catch::Approx(0).margin(.006));
+    REQUIRE(s.angular_velocity == Catch::Approx(0).margin(.006));
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().bodies[0].center == b.center);
+    m.slides[0].axis = {2, 0};
+    REQUIRE(physics::Mechanism::create(m).error());
+    m.slides[0].axis = {1, 0};
+    m.slides[0].lock_rotation = false;
+    REQUIRE(physics::Mechanism::create(m).error());
+}
+TEST_CASE("Live commands reject a whole invalid batch and retain clock and constraints",
+          "[unit][mechanism][INT-010]") {
+    scene::Mechanism m;
+    m.gravity = {};
+    scene::CircleBody a;
+    a.id = {1};
+    a.static_body = true;
+    a.center = {3, 4};
+    scene::CircleBody b;
+    b.id = {2};
+    b.center = {3, 6};
+    m.bodies = {a, b};
+    scene::SlideLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.body_b = {2};
+    j.axis = {0, 1};
+    m.slides = {j};
+    auto w = make(m);
+    scene::BodyUpdate good;
+    good.body = {1};
+    good.center = math::Vec2{5, 4};
+    scene::BodyUpdate invalid;
+    invalid.body = {2};
+    invalid.mass = 0;
+    REQUIRE(w->update({good, invalid}).error());
+    REQUIRE(w->snapshot().bodies[0].center == a.center);
+    REQUIRE(w->update({good, good}).error());
+    REQUIRE(w->update({good}).has_value());
+    REQUIRE(w->set_time(7).has_value());
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[1].center.x == Catch::Approx(5).margin(.006));
+    REQUIRE(w->snapshot().time == Catch::Approx(9).margin(1e-12));
+    REQUIRE(w->set_time(-1).error());
+    REQUIRE(w->snapshot().time == Catch::Approx(9));
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().time == 0);
+    REQUIRE(w->snapshot().bodies[0].center == a.center);
+    good.velocity = math::Vec2{1, 0};
+    REQUIRE(w->update({good}).error());
+}
+TEST_CASE("Live mass damping and force retain SI motion", "[unit][mechanism][INT-010]") {
+    scene::Mechanism m;
+    m.gravity = {};
+    m.fixed_dt = 1.0 / 120;
+    scene::CircleBody b;
+    b.id = {1};
+    m.bodies = {b};
+    auto w = make(m);
+    scene::BodyUpdate u;
+    u.body = {1};
+    u.mass = 2;
+    u.inertia = 1;
+    u.damping = 2;
+    REQUIRE(w->update({u}).has_value());
+    REQUIRE(w->forces({{{1}, {4, 0}, {}, false, 0}}).has_value());
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    // dv/dt=2-2v => v(1)=1-exp(-2). Eight microsteps bound discretization.
+    REQUIRE(w->snapshot().bodies[0].velocity.x == Catch::Approx(1 - std::exp(-2)).margin(.002));
+}
+TEST_CASE("Moving platform drives a spring oscillator without replacing its runtime",
+          "[unit][mechanism][INT-010]") {
+    scene::Mechanism m;
+    m.gravity = {};
+    m.fixed_dt = 1.0 / 240;
+    scene::CircleBody base;
+    base.id = {1};
+    base.static_body = true;
+    base.center = {0, 2};
+    base.radius = .1;
+    scene::CircleBody ball;
+    ball.id = {2};
+    ball.restitution = 0;
+    m.bodies = {base, ball};
+    scene::SlideLink line;
+    line.id = {1};
+    line.body_b = {2};
+    line.axis = {0, 1};
+    m.slides = {line};
+    scene::DistanceLink spring;
+    spring.id = {2};
+    spring.body_a = {2};
+    spring.body_b = {1};
+    spring.length = 2;
+    spring.stiffness = 4;
+    spring.spring = true;
+    m.links = {spring};
+    auto w = make(m);
+    scene::BodyUpdate drive;
+    drive.body = {1};
+    for (int i = 0; i < 480; ++i) {
+        drive.center = math::Vec2{0, 2 + .1 * std::sin(w->snapshot().time)};
+        REQUIRE(w->update({drive}).has_value());
+        REQUIRE(w->step().has_value());
+        auto s = w->snapshot();
+        const double t = s.time;
+        // y''+4y=.4 sin(t), zero initial pose/speed.
+        const double exact = .4 / 3 * (std::sin(t) - .5 * std::sin(2 * t));
+        REQUIRE(s.bodies[1].center.y == Catch::Approx(exact).margin(.003));
+        REQUIRE(s.bodies[1].center.x == Catch::Approx(0).margin(.001));
+    }
+    REQUIRE(w->snapshot().time == Catch::Approx(2));
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().bodies[1].center == ball.center);
+}
+TEST_CASE("Line motion transmits reaction torque and enforces unilateral limits",
+          "[unit][mechanism][INT-010]") {
+    scene::Mechanism m;
+    m.gravity = {};
+    scene::CircleBody a;
+    a.id = {1};
+    a.mass = 1;
+    a.inertia = 1;
+    scene::CircleBody b = a;
+    b.id = {2};
+    b.center = {1, 2};
+    b.velocity = {1, 0};
+    m.bodies = {a, b};
+    scene::SlideLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.body_b = {2};
+    j.local_a = {1, 0};
+    j.axis = {0, 1};
+    m.slides = {j};
+    auto w = make(m);
+    REQUIRE(w->step().has_value());
+    auto s = w->snapshot();
+    REQUIRE(std::abs(s.bodies[0].angular_velocity) > .1);
+    REQUIRE(s.bodies[0].velocity.x + s.bodies[1].velocity.x == Catch::Approx(1).margin(.002));
+    m.bodies = {b};
+    m.bodies[0].center = {};
+    m.bodies[0].velocity = {0, 3};
+    j.body_a = {};
+    j.local_a = {};
+    j.limit = true;
+    j.lower = -1;
+    j.upper = 1;
+    m.slides = {j};
+    w = make(m);
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.y == Catch::Approx(1).margin(.006));
+    REQUIRE(w->snapshot().bodies[0].angular_velocity == 0);
+}
 TEST_CASE("Circular backend free motion, reset and isolation", "[unit][mechanism]") {
     scene::Mechanism m;
     m.gravity = {0, -8};

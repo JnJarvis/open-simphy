@@ -450,7 +450,8 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             throw std::runtime_error("Invalid source XML");
         auto root = xml.child("Simulation"), world = root.child("World");
         if (world.child("Circuit") || world.child("Geometry") ||
-            world.child("Fields").first_child() || world.child("Controllers").first_child())
+            root.child("Fields").first_child() || world.child("Fields").first_child() ||
+            world.child("Controllers").first_child())
             throw std::runtime_error("Other domains/fields/controllers require source preview");
         if (world.child("ParticleSystem").first_child() || world.child("Tracers").first_child())
             throw std::runtime_error("Particle systems/tracers require their runtime features");
@@ -489,6 +490,8 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
         std::map<std::string, unsigned> ids;
         std::map<unsigned, math::Vec2> centers;
         std::map<unsigned, double> angles;
+        std::map<std::string, math::Vec2> local_centers, origins;
+        std::map<std::string, double> source_angles;
         unsigned index = 0;
         for (auto body : world.child("Bodies").children()) {
             if (std::string(body.name()) != "Body" && std::string(body.name()) != "PlaneBody")
@@ -497,6 +500,13 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             if (key.empty() || ids.contains(key))
                 throw std::runtime_error("Duplicate source body ID");
             auto mass = body.child("Mass");
+            local_centers[key] =
+                mass.child("LocalCenter") ? point(mass.child("LocalCenter")) : math::Vec2{};
+            origins[key] = body.child("Transform").child("Translation")
+                               ? point(body.child("Transform").child("Translation"))
+                               : math::Vec2{};
+            source_angles[key] =
+                scalar(body.child("Transform").child("Rotation")) * std::numbers::pi / 180;
             std::string mode = mass.child("Type").child_value();
             auto fixtures = body.child("Fixtures");
             if (!fixtures.first_child()) {
@@ -667,7 +677,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 continue;
             const std::string jt = node.attribute("xsi:type").value();
             if (jt != "DistanceJoint" && jt != "RevoluteJoint" && jt != "SpindleJoint" &&
-                jt != "SpringJoint" && jt != "RopeJoint" && jt != "WeldJoint")
+                jt != "SpringJoint" && jt != "RopeJoint" && jt != "WeldJoint" && jt != "LineJoint")
                 throw std::runtime_error("Unsupported joint profile: " + jt);
             const double source_frequency = scalar(node.child("Frequency"));
             if (source_frequency < 0 || (source_frequency != 0 && jt != "DistanceJoint" &&
@@ -675,6 +685,39 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 throw std::runtime_error("Unsupported elastic parameters for joint: " + jt);
             auto ia = ids.find(node.child("BodyId1").child_value()),
                  ib = ids.find(node.child("BodyId2").child_value());
+            if (jt == "LineJoint") {
+                if (ia == ids.end() || ib == ids.end() || !ib->second)
+                    throw std::runtime_error("Unresolved line joint endpoints");
+                if (scalar(node.child("LineJointOffset")) != 0 ||
+                    scalar(node.child("LineJointMu")) != 0)
+                    throw std::runtime_error(
+                        "Line offset/friction needs numeric compatibility evidence");
+                const std::string key = ia->first;
+                auto anchor = point(node.child("LocalAnchor"));
+                const double angle = scalar(node.child("LineAngle"));
+                scene::SlideLink s;
+                s.id = {4097ULL + joint++};
+                s.body_a = {ia->second};
+                s.body_b = {ib->second};
+                s.axis = {std::cos(angle), std::sin(angle)};
+                if (ia->second) {
+                    auto com = local_centers.at(key);
+                    s.local_a = {anchor.x - com.x, anchor.y - com.y};
+                } else {
+                    anchor = rotate(anchor, source_angles.at(key));
+                    auto origin = origins.at(key);
+                    s.local_a = {origin.x + anchor.x, origin.y + anchor.y};
+                    s.axis = rotate(s.axis, source_angles.at(key));
+                }
+                s.limit = node.child("LimitEnabled").text().as_bool(false);
+                if (s.limit) {
+                    s.lower = scalar(node.child("LowerLimit"));
+                    s.upper = scalar(node.child("UpperLimit"));
+                }
+                s.collide_connected = node.child("CollisionAllowed").text().as_bool(false);
+                p->definition.slides.push_back(s);
+                continue;
+            }
             if (ia == ids.end() || ib == ids.end() || ia->second == 0)
                 throw std::runtime_error("Unresolved authored distance joint");
             auto a = point(node.child((jt == "RevoluteJoint" || jt == "WeldJoint") ? "Anchor"
@@ -798,69 +841,77 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
         if (*source && !gui.load_string(source))
             throw std::runtime_error("Invalid GUI XML");
         double row = 16;
-        std::function<void(pugi::xml_node, unsigned)> widgets = [&](pugi::xml_node parent,
-                                                                    unsigned depth) {
-            if (depth > 16)
-                throw std::runtime_error("Widget nesting budget");
-            for (auto node : parent.children()) {
-                const std::string kind = node.name();
-                if (kind == "dialog" || kind == "panel") {
-                    widgets(node, depth + 1);
-                    continue;
-                }
-                if (kind != "button" && kind != "textarea" && kind != "label" && kind != "slider")
-                    throw std::runtime_error("Unsupported embedded widget: " + kind);
-                if (p->widgets.size() >= 64)
-                    throw std::runtime_error("Widget budget");
-                SourceWidget w;
-                w.button = kind == "button";
-                w.slider = kind == "slider";
-                w.text = node.attribute("text").value();
-                w.action = node.attribute("action").value();
-                w.name = node.attribute("name").value();
-                if (w.text.size() > 65536 || w.action.size() > 4096 || w.name.size() > 128)
-                    throw std::runtime_error("Widget text budget");
-                w.position = {16, row};
-                w.size = {300, w.button || w.slider ? 36.0 : 80.0};
-                std::string bounds = node.attribute("rectbounds").value();
-                if (!bounds.empty()) {
-                    for (auto &ch : bounds)
-                        if (ch == ',')
-                            ch = ' ';
-                    std::istringstream in(bounds);
-                    in.imbue(std::locale::classic());
-                    if (!(in >> w.position.x >> w.position.y >> w.size.x >> w.size.y))
+        std::function<void(pugi::xml_node, unsigned, bool, bool)> widgets =
+            [&](pugi::xml_node parent, unsigned depth, bool visible, bool enabled) {
+                if (depth > 16)
+                    throw std::runtime_error("Widget nesting budget");
+                for (auto node : parent.children()) {
+                    const std::string kind = node.name();
+                    const bool shown = visible && node.attribute("visible").as_bool(true);
+                    const bool active = enabled && node.attribute("enabled").as_bool(true);
+                    if (kind == "dialog" || kind == "panel") {
+                        widgets(node, depth + 1, shown, active);
+                        continue;
+                    }
+                    if (kind != "button" && kind != "textarea" && kind != "label" &&
+                        kind != "slider")
+                        throw std::runtime_error("Unsupported embedded widget: " + kind);
+                    if (p->widgets.size() >= 64)
+                        throw std::runtime_error("Widget budget");
+                    SourceWidget w;
+                    w.visible = shown;
+                    w.enabled = active;
+                    w.button = kind == "button";
+                    w.slider = kind == "slider";
+                    w.text = node.attribute("text").value();
+                    w.action = node.attribute("action").value();
+                    w.name = node.attribute("name").value();
+                    if (w.text.size() > 65536 || w.action.size() > 4096 || w.name.size() > 128)
+                        throw std::runtime_error("Widget text budget");
+                    w.position = {16, row};
+                    w.size = {300, w.button || w.slider ? 36.0 : 80.0};
+                    std::string bounds = node.attribute("rectbounds").value();
+                    if (!bounds.empty()) {
+                        for (auto &ch : bounds)
+                            if (ch == ',')
+                                ch = ' ';
+                        std::istringstream in(bounds);
+                        in.imbue(std::locale::classic());
+                        if (!(in >> w.position.x >> w.position.y >> w.size.x >> w.size.y))
+                            throw std::runtime_error("Invalid widget bounds");
+                    }
+                    if (!math::finite(w.position) || !math::finite(w.size) ||
+                        (w.visible && (w.size.x <= 0 || w.size.y <= 0)) ||
+                        std::abs(w.size.x) > 4096 || std::abs(w.size.y) > 4096 ||
+                        std::abs(w.position.x) > 10000 || std::abs(w.position.y) > 10000)
                         throw std::runtime_error("Invalid widget bounds");
+                    if (w.visible)
+                        row += w.size.y + 8;
+                    if (w.slider) {
+                        if (w.name.empty() ||
+                            !(std::isalpha(static_cast<unsigned char>(w.name[0])) ||
+                              w.name[0] == '_') ||
+                            !std::all_of(w.name.begin(), w.name.end(), [](unsigned char c) {
+                                return std::isalnum(c) || c == '_';
+                            }))
+                            throw std::runtime_error("Invalid slider variable");
+                        w.minimum = node.attribute("minimum").as_double(0);
+                        w.maximum = node.attribute("maximum").as_double(10);
+                        w.value = node.attribute("value").as_double(5);
+                        if (!std::isfinite(w.minimum) || !std::isfinite(w.maximum) ||
+                            !std::isfinite(w.value) || w.minimum >= w.maximum ||
+                            w.value < w.minimum || w.value > w.maximum ||
+                            std::abs(w.minimum) > 1e9 || std::abs(w.maximum) > 1e9)
+                            throw std::runtime_error("Invalid slider range");
+                        JS_SetPropertyStr(p->context, global.value, w.name.c_str(),
+                                          JS_NewFloat64(p->context, w.value));
+                    }
+                    if (w.button && w.action.empty() && !w.name.empty())
+                        w.action = w.name + "_onClick()";
+                    p->widgets.push_back(std::move(w));
                 }
-                if (!math::finite(w.position) || !math::finite(w.size) || w.size.x <= 0 ||
-                    w.size.y <= 0 || w.size.x > 4096 || w.size.y > 4096 ||
-                    std::abs(w.position.x) > 10000 || std::abs(w.position.y) > 10000)
-                    throw std::runtime_error("Invalid widget bounds");
-                row += w.size.y + 8;
-                if (w.slider) {
-                    if (w.name.empty() ||
-                        !(std::isalpha(static_cast<unsigned char>(w.name[0])) ||
-                          w.name[0] == '_') ||
-                        !std::all_of(w.name.begin(), w.name.end(),
-                                     [](unsigned char c) { return std::isalnum(c) || c == '_'; }))
-                        throw std::runtime_error("Invalid slider variable");
-                    w.minimum = node.attribute("minimum").as_double(0);
-                    w.maximum = node.attribute("maximum").as_double(1);
-                    w.value = node.attribute("value").as_double(0);
-                    if (!std::isfinite(w.minimum) || !std::isfinite(w.maximum) ||
-                        !std::isfinite(w.value) || w.minimum >= w.maximum || w.value < w.minimum ||
-                        w.value > w.maximum || std::abs(w.minimum) > 1e9 ||
-                        std::abs(w.maximum) > 1e9)
-                        throw std::runtime_error("Invalid slider range");
-                    JS_SetPropertyStr(p->context, global.value, w.name.c_str(),
-                                      JS_NewFloat64(p->context, w.value));
-                }
-                if (w.button && w.action.empty() && !w.name.empty())
-                    w.action = w.name + "_onClick()";
-                p->widgets.push_back(std::move(w));
-            }
-        };
-        widgets(gui.child("desktop"), 0);
+            };
+        widgets(gui.child("desktop"), 0, true, true);
         for (auto node : world.child("BodyControllers").children("BodyController")) {
             if (p->controllers.size() >= 1024)
                 throw std::runtime_error("Controller budget");
@@ -965,7 +1016,8 @@ core::Result<void> MechanicalSource::apply_action(std::string_view action) {
     }
 }
 core::Result<void> MechanicalSource::set_slider(std::size_t index, double value) {
-    if (index >= impl_->widgets.size() || !impl_->widgets[index].slider || !std::isfinite(value) ||
+    if (index >= impl_->widgets.size() || !impl_->widgets[index].slider ||
+        !impl_->widgets[index].enabled || !std::isfinite(value) ||
         value < impl_->widgets[index].minimum || value > impl_->widgets[index].maximum)
         return core::Result<void>::failure({core::Code::invalid_argument,
                                             core::Severity::error,

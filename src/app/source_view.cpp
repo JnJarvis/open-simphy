@@ -251,7 +251,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                             vh = float(l.canvas.height) / l.scale;
                 for (std::size_t i = 0; i < source_.widgets().size(); ++i) {
                     const auto &w = source_.widgets()[i];
-                    if (!w.slider)
+                    if (!w.slider || !w.visible || !w.enabled)
                         continue;
                     const double wx = left + std::clamp(w.position.x, 8.0,
                                                         std::max(8.0, double(vw) - w.size.x - 8));
@@ -266,7 +266,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                     }
                 }
                 for (const auto &w : source_.widgets())
-                    if (w.button) {
+                    if (w.button && w.visible && w.enabled) {
                         const float wx =
                                         left + std::clamp(float(w.position.x), 8.0f,
                                                           std::max(8.0f, vw - float(w.size.x) - 8)),
@@ -547,6 +547,8 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     }
     float textY = top + 136;
     for (const auto &w : source_.widgets()) {
+        if (!w.visible)
+            continue;
         if (w.slider) {
             const float x = left + std::clamp(float(w.position.x), 8.0f,
                                               std::max(8.0f, vw - float(w.size.x) - 8));

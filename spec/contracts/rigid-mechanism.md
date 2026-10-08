@@ -35,3 +35,10 @@ RFC/report. Effective anchor mass includes rotational lever arms each microstep.
 DistanceLink spring=false preserves rigid defaults. Explicit spring=true allows
 zero stiffness (free link), optionally with direct viscous damping. Positive
 stiffness enables spring behavior even when the flag is false.
+
+INT-010 additive ports and slide constraints are reviewed in
+rfcs/INT-010-driven-mechanics.md. SlideLink distinguishes free rotation line
+constraints from rotation locked prismatic constraints, preserving COM-local
+anchors and A-local unit axis. BodyUpdate validates an entire batch before changing
+any bodies, retaining the world and its constraints. set_time changes only the
+finite nonnegative simulation clock. Reset retains its original definition.

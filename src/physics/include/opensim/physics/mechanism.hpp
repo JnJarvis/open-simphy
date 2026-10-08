@@ -16,5 +16,7 @@ class Mechanism {
     core::Result<void> forces(const std::vector<scene::AppliedForce> &);
     core::Result<void> friction(core::EntityId, double);
     core::Result<void> relocate(core::EntityId, math::Vec2);
+    core::Result<void> update(const std::vector<scene::BodyUpdate> &);
+    core::Result<void> set_time(double);
 };
 } // namespace opensim::physics

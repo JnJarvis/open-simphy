@@ -402,7 +402,8 @@
         "PHY-002",
         "REN-003",
         "EDT-001",
-        "IO-001"
+        "IO-001",
+        "IO-002"
       ],
       "gates": [],
       "allowed_paths": [
@@ -714,7 +715,9 @@
         "SCENE-002",
         "INT-002"
       ],
-      "blocks": [],
+      "blocks": [
+        "IO-002"
+      ],
       "gates": [],
       "allowed_paths": [
         "spec/contracts/serialization.md",
@@ -733,6 +736,38 @@
       "completion_report": "tasks/reports/IO-001.md",
       "reviewer": "user",
       "merged_commit": "3a055ba012edeb315bc110bae9f35962a98c5425"
+    },
+    {
+      "id": "IO-002",
+      "title": "Implement bounded native document codec",
+      "stage": 2,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "IO-001",
+        "SCENE-002"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/serialization/",
+        "tests/contract/serialization/",
+        "tests/unit/serialization/"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/serialization.md",
+        "spec/contracts/core.md",
+        "spec/contracts/math.md",
+        "spec/contracts/scene.md"
+      ],
+      "description": "tasks/items/IO-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
     }
   ]
 }

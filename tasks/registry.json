@@ -880,7 +880,8 @@
       ],
       "blocks": [
         "INT-004",
-        "SCENE-003"
+        "SCENE-003",
+        "INT-008"
       ],
       "gates": [],
       "allowed_paths": [
@@ -1030,7 +1031,8 @@
         "INT-005"
       ],
       "blocks": [
-        "INT-007"
+        "INT-007",
+        "INT-008"
       ],
       "gates": [],
       "allowed_paths": [
@@ -1058,7 +1060,7 @@
       "id": "INT-007",
       "title": "Continuous circle contacts, viewport navigation and responsive Open",
       "stage": 3,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -1083,6 +1085,45 @@
       "description": "tasks/items/INT-007.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-007.md",
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "INT-008",
+      "title": "General imported rigid fixtures and common 2D constraints",
+      "stage": 3,
+      "status": "READY",
+      "priority": 0,
+      "owner": null,
+      "dependencies": [
+        "INT-006",
+        "COMPAT-004"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/scene/",
+        "src/physics/",
+        "src/compat/",
+        "src/app/",
+        "tests/unit/scene/",
+        "tests/unit/physics/",
+        "tests/compatibility/ssim/",
+        "spec/contracts/rigid-mechanism.md",
+        "rfcs/INT-008-rigid-mechanics.md",
+        "docs/demo.md",
+        "docs/ssim.md",
+        "README.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/mechanism.md",
+        "tasks/reports/SCENE-003.md"
+      ],
+      "description": "tasks/items/INT-008.md",
+      "block_reason": null,
+      "completion_report": "tasks/reports/INT-008.md",
       "reviewer": null,
       "merged_commit": null
     }

@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-005 is approved and merged. INT-006 fixes the reproduced 3 FPS imported view and verifies one-/two-ball collision transfer, quiet middle balls, return swings, energy and overlap. INT-006 and the broader SCENE-003 compound-body contract are in review. Other domains, joints, general scripts and full authoring still need implementation.
+INT-006 is approved and merged. INT-007 continuous circle contacts, viewport navigation and responsive Open are in review. The bundled audit reports 1/67 startup profiles supported by the current circle backend. INT-008 is READY for general rigid fixtures/common constraints, with serial ownership and independent-baseline rules. Full controllers, optics, circuits, 3D and scripting compatibility remain further work.
 
-DONE: 26 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
+DONE: 27 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 2 | BLOCKED: 2
 
 ```mermaid
 flowchart TD
@@ -38,7 +38,9 @@ flowchart TD
   INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>DONE"]
   INT_005["INT-005: Scalable workspace and functional imported circle mechanisms<br/>DONE"]
   SCENE_003["SCENE-003: Specify compound rigid bodies and immutable body snapshots<br/>REVIEW"]
-  INT_006["INT-006: Optimize imported rendering and correct cradle collision transfer<br/>REVIEW"]
+  INT_006["INT-006: Optimize imported rendering and correct cradle collision transfer<br/>DONE"]
+  INT_007["INT-007: Continuous circle contacts, viewport navigation and responsive Open<br/>REVIEW"]
+  INT_008["INT-008: General imported rigid fixtures and common 2D constraints<br/>READY"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -89,4 +91,7 @@ flowchart TD
   SCENE_002 --> SCENE_003
   PHY_002 --> SCENE_003
   INT_005 --> INT_006
+  INT_006 --> INT_007
+  INT_006 --> INT_008
+  COMPAT_004 --> INT_008
 ```

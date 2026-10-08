@@ -1,6 +1,6 @@
 # PLAT-001 RFC: explicit file replacement outcomes
 
-Status: PROPOSED, requires independent affected-consumer review.
+Status: ACCEPTED by user, 2026-10-07, including affected-consumer outcome semantics.
 Full [file contract](../spec/contracts/files.md).
 
 ## Why this boundary matters

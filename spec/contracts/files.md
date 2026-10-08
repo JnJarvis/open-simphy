@@ -1,6 +1,6 @@
 # Portable bounded file transactions v1
 
-Status: PROPOSED under PLAT-001. No implementation authorization until review.
+Status: ACCEPTED by user under PLAT-001, 2026-10-07. Implementation requires scoped tasks.
 Owner: platform; consumer: app. Internal dependency: core only. No codec, scene,
 editor or physics dependency; byte limits come from callers, not a native schema.
 

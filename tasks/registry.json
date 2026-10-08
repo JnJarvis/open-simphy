@@ -742,7 +742,7 @@
       "id": "IO-002",
       "title": "Implement bounded native document codec",
       "stage": 2,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -767,14 +767,14 @@
       "description": "tasks/items/IO-002.md",
       "block_reason": null,
       "completion_report": "tasks/reports/IO-002.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user",
+      "merged_commit": "c4420f208d65b502ea3d580c1aad9f5b398766e5"
     },
     {
       "id": "PLAT-001",
       "title": "Specify bounded reads and safe file replacement",
       "stage": 2,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -796,6 +796,34 @@
       "description": "tasks/items/PLAT-001.md",
       "block_reason": null,
       "completion_report": "tasks/reports/PLAT-001.md",
+      "reviewer": "user",
+      "merged_commit": "ab2f5108f7b55f1ab1fef9e1922c370bfe046057"
+    },
+    {
+      "id": "COMPAT-003",
+      "title": "Inspect real SSIM archives and bounded container validation",
+      "stage": 0,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "research/tools/",
+        "research/evidence/ssim-inspection.json",
+        "research/SSIM_INSPECTION.md"
+      ],
+      "spec_refs": [
+        "spec/research-intake.md",
+        "spec/testing.md",
+        "research/README.md",
+        "research/FILE_FORMAT.md",
+        "research/EVIDENCE_REVIEW.md"
+      ],
+      "description": "tasks/items/COMPAT-003.md",
+      "block_reason": null,
+      "completion_report": null,
       "reviewer": null,
       "merged_commit": null
     }

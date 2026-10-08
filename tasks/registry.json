@@ -1023,13 +1023,15 @@
       "id": "INT-006",
       "title": "Optimize imported rendering and correct cradle collision transfer",
       "stage": 3,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
         "INT-005"
       ],
-      "blocks": [],
+      "blocks": [
+        "INT-007"
+      ],
       "gates": [],
       "allowed_paths": [
         "src/app/",
@@ -1049,6 +1051,38 @@
       "description": "tasks/items/INT-006.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-006.md",
+      "reviewer": "user",
+      "merged_commit": "e378bf6b515bf782b71cf49e952024639d10f00c"
+    },
+    {
+      "id": "INT-007",
+      "title": "Continuous circle contacts, viewport navigation and responsive Open",
+      "stage": 3,
+      "status": "IN_PROGRESS",
+      "priority": 0,
+      "owner": "codex-worker",
+      "dependencies": [
+        "INT-006"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/app/",
+        "src/physics/mechanism.cpp",
+        "tests/unit/physics/",
+        "docs/demo.md",
+        "docs/ssim.md",
+        "rfcs/INT-007-interaction.md",
+        "spec/contracts/mechanism.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/mechanism.md"
+      ],
+      "description": "tasks/items/INT-007.md",
+      "block_reason": null,
+      "completion_report": "tasks/reports/INT-007.md",
       "reviewer": null,
       "merged_commit": null
     }

@@ -213,9 +213,87 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     std::cout << "PASS: editor selection/drag/history/property/create/delete, native upload, "
                  "simulation controls, resize, minimize/restore, display moves, close\n";
 }
+void verify_imported_cradle(const scene::Mechanism &definition) {
+    std::vector<scene::DistanceLink> links;
+    for (const auto &j : definition.links)
+        if (!j.body_b.valid() && std::hypot(j.local_a.x, j.local_a.y) < 1e-6)
+            links.push_back(j);
+    std::sort(links.begin(), links.end(),
+              [](const auto &a, const auto &b) { return a.local_b.x < b.local_b.x; });
+    expect(links.size() >= 5, "Cradle regression requires five ground suspensions");
+    links.erase(links.begin(), links.end() - 5);
+    const auto body = [&](core::EntityId id) -> const scene::CircleBody & {
+        return *std::find_if(definition.bodies.begin(), definition.bodies.end(),
+                             [&](const auto &b) { return b.id == id; });
+    };
+    for (unsigned count : {1u, 2u}) {
+        auto result = physics::Mechanism::create(definition);
+        if (result.error())
+            throw std::runtime_error(result.error()->message);
+        auto world = *result.value();
+        double initial_energy = 0;
+        for (unsigned i = 5 - count; i < 5; ++i) {
+            const auto &j = links[i];
+            checked(world->relocate(j.body_a, {j.local_b.x + j.length * std::sin(.5),
+                                               j.local_b.y - j.length * std::cos(.5)}));
+            initial_energy +=
+                body(j.body_a).mass * (-definition.gravity.y) * j.length * (1 - std::cos(.5));
+        }
+        double outgoing[5]{}, returning[5]{}, max_energy = 0, max_overlap = 0;
+        for (unsigned step = 0; step < 300; ++step) {
+            checked(world->step());
+            const auto state = world->snapshot();
+            double energy = 0;
+            math::Vec2 previous{};
+            double previous_radius = 0;
+            for (unsigned i = 0; i < 5; ++i) {
+                const auto &j = links[i];
+                const auto &b = *std::find_if(state.bodies.begin(), state.bodies.end(),
+                                              [&](const auto &v) { return v.id == j.body_a; });
+                const auto &d = body(j.body_a);
+                const double dx = b.center.x - j.local_b.x;
+                if (state.time < 2.15)
+                    outgoing[i] = std::max(outgoing[i], -dx / j.length);
+                if (state.time > 2.15)
+                    returning[i] = std::max(returning[i], dx / j.length);
+                expect(std::abs(std::hypot(dx, b.center.y - j.local_b.y) - j.length) < .005,
+                       "Imported suspension length drift");
+                energy +=
+                    .5 * d.mass * math::dot(b.velocity, b.velocity) +
+                    d.mass * (-definition.gravity.y) * (b.center.y - (j.local_b.y - j.length));
+                if (i)
+                    max_overlap = std::max(max_overlap, previous_radius + d.radius -
+                                                            std::hypot(b.center.x - previous.x,
+                                                                       b.center.y - previous.y));
+                previous = b.center;
+                previous_radius = d.radius;
+            }
+            max_energy = std::max(max_energy, energy);
+        }
+        double min_output = 1, min_return = 1, interior = 0;
+        for (unsigned i = 0; i < 5; ++i) {
+            if (i < count)
+                min_output = std::min(min_output, outgoing[i]);
+            else
+                interior = std::max(interior, outgoing[i]);
+            if (i >= 5 - count)
+                min_return = std::min(min_return, returning[i]);
+        }
+        std::cout << "CRADLE released=" << count << " outgoing_sin=" << min_output
+                  << " interior_sin=" << interior << " return_sin=" << min_return
+                  << " energy_ratio=" << max_energy / initial_energy << " overlap_m=" << max_overlap
+                  << '\n';
+        expect(min_output > .3, "Imported cradle failed released-ball-count transfer");
+        expect(interior < .12, "Imported cradle scattered motion into stationary balls");
+        expect(min_return > .22, "Imported cradle failed return swing");
+        expect(max_energy < initial_energy * 1.04 && max_overlap < .005,
+               "Imported collision energy/overlap invalid");
+    }
+}
 } // namespace
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
+    bool benchmark = false, benchmark_legacy = false;
     bool smoke_mechanics = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
@@ -253,7 +331,11 @@ int main(int argc, char **argv) {
             smoke_mechanics = true;
         } else if (arg == "--smoke-source" && i + 1 < argc)
             smoke_source = argv[++i];
-        else if (arg == "--smoke")
+        else if ((arg == "--benchmark-mechanism" || arg == "--benchmark-legacy") && i + 1 < argc) {
+            open_path = argv[++i];
+            benchmark = true;
+            benchmark_legacy = arg == "--benchmark-legacy";
+        } else if (arg == "--smoke")
             smoke_mode = true;
         else if (arg == "--fail-window")
             fail_window = true;
@@ -306,6 +388,7 @@ int main(int argc, char **argv) {
                 }));
             if (auto *view = ui.mechanical(); view && smoke_mechanics) {
                 expect(!view->definition().bodies.empty(), "Empty mechanical source");
+                verify_imported_cradle(view->definition());
                 key(SDLK_SPACE, session, ui, host);
                 ui.tick(view->definition().fixed_dt);
                 expect(view->snapshot().time > 0, "Imported Play did not advance");
@@ -421,6 +504,48 @@ int main(int argc, char **argv) {
             smoke(session, host, ui);
             return 0;
         }
+        if (benchmark) {
+            expect(ui.mechanical() != nullptr, "Benchmark requires supported mechanism");
+            key(SDLK_SPACE, session, ui, host);
+            std::vector<double> frames, physics_times, render_times;
+            const auto millis = [](auto a, auto b) {
+                return std::chrono::duration<double, std::milli>(b - a).count();
+            };
+            for (int i = 0; i < 100; ++i) {
+                const auto begin = std::chrono::steady_clock::now();
+                ui.tick(ui.mechanical()->definition().fixed_dt);
+                const auto stepped = std::chrono::steady_clock::now();
+                const auto paint = [&](SDL_Renderer *r) {
+                    ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
+                };
+                if (benchmark_legacy)
+                    checked(session.draw(host.canvas_extent(), renderer::render,
+                                         [&](const renderer::Frame &f) {
+                                             return host.present(f, nullptr, false, paint);
+                                         }));
+                else
+                    checked(host.present_overlay(paint));
+                const auto end = std::chrono::steady_clock::now();
+                if (i >= 20) {
+                    frames.push_back(millis(begin, end));
+                    physics_times.push_back(millis(begin, stepped));
+                    render_times.push_back(millis(stepped, end));
+                }
+            }
+            const auto mean = [](const auto &v) {
+                double sum = 0;
+                for (auto x : v)
+                    sum += x;
+                return sum / double(v.size());
+            };
+            std::sort(frames.begin(), frames.end());
+            std::cout << "BENCHMARK frames=" << frames.size() << " frame_ms=" << mean(frames)
+                      << " p95_ms=" << frames[frames.size() * 95 / 100]
+                      << " physics_ms=" << mean(physics_times)
+                      << " render_ms=" << mean(render_times)
+                      << " uncapped_fps=" << 1000 / mean(frames) << '\n';
+            return 0;
+        }
         auto previous = std::chrono::steady_clock::now();
         std::string last_error;
         while (events(session, ui, host)) {
@@ -429,16 +554,23 @@ int main(int argc, char **argv) {
             checked(session.tick(std::chrono::duration<double>(now - previous).count()));
             ui.tick(std::chrono::duration<double>(now - previous).count());
             previous = now;
+            const auto paint = [&](SDL_Renderer *r) {
+                ui.paint(r, session, host.extent(), SDL_GetWindowDisplayScale(host.window()));
+            };
             const auto result =
-                session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
-                    return host.present(f, nullptr, fail_texture,
-                                        [&](SDL_Renderer *r) {
-                                            ui.paint(r, session, host.extent(),
-                                                     SDL_GetWindowDisplayScale(host.window()));
-                                        },
-                                        {session.editing().view().center,
-                                         session.editing().view().pixels_per_meter});
-                });
+                ui.mechanical()
+                    ? host.present_overlay(paint, nullptr, fail_texture)
+                    : session.draw(host.canvas_extent(), renderer::render,
+                                   [&](const renderer::Frame &f) {
+                                       return host.present(
+                                           f, nullptr, fail_texture,
+                                           [&](SDL_Renderer *r) {
+                                               ui.paint(r, session, host.extent(),
+                                                        SDL_GetWindowDisplayScale(host.window()));
+                                           },
+                                           {session.editing().view().center,
+                                            session.editing().view().pixels_per_meter});
+                                   });
             if (result.error()) {
                 if (fail_texture) {
                     std::cerr << result.error()->message << '\n';
@@ -455,8 +587,13 @@ int main(int argc, char **argv) {
                           ? ui.source_title() + (ui.mechanical() ? " | Experimental mechanics"
                                                                  : " | SSIM source preview")
                           : "Untitled scene")
-                  << " | " << (session.running() ? "Running" : "Paused") << " | t=" << std::fixed
-                  << std::setprecision(3) << session.snapshot().time() << " s | Workspace preview";
+                  << " | "
+                  << ((ui.mechanical() ? ui.mechanical()->running() : session.running()) ? "Running"
+                                                                                         : "Paused")
+                  << " | t=" << std::fixed << std::setprecision(3)
+                  << (ui.mechanical() ? ui.mechanical()->snapshot().time
+                                      : session.snapshot().time())
+                  << " s | Workspace preview";
             if (!last_error.empty())
                 title << " | " << last_error;
             host.title(title.str());

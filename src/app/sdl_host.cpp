@@ -149,4 +149,25 @@ core::Result<void> Host::present(const renderer::Frame &frame, const char *captu
         return failure("Present frame");
     return core::Result<void>::success();
 }
+core::Result<void> Host::present_overlay(const std::function<void(SDL_Renderer *)> &paint,
+                                         const char *capture, bool fail_texture) {
+    if (fail_texture)
+        return core::Result<void>::failure({core::Code::internal_error,
+                                            core::Severity::error,
+                                            "Create texture: injected failure",
+                                            {},
+                                            "host"});
+    if (!SDL_SetRenderDrawColor(device_.get(), 42, 42, 42, 255) || !SDL_RenderClear(device_.get()))
+        return failure("Clear source frame");
+    paint(device_.get());
+    if (capture) {
+        std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)> surface(
+            SDL_RenderReadPixels(device_.get(), nullptr), SDL_DestroySurface);
+        if (!surface || !SDL_SaveBMP(surface.get(), capture))
+            return failure("Capture source frame");
+    }
+    if (!SDL_RenderPresent(device_.get()))
+        return failure("Present source frame");
+    return core::Result<void>::success();
+}
 } // namespace opensim::app

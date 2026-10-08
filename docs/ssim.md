@@ -67,3 +67,9 @@ headless configuration acquires none of these. OPENSIM_BUILD_COMPAT=ON builds th
 portable mechanics/script profile with tests, including without a desktop window.
 The solver uses float internally; canonical scene values remain binary64. Exact
 cross-simulator or arbitrary-input numerical equivalence is not established.
+
+The circle backend refreshes contacts and restitution through eight complete world
+microsteps per canonical fixed step. This resolves close-chain transfer that was
+incorrect when the previous backend refreshed contacts once per eight-substep frame.
+Materials and authored damping remain intact; no source filename triggers special
+physics. See demo.md for measured rendering and cradle regression commands.

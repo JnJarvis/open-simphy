@@ -155,3 +155,29 @@ Opening errors print the filename, diagnostic code/path and full reason to the
 launching terminal (stderr). Successful source opens print the preview-only status,
 shape/joint inventory, scripts and omitted-geometry diagnostics. The UI retains
 the previous source after failure. Launch from a terminal to retain these messages.
+
+## Imported mechanism performance checks
+
+The imported mechanism owns its complete native viewport. Its normal presentation
+bypasses particle rasterization, grid decoration, pixel recoloring and upload of a
+hidden scene. Particle authoring continues to use the accepted Frame path.
+
+For repeatable native timing with an actual supported source file:
+
+```text
+opensim_demo --benchmark-mechanism "Newton Cradle.ssim"
+opensim_demo --benchmark-legacy "Newton Cradle.ssim"
+opensim_demo --smoke-mechanism "Newton Cradle.ssim"
+```
+
+The benchmark warms up twenty frames and measures eighty, with no artificial delay.
+It prints mean/p95 frame time and separate physics/render timings. The legacy
+command deliberately exercises the previous hidden particle presentation for
+comparison. Native timing depends on hardware, renderer, resolution and build type;
+uncapped FPS is throughput evidence, not a promise of interactive refresh rate.
+The ordinary event loop retains an 8 ms pacing delay.
+
+The cradle smoke additionally checks one- and two-ball releases through the actual
+imported bodies/materials/joints, output count, quiet middle balls, return swing,
+length stability, overlap and energy. This check expects a five-ball cradle geometry;
+it is a diagnostic command, not a generic simulation compatibility test.

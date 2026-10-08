@@ -944,7 +944,7 @@
       "id": "INT-005",
       "title": "Scalable workspace and functional imported circle mechanisms",
       "stage": 3,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -969,7 +969,8 @@
         "tests/unit/scene/",
         "spec/contracts/mechanism.md",
         "rfcs/INT-005-mechanisms.md",
-        "docs/ssim.md"
+        "docs/ssim.md",
+        "README.md"
       ],
       "spec_refs": [
         "spec/architecture.md",

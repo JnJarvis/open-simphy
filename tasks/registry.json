@@ -832,7 +832,7 @@
       "id": "INT-003",
       "title": "Build application workspace for interface feedback",
       "stage": 2,
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [
@@ -854,7 +854,7 @@
         "spec/contracts/scene.md"
       ],
       "description": "tasks/items/INT-003.md",
-      "block_reason": null,
+      "block_reason": "GitHub sign-in unavailable: cannot retrieve failed Windows Debug test log or publish revised branch for required native CI. Local checks pass; root cause unresolved.",
       "completion_report": null,
       "reviewer": null,
       "merged_commit": null

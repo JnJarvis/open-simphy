@@ -15,6 +15,7 @@ Use it as a workflow/layout reference, not a source of branding or copied assets
   correct. Keep actual functionality explicit; do not imply unimplemented domains
   work merely by drawing their tabs.
 
-Current INT-003 remains a runnable first workspace, not the final design. Scope a
-follow-up integration task for this layout/grid after review; do not silently change
-domain contracts or mix collision/import work into visual layout changes.
+Current INT-003 remains a runnable first workspace, not the final design. On
+2026-10-08 the coordinator refined its existing app-only scope for the requested
+grid/rulers and stacked left panels. Remaining visual work is follow-up integration
+scope; domain contracts and collision/import tasks are unchanged.

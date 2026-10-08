@@ -1,21 +1,14 @@
 # Task dependency chart
 
-Updated 2026-10-07 from [registry.json](registry.json). Arrows point from prerequisite
-to dependent. Registry status remains authoritative.
+Updated 2026-10-08 from [registry.json](registry.json). Registry status is authoritative.
 
-DONE: 21 | REVIEW: 0 | IN_PROGRESS: 1 | READY: 1 | BLOCKED: 2
+DONE: 22 | REVIEW: 0 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 3
 
-- INT-002 editor demo and IO-001 native-file contract are merged.
-- IO-002 codec implementation is merged; all59 local tests and14 native CI jobs passed.
-- PLAT-001 file-adapter contract is accepted and merged; implementation has not begun.
-- COMPAT-001 remains READY for the later small-task worker.
-- INT-001 is merged but BLOCKED on mixed-monitor hardware evidence.
-- COMPAT-002 remains evidence-gated; full SimPHY-openable format coverage is a product goal.
+INT-003 has a locally tested workspace; remote failure diagnosis and fresh CI await GitHub sign-in.
+COMPAT-003 real SSIM inspection is merged. Import translation and file adapters remain future work.
 
 ```mermaid
 flowchart TD
-  COMPAT_003["COMPAT-003: Real SSIM evidence inspection<br/>IN_PROGRESS"]
-  class COMPAT_003 IN_PROGRESS
   BUILD_001["BUILD-001: Select foundation toolchain and coding policy<br/>DONE"]
   CORE_001["CORE-001: Specify IDs and diagnostics contracts<br/>DONE"]
   MATH_001["MATH-001: Specify 2D numeric contracts<br/>DONE"]
@@ -40,6 +33,8 @@ flowchart TD
   IO_001["IO-001: Specify bounded native particle persistence<br/>DONE"]
   IO_002["IO-002: Implement bounded native document codec<br/>DONE"]
   PLAT_001["PLAT-001: Specify bounded reads and safe file replacement<br/>DONE"]
+  COMPAT_003["COMPAT-003: Inspect real SSIM archives and bounded container validation<br/>DONE"]
+  INT_003["INT-003: Build application workspace for interface feedback<br/>BLOCKED"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -80,30 +75,5 @@ flowchart TD
   IO_001 --> IO_002
   SCENE_002 --> IO_002
   IO_001 --> PLAT_001
-  gate_research_available{"research_available: not satisfied"}
-  gate_research_available -.-> COMPAT_002
-  classDef DONE fill:#dcfce7,stroke:#475569,color:#111827
-  class BUILD_001,CORE_001,MATH_001,REN_001,BUILD_002,TEST_001,CORE_002,MATH_002,SCENE_001,PHY_001,REN_002,SCENE_002,PHY_002,REN_003,BUILD_003,BUILD_004,EDT_001,INT_002,IO_001 DONE
-  classDef REVIEW fill:#dbeafe,stroke:#475569,color:#111827
-  class IO_002,PLAT_001 DONE
-  classDef READY fill:#fef9c3,stroke:#475569,color:#111827
-  class COMPAT_001 READY
-  classDef BLOCKED fill:#fee2e2,stroke:#475569,color:#111827
-  class INT_001,COMPAT_002 BLOCKED
-  classDef IN_PROGRESS fill:#ede9fe,stroke:#475569,color:#111827
+  INT_002 --> INT_003
 ```
-
-## Remaining persistence sequence
-
-The following unnumbered steps are proposals, not READY tasks.
-
-```mermaid
-flowchart LR
-  codec["IO-002: codec merged"] --> app["Scope Save/Open integration"]
-  contract["PLAT-001: file contract accepted"] --> adapters["Scope native adapters and tests"]
-  adapters --> app
-  app --> smoke["Native save/reopen and failure workflow tests"]
-```
-
-Codec code alone does not enable Save/Open. Import support stays separate from the
-custom native format. See [architecture](../spec/architecture.md) for module boundaries.

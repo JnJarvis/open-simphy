@@ -2,7 +2,9 @@
 #include "sdl_host.hpp"
 #include "session.hpp"
 #include <SDL3/SDL_main.h>
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -126,6 +128,12 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
     draw("smoke-help.bmp");
     key(SDLK_ESCAPE, session, ui, host);
     draw("smoke-workspace.bmp");
+    // Exercise a different raster density without changing the user's desktop settings.
+    checked(session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
+        return host.present(f, "smoke-font-150.bmp", false,
+                            [&](SDL_Renderer *r) { ui.paint(r, session, host.extent(), 1.5f); });
+    }));
+    draw("smoke-font-return.bmp");
     session = *app::Session::create().value();
     ui = app::EditorUI{};
     checked(session.resize(host.canvas_extent()));
@@ -208,6 +216,7 @@ void smoke(app::Session &session, app::Host &host, app::EditorUI &ui) {
 } // namespace
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
+    bool smoke_mechanics = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
@@ -239,7 +248,10 @@ int main(int argc, char **argv) {
             return count && !failed ? 0 : 1;
         } else if (arg == "--open" && i + 1 < argc)
             open_path = argv[++i];
-        else if (arg == "--smoke-source" && i + 1 < argc)
+        else if (arg == "--smoke-mechanism" && i + 1 < argc) {
+            smoke_source = argv[++i];
+            smoke_mechanics = true;
+        } else if (arg == "--smoke-source" && i + 1 < argc)
             smoke_source = argv[++i];
         else if (arg == "--smoke")
             smoke_mode = true;
@@ -292,6 +304,113 @@ int main(int argc, char **argv) {
                                  SDL_GetWindowDisplayScale(host.window()));
                     });
                 }));
+            if (auto *view = ui.mechanical(); view && smoke_mechanics) {
+                expect(!view->definition().bodies.empty(), "Empty mechanical source");
+                key(SDLK_SPACE, session, ui, host);
+                ui.tick(view->definition().fixed_dt);
+                expect(view->snapshot().time > 0, "Imported Play did not advance");
+                key(SDLK_R, session, ui, host);
+                expect(view->snapshot().time == 0 && !view->running(), "Imported Reset failed");
+                if (!view->definition().links.empty()) {
+                    const auto &joint = view->definition().links.back();
+                    if (!joint.body_b.valid()) {
+                        const auto cradle_initial = view->snapshot();
+                        const auto body = *std::find_if(
+                            cradle_initial.bodies.begin(), cradle_initial.bodies.end(),
+                            [&](const auto &b) { return b.id == joint.body_a; });
+                        const auto l = host.workspace();
+                        const auto pixel = [&](math::Vec2 p) {
+                            return math::Vec2{l.x + double(l.canvas.width) / 2 +
+                                                  (p.x - view->camera().x) * view->zoom() * l.scale,
+                                              l.y + double(l.canvas.height) / 2 -
+                                                  (p.y - view->camera().y) * view->zoom() *
+                                                      l.scale};
+                        };
+                        const auto mouse = [&](SDL_EventType type, math::Vec2 position) {
+                            int ww = 0, wh = 0;
+                            app::require_sdl(SDL_GetWindowSize(host.window(), &ww, &wh),
+                                             "Mechanism smoke coordinates");
+                            const auto screen = host.extent();
+                            SDL_Event e{};
+                            e.type = type;
+                            const float x = float(position.x * ww / screen.width),
+                                        y = float(position.y * wh / screen.height);
+                            if (type == SDL_EVENT_MOUSE_MOTION) {
+                                e.motion.x = x;
+                                e.motion.y = y;
+                            } else {
+                                e.button.x = x;
+                                e.button.y = y;
+                                e.button.button = SDL_BUTTON_LEFT;
+                                e.button.down = type == SDL_EVENT_MOUSE_BUTTON_DOWN;
+                            }
+                            expect(ui.event(e, session, host),
+                                   "Imported pointer unexpectedly closed");
+                        };
+                        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, pixel(body.center));
+                        mouse(SDL_EVENT_MOUSE_MOTION, pixel({body.center.x + joint.length * .5,
+                                                             body.center.y + joint.length * .15}));
+                        mouse(SDL_EVENT_MOUSE_BUTTON_UP,
+                              pixel({body.center.x + joint.length * .5,
+                                     body.center.y + joint.length * .15}));
+                        const auto raised = view->snapshot();
+                        const auto moved =
+                            *std::find_if(raised.bodies.begin(), raised.bodies.end(),
+                                          [&](const auto &b) { return b.id == body.id; });
+                        expect(moved.center.y > body.center.y + .1,
+                               "Imported pendulum drag failed");
+                        key(SDLK_SPACE, session, ui, host);
+                        double other_motion = 0;
+                        for (int i = 0; i < 240; ++i) {
+                            ui.tick(view->definition().fixed_dt);
+                            const auto state = view->snapshot();
+                            for (const auto &b : state.bodies)
+                                if (b.id != body.id)
+                                    for (const auto &old : cradle_initial.bodies)
+                                        if (old.id == b.id && std::abs(old.center.y) < 10)
+                                            other_motion = std::max(
+                                                other_motion, std::abs(b.center.x - old.center.x));
+                        }
+                        expect(other_motion > .1,
+                               "Imported contact transfer did not move another suspended ball");
+                        key(SDLK_SPACE, session, ui, host);
+                        checked(session.draw(
+                            host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
+                                return host.present(
+                                    f, "smoke-mechanism.bmp", false, [&](SDL_Renderer *r) {
+                                        ui.paint(r, session, host.extent(),
+                                                 SDL_GetWindowDisplayScale(host.window()));
+                                    });
+                            }));
+                        for (const auto &widget : view->widgets())
+                            if (widget.button) {
+                                const float left = float(l.x) / l.scale, top = float(l.y) / l.scale,
+                                            vw = float(l.canvas.width) / l.scale,
+                                            vh = float(l.canvas.height) / l.scale;
+                                const double x =
+                                    (left +
+                                     std::clamp(float(widget.position.x), 8.0f,
+                                                std::max(8.0f, vw - float(widget.size.x) - 8)) +
+                                     10) *
+                                    l.scale;
+                                const double y =
+                                    (top +
+                                     std::clamp(float(widget.position.y), 8.0f,
+                                                std::max(8.0f, vh - float(widget.size.y) - 8)) +
+                                     10) *
+                                    l.scale;
+                                mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, {x, y});
+                                expect(view->snapshot().time == 0,
+                                       "Imported script button did not reset");
+                                break;
+                            }
+                        std::cout << "PASS: imported Play/Reset, pendulum drag, contact transfer "
+                                     "and embedded button\n";
+                    }
+                }
+            }
+            expect(!smoke_mechanics || ui.mechanical(),
+                   "Requested mechanical source profile unavailable");
             key(SDLK_ESCAPE, session, ui, host);
             expect(!ui.source_open(), "Could not return to authored scene");
             std::cout
@@ -308,6 +427,7 @@ int main(int argc, char **argv) {
             ui.poll_open(session, host);
             const auto now = std::chrono::steady_clock::now();
             checked(session.tick(std::chrono::duration<double>(now - previous).count()));
+            ui.tick(std::chrono::duration<double>(now - previous).count());
             previous = now;
             const auto result =
                 session.draw(host.canvas_extent(), renderer::render, [&](const renderer::Frame &f) {
@@ -331,8 +451,10 @@ int main(int argc, char **argv) {
                 last_error.clear();
             std::ostringstream title;
             title << "Open Simphy - "
-                  << (ui.source_open() ? ui.source_title() + " | SSIM source preview"
-                                       : "Untitled scene")
+                  << (ui.source_open()
+                          ? ui.source_title() + (ui.mechanical() ? " | Experimental mechanics"
+                                                                 : " | SSIM source preview")
+                          : "Untitled scene")
                   << " | " << (session.running() ? "Running" : "Paused") << " | t=" << std::fixed
                   << std::setprecision(3) << session.snapshot().time() << " s | Workspace preview";
             if (!last_error.empty())

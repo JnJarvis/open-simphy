@@ -128,6 +128,30 @@ ratios; these do not substitute for actual monitor testing. The local editor was
 also exercised on a real Windows display reporting scale1.5. Mixed-monitor and
 Linux/macOS interactive smoke remain separate hardware checks.
 
-Open... / Ctrl+O / file drop opens a real SSIM source preview. Escape returns to
-the authored scene. See [SSIM controls and limits](ssim.md); imported projects
-require future body/collision/joint support before they can play.
+Open... / Ctrl+O / file drop opens a real SSIM project. Eligible circular/distance
+mechanisms use experimental Play/Step/Reset and drag controls; other profiles stay
+in source preview. Escape returns to the authored scene. See
+[SSIM controls and limits](ssim.md). The supplied Newton Cradle reconstructs its
+script-created balls, materials, textures, suspension joints, description and
+reset control. --smoke-mechanism checks the cradle's actual drag/contact/reset path;
+--smoke-source checks general opening/failure retention.
+
+
+## Desktop text and theme
+
+The desktop uses neutral gray panels and a gray grid background. UI text uses
+Noto Sans rendered with FreeType at the current physical display density; glyph
+textures are rebuilt when the display scale changes. Source titles retain UTF-8
+characters, subject to the font's character coverage. Text clips by measured
+advances rather than byte counts.
+
+App builds acquire FreeType 2.13.3 and Noto Sans at the pinned commit and hashes
+in `cmake/OpenSimFonts.cmake`. Engine-only builds acquire neither. Keep the font,
+NOTO-LICENSE.txt, FREETYPE-LICENSE.txt and FREETYPE-LICENSE-OPTIONS.txt beside the
+executable along with the existing notices. This software uses the FreeType
+library under the FreeType License. Noto Sans uses the SIL Open Font License.
+
+Opening errors print the filename, diagnostic code/path and full reason to the
+launching terminal (stderr). Successful source opens print the preview-only status,
+shape/joint inventory, scripts and omitted-geometry diagnostics. The UI retains
+the previous source after failure. Launch from a terminal to retain these messages.

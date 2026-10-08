@@ -942,9 +942,9 @@
     },
     {
       "id": "INT-005",
-      "title": "Neutral workspace theme and scalable desktop text",
+      "title": "Scalable workspace and functional imported circle mechanisms",
       "stage": 3,
-      "status": "REVIEW",
+      "status": "IN_PROGRESS",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -955,12 +955,29 @@
       "allowed_paths": [
         "src/app/",
         "cmake/OpenSimFonts.cmake",
-        "docs/demo.md"
+        "docs/demo.md",
+        "src/compat/",
+        "src/scene/mechanism.cpp",
+        "src/scene/include/opensim/scene/mechanism.hpp",
+        "src/scene/CMakeLists.txt",
+        "src/physics/mechanism.cpp",
+        "src/physics/include/opensim/physics/mechanism.hpp",
+        "src/physics/CMakeLists.txt",
+        "cmake/OpenSimMechanics.cmake",
+        "tests/compatibility/ssim/",
+        "tests/unit/physics/",
+        "tests/unit/scene/",
+        "spec/contracts/mechanism.md",
+        "rfcs/INT-005-mechanisms.md",
+        "docs/ssim.md"
       ],
       "spec_refs": [
         "spec/architecture.md",
         "spec/testing.md",
-        "spec/contracts/renderer.md"
+        "spec/contracts/renderer.md",
+        "research/SCRIPTING.md",
+        "research/GUI_WIDGETS.md",
+        "research/FILE_FORMAT.md"
       ],
       "description": "tasks/items/INT-005.md",
       "block_reason": null,

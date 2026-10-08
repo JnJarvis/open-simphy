@@ -112,20 +112,42 @@ bool EditorUI::open_file(const std::string &path, Session &session) {
     auto next = *result.value();
     report(session.cancel_drag());
     report(session.set_running(false));
+    std::unique_ptr<SourceView> mechanical;
+    auto prepared = compat::MechanicalSource::create(next);
+    if (prepared.value()) {
+        try {
+            mechanical = std::make_unique<SourceView>(*prepared.value());
+        } catch (const std::exception &error) {
+            std::cerr << "Open Simphy: source image/mechanics unavailable: " << error.what()
+                      << '\n';
+        }
+        if (mechanical)
+            std::cerr
+                << "Open Simphy: experimental circle/distance mechanics available; source solver "
+                   "parity, event callbacks and audio unavailable.\n";
+    } else {
+        std::cerr << "Open Simphy: source preview only: " << prepared.error()->message << '\n';
+    }
+    mechanical_ = std::move(mechanical);
     source_ = std::move(next);
     source_scroll_ = 0;
-    message_ = "SSIM source opened. Physics support is still being built.";
+    message_ = mechanical_ ? "Source opened with experimental circle mechanics."
+                           : "SSIM source opened. Unsupported mechanics remain preview-only.";
     std::cerr << "Open Simphy: opened " << std::quoted(path)
-              << " for source preview only; rigid-body simulation is not implemented."
+              << (mechanical_
+                      ? " with experimental circle/distance mechanics."
+                      : " for source preview only; required simulation features are unavailable.")
               << " Outlines=" << source_->outlines.size()
               << ", omitted=" << source_->omitted_outlines
               << ", nonempty scripts=" << source_->scripts << '\n';
     for (const auto &[name, count] : source_->shapes)
         std::cerr << "  Shape " << name << ": " << count << '\n';
     for (const auto &[name, count] : source_->joints)
-        std::cerr << "  Joint " << name << ": " << count << " (simulation unavailable)\n";
+        std::cerr << "  Joint " << name << ": " << count
+                  << (mechanical_ ? " (stored source records)\n" : " (simulation unavailable)\n");
     for (const auto &reason : source_->diagnostics)
-        std::cerr << "  Preview limitation: " << reason << '\n';
+        if (!mechanical_)
+            std::cerr << "  Preview limitation: " << reason << '\n';
     std::cerr << std::flush;
     return true;
 }
@@ -165,9 +187,12 @@ bool EditorUI::event(const SDL_Event &e, Session &s, Host &host) {
     }
     if (source_) {
         if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
+            mechanical_.reset();
             source_.reset();
             message_ = "Returned to authored scene.";
         }
+        if (mechanical_)
+            return mechanical_->event(e, host);
         if (e.type == SDL_EVENT_MOUSE_WHEEL)
             source_scroll_ = std::max(0.0f, source_scroll_ - e.wheel.y * 24);
         return true;
@@ -605,7 +630,10 @@ void EditorUI::paint(SDL_Renderer *r, const Session &s, renderer::Extent extent,
     color(r, 196, 211, 230);
     clipped_text(12, h - 20, message_, w - 24);
     if (source_) {
-        paint_source(r, extent, scale);
+        if (mechanical_)
+            mechanical_->paint(r, extent, scale);
+        else
+            paint_source(r, extent, scale);
         require_sdl(SDL_SetRenderScale(r, 1, 1), "Restore source scale");
         return;
     }

@@ -1,11 +1,14 @@
-# Open Simphy - C++ particle simulation
+# Open Simphy - C++ physics workspace
 
 A modular, independent open-source simulator project with a working Windows
 workspace preview. The current slice models free particles under uniform gravity,
 with a real editor, toolbar, scene list, viewport and property inspector.
-The native document codec exists. The app can open real `.ssim` archives for
-source inspection and partial geometry preview; executable SimPHY import,
-collisions and native Save/Open are still being built. See [SSIM opening](docs/ssim.md). This is an early application, not a finished product.
+The native document codec exists. The app opens real `.ssim` archives and now has
+an experimental circular-mechanism path: the supplied Newton Cradle reconstructs
+script-created balls, textures, distance joints and controls, with drag, collisions,
+playback and reset. Other bodies/joints, event scripts, sound, optics, circuits and
+3D remain incomplete. See [SSIM opening](docs/ssim.md). This is an early application,
+not a finished product or a claim of full SimPHY compatibility.
 
 ## Try the demo
 

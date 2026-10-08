@@ -128,9 +128,13 @@ ratios; these do not substitute for actual monitor testing. The local editor was
 also exercised on a real Windows display reporting scale1.5. Mixed-monitor and
 Linux/macOS interactive smoke remain separate hardware checks.
 
-Open... / Ctrl+O / file drop opens a real SSIM source preview. Escape returns to
-the authored scene. See [SSIM controls and limits](ssim.md); imported projects
-require future body/collision/joint support before they can play.
+Open... / Ctrl+O / file drop opens a real SSIM project. Eligible circular/distance
+mechanisms use experimental Play/Step/Reset and drag controls; other profiles stay
+in source preview. Escape returns to the authored scene. See
+[SSIM controls and limits](ssim.md). The supplied Newton Cradle reconstructs its
+script-created balls, materials, textures, suspension joints, description and
+reset control. --smoke-mechanism checks the cradle's actual drag/contact/reset path;
+--smoke-source checks general opening/failure retention.
 
 
 ## Desktop text and theme

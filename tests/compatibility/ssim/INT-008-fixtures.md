@@ -11,3 +11,9 @@ mechanism.cpp with timestep and numerical bounds in the assertions/comments.
 
 Real archives remain local/untracked and are separately tested via native/headless
 CLI; their hashes and evidence are recorded in the coordinator completion report.
+
+INT-009 updates the former concavity-rejection expectation to tested area-preserving
+pieces under the reviewed RFC. Independent coverage points avoid shared edges;
+area5 L-shape leaves its notch empty (a hull would occupy7). Crossing/touching
+boundaries remain rejected. Source spring/distance/rope/weld XML is newly authored,
+with parameter/reset checks; no original fixture copies are used.

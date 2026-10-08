@@ -40,6 +40,54 @@ struct Mechanism::Impl {
         double constant, a, b, previous_a, previous_b, phi;
     };
     std::vector<WindingState> windings;
+    struct ElasticState {
+        scene::DistanceLink link;
+        b2JointId joint;
+    };
+    std::vector<ElasticState> elastic;
+    void spring_parameters(double dt) {
+        for (const auto &spring : elastic) {
+            auto a = bodies.at(spring.link.body_a),
+                 b = spring.link.body_b.valid() ? bodies.at(spring.link.body_b) : ground;
+            auto pa = b2Body_GetWorldPoint(a, native(spring.link.local_a)),
+                 pb = b2Body_GetWorldPoint(b, native(spring.link.local_b));
+            const double dx = pb.x - pa.x, dy = pb.y - pa.y, length = std::hypot(dx, dy);
+            if (length < 1e-6)
+                continue;
+            const auto inverse = [&](b2BodyId id, b2Vec2 p) {
+                if (b2Body_GetType(id) != b2_dynamicBody)
+                    return 0.0;
+                auto c = b2Body_GetWorldCenterOfMass(id);
+                const double lever = ((p.x - c.x) * dy - (p.y - c.y) * dx) / length;
+                const double inertia = b2Body_GetRotationalInertia(id), mass = b2Body_GetMass(id);
+                return (mass > 0 ? 1.0 / mass : 0) + (inertia > 0 ? lever * lever / inertia : 0);
+            };
+            const double inv = inverse(a, pa) + inverse(b, pb);
+            if (inv <= 0)
+                continue;
+            if (spring.link.stiffness == 0) {
+                if (spring.link.damping_coefficient > 0) {
+                    auto va = b2Body_GetWorldPointVelocity(a, pa),
+                         vb = b2Body_GetWorldPointVelocity(b, pb);
+                    const double speed = ((vb.x - va.x) * dx + (vb.y - va.y) * dy) / length;
+                    const double coefficient = spring.link.damping_coefficient;
+                    const double impulse = -coefficient * speed * dt / (1 + coefficient * inv * dt);
+                    b2Vec2 vector{float(impulse * dx / length), float(impulse * dy / length)};
+                    b2Body_ApplyLinearImpulse(b, vector, pb, true);
+                    b2Body_ApplyLinearImpulse(a, {-vector.x, -vector.y}, pa, true);
+                }
+                continue;
+            }
+            b2DistanceJoint_SetSpringHertz(
+                spring.joint,
+                float(std::sqrt(spring.link.stiffness * inv) / (2 * std::numbers::pi)));
+            const double ratio =
+                spring.link.damping_coefficient >= 0
+                    ? spring.link.damping_coefficient / (2 * std::sqrt(spring.link.stiffness / inv))
+                    : spring.link.damping_ratio;
+            b2DistanceJoint_SetSpringDampingRatio(spring.joint, float(ratio));
+        }
+    }
     static double unwrap(double x, double previous) {
         return std::remainder(x - previous, 2 * std::numbers::pi);
     }
@@ -155,8 +203,40 @@ struct Mechanism::Impl {
             d.localAnchorA = native(j.local_a);
             d.localAnchorB = native(j.local_b);
             d.length = static_cast<float>(j.length);
+            d.enableSpring = j.spring || j.stiffness > 0 || j.damping_coefficient >= 0;
+            if (j.stiffness > 0) {
+                const auto inverse = [](b2BodyId id) {
+                    const auto mass = b2Body_GetMass(id);
+                    return b2Body_GetType(id) == b2_dynamicBody && mass > 0 ? 1.0 / mass : 0;
+                };
+                const double inverse_mass = inverse(d.bodyIdA) + inverse(d.bodyIdB);
+                d.hertz = float(std::sqrt(j.stiffness * inverse_mass) / (2 * std::numbers::pi));
+                d.dampingRatio = float(j.damping_ratio);
+            }
+            // Box2D disables limits when its spring flag is false. A zero-Hz spring
+            // supplies no bilateral force but allows the unilateral rope bounds.
+            if (j.limit) {
+                d.enableSpring = true;
+                d.enableLimit = true;
+                d.minLength = float(j.minimum);
+                d.maxLength = float(j.maximum);
+            }
             d.collideConnected = j.collide_connected;
-            b2CreateDistanceJoint(world, &d);
+            auto joint = b2CreateDistanceJoint(world, &d);
+            if (j.spring || j.stiffness > 0 || j.damping_coefficient >= 0)
+                elastic.push_back({j, joint});
+        }
+        for (const auto &j : m.welds) {
+            auto d = b2DefaultWeldJointDef();
+            d.bodyIdA = bodies.at(j.body_a);
+            d.bodyIdB = j.body_b.valid() ? bodies.at(j.body_b) : ground;
+            d.localAnchorA = native(j.local_a);
+            d.localAnchorB = native(j.local_b);
+            d.referenceAngle = float(j.reference);
+            d.angularHertz = float(j.frequency);
+            d.angularDampingRatio = float(j.damping_ratio);
+            d.collideConnected = j.collide_connected;
+            b2CreateWeldJoint(world, &d);
         }
         for (const auto &j : m.hinges) {
             auto d = b2DefaultRevoluteJointDef();
@@ -226,6 +306,7 @@ core::Result<void> Mechanism::step() {
     if (impl_->poisoned || impl_->steps >= 9007199254740991ULL)
         return bad("Reset invalid or exhausted mechanism runtime");
     for (unsigned substep = 0; substep < 8; ++substep) {
+        impl_->spring_parameters(impl_->initial.fixed_dt / 8);
         for (const auto &f : impl_->applied) {
             const auto id = impl_->bodies.at(f.body);
             if (f.wrapped) {

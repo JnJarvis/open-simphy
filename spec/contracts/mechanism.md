@@ -58,3 +58,9 @@ unknown API/loop timeout/over-limit rollback; assets/gui actions; actual seven-f
 corpus classification and native visual comparison without importing fixtures into Git.
 
 INT-008 reviewed additive extension: explicit fixture vector overrides geometry/material/filter for general rigid bodies; empty retains the centered circle contract. See rigid-mechanism.md and rfcs/INT-008-rigid-mechanics.md. Snapshots retain COM pose/velocity semantics. Particle/native-v1 contracts remain unchanged.
+
+INT-009 additive extension: exact source polygon decomposition, reviewed per-body
+fixture capacity 256 with unchanged4096 aggregate cap; elastic/limited distance
+and rigid/soft weld values. See rigid-mechanism.md and INT-009 RFC. Native particle
+ports/schema remain unchanged. Required particle/tracer systems stay explicitly
+unsupported until their complete runtime can be composed.

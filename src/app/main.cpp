@@ -294,7 +294,7 @@ void verify_imported_cradle(const scene::Mechanism &definition) {
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
     bool benchmark = false, benchmark_legacy = false;
-    bool smoke_mechanics = false, smoke_rigid = false;
+    bool smoke_mechanics = false, smoke_rigid = false, smoke_elastic = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
@@ -338,6 +338,7 @@ int main(int argc, char **argv) {
                         fixtures += b.fixtures.size();
                     std::cout << fixtures << " hinges=" << source.definition().hinges.size()
                               << " windings=" << source.definition().windings.size()
+                              << " welds=" << source.definition().welds.size()
                               << " time=" << final.time << " travel=" << travel << '\n';
                     return true;
                 } catch (const std::exception &e) {
@@ -387,9 +388,10 @@ int main(int argc, char **argv) {
             return count && !failed ? 0 : 1;
         } else if (arg == "--open" && i + 1 < argc)
             open_path = argv[++i];
-        else if (arg == "--smoke-rigid" && i + 1 < argc) {
+        else if ((arg == "--smoke-rigid" || arg == "--smoke-elastic") && i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_rigid = true;
+            smoke_elastic = arg == "--smoke-elastic";
         } else if (arg == "--smoke-mechanism" && i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_mechanics = true;
@@ -453,6 +455,70 @@ int main(int argc, char **argv) {
             if (smoke_rigid) {
                 auto *view = ui.mechanical();
                 expect(view != nullptr, "Required rigid source profile unavailable");
+                if (smoke_elastic) {
+                    const auto l = host.workspace();
+                    int ww = 0, wh = 0;
+                    app::require_sdl(SDL_GetWindowSize(host.window(), &ww, &wh),
+                                     "Elastic drag window size");
+                    const auto mouse = [&](SDL_EventType type, math::Vec2 p) {
+                        SDL_Event event{};
+                        event.type = type;
+                        const float x = float((l.x + double(l.canvas.width) / 2 +
+                                               (p.x - view->camera().x) * view->zoom() * l.scale) *
+                                              ww / host.extent().width);
+                        const float y = float((l.y + double(l.canvas.height) / 2 -
+                                               (p.y - view->camera().y) * view->zoom() * l.scale) *
+                                              wh / host.extent().height);
+                        if (type == SDL_EVENT_MOUSE_MOTION) {
+                            event.motion.x = x;
+                            event.motion.y = y;
+                        } else {
+                            event.button.button = SDL_BUTTON_LEFT;
+                            event.button.x = x;
+                            event.button.y = y;
+                        }
+                        expect(ui.event(event, session, host), "Elastic drag event rejected");
+                    };
+                    unsigned springs = 0, ropes = 0;
+                    for (const auto &link : view->definition().links) {
+                        if (link.body_b.valid() || link.local_a != math::Vec2{})
+                            continue;
+                        const auto state = view->snapshot();
+                        const auto body =
+                            std::find_if(state.bodies.begin(), state.bodies.end(),
+                                         [&](const auto &b) { return b.id == link.body_a; });
+                        expect(body != state.bodies.end(), "Elastic drag endpoint missing");
+                        math::Vec2 target = body->center;
+                        if (link.limit) {
+                            target = {link.local_b.x, link.local_b.y - link.maximum - 2};
+                            ++ropes;
+                        } else if (link.spring || link.stiffness > 0) {
+                            target.x -= .5;
+                            ++springs;
+                        } else
+                            continue;
+                        mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, body->center);
+                        mouse(SDL_EVENT_MOUSE_MOTION, target);
+                        mouse(SDL_EVENT_MOUSE_BUTTON_UP, target);
+                        const auto moved_state = view->snapshot();
+                        const auto moved =
+                            std::find_if(moved_state.bodies.begin(), moved_state.bodies.end(),
+                                         [&](const auto &b) { return b.id == link.body_a; });
+                        const double distance = std::hypot(moved->center.x - link.local_b.x,
+                                                           moved->center.y - link.local_b.y);
+                        if (link.limit)
+                            expect(std::abs(distance - link.maximum) < .005,
+                                   "Paused rope drag ignored maximum bound");
+                        else
+                            expect(std::hypot(moved->center.x - target.x,
+                                              moved->center.y - target.y) < .005,
+                                   "Spring drag incorrectly imposed natural rod length");
+                    }
+                    expect(springs > 0 && ropes > 0,
+                           "Elastic native fixture needs a spring and rope");
+                    key(SDLK_R, session, ui, host);
+                    std::cout << "PASS: native spring extension and bounded slack rope drag\n";
+                }
                 // Exercise actual source controls before requiring dynamic motion: a friction demo
                 // may start in equilibrium.
                 const auto control_layout = host.workspace();

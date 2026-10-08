@@ -71,3 +71,53 @@ TEST_CASE("Rigid fixtures reject concavity, winding degeneracy and invalid mater
         REQUIRE(scene::validate(m).error());
     }
 }
+
+TEST_CASE("Elastic and weld constraint values validate before backend mutation",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    scene::CircleBody b;
+    b.id = {1};
+    m.bodies = {b};
+    scene::DistanceLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.stiffness = 100;
+    j.damping_ratio = .5;
+    m.links = {j};
+    REQUIRE(scene::validate(m).has_value());
+    m.links[0].stiffness = -1;
+    REQUIRE(scene::validate(m).error());
+    m.links[0] = j;
+    m.links[0].minimum = 3;
+    m.links[0].maximum = 2;
+    REQUIRE(scene::validate(m).error());
+    m.links.clear();
+    scene::WeldLink w;
+    w.id = {1};
+    w.body_a = {1};
+    m.welds = {w};
+    REQUIRE(scene::validate(m).has_value());
+    m.welds[0].frequency = -1;
+    REQUIRE(scene::validate(m).error());
+    m.welds[0] = w;
+    m.welds[0].body_b = {9};
+    REQUIRE(scene::validate(m).error());
+}
+
+TEST_CASE("Compound bodies accept the reviewed fixture budget and reject overflow",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    scene::CircleBody b;
+    b.id = {1};
+    b.fixtures.resize(256);
+    m.bodies = {b};
+    REQUIRE(scene::validate(m).has_value());
+    m.bodies[0].fixtures.emplace_back();
+    REQUIRE(scene::validate(m).error());
+    m.bodies.clear();
+    for (unsigned i = 0; i < 17; ++i) {
+        b.id = {i + 1};
+        m.bodies.push_back(b);
+    }
+    REQUIRE(scene::validate(m).error());
+}

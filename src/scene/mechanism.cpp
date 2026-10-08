@@ -15,7 +15,8 @@ core::Result<void> bad(const char *message, core::EntityId id = {}) {
 }
 } // namespace
 core::Result<void> validate(const Mechanism &m) {
-    if (m.bodies.size() > 256 || m.links.size() + m.hinges.size() + m.windings.size() > 1024 ||
+    if (m.bodies.size() > 256 ||
+        m.links.size() + m.hinges.size() + m.windings.size() + m.welds.size() > 1024 ||
         !point(m.gravity) || !range(m.fixed_dt, .001, 1.0 / 30))
         return bad("Mechanism bounds or timestep invalid");
     const auto valid_mixer = [](MaterialMixer v) {
@@ -38,7 +39,7 @@ core::Result<void> validate(const Mechanism &m) {
             (b.static_body && (b.velocity != math::Vec2{} || b.angular_velocity != 0)))
             return bad("Invalid circular body", b.id);
         fixture_count += b.fixtures.size();
-        if (b.fixtures.size() > 64 || fixture_count > 4096)
+        if (b.fixtures.size() > 256 || fixture_count > 4096)
             return bad("Fixture budget", b.id);
         for (const auto &f : b.fixtures) {
             if (!point(f.center) || !range(f.radius, 1e-4, 1000) || !range(f.friction, 0, 1e6) ||
@@ -72,7 +73,10 @@ core::Result<void> validate(const Mechanism &m) {
             return bad("Distance joint needs a dynamic endpoint", j.id);
         if (!j.id.valid() || !joints.insert(j.id).second || !ids.contains(j.body_a) ||
             (j.body_b.valid() && !ids.contains(j.body_b)) || j.body_a == j.body_b ||
-            !point(j.local_a) || !point(j.local_b) || !range(j.length, .01, 20000) || j.length == 0)
+            !point(j.local_a) || !point(j.local_b) || !range(j.length, .01, 20000) ||
+            j.length == 0 || !range(j.stiffness, 0, 1e9) || !range(j.damping_ratio, 0, 10) ||
+            !(j.damping_coefficient == -1 || range(j.damping_coefficient, 0, 1e9)) ||
+            !range(j.minimum, 0, 20000) || !range(j.maximum, j.minimum, 20000))
             return bad("Invalid distance joint", j.id);
     }
     const auto endpoints = [&](core::EntityId a, core::EntityId b, core::EntityId id) {
@@ -85,6 +89,11 @@ core::Result<void> validate(const Mechanism &m) {
         return id.valid() && joints.insert(id).second && ids.contains(a) &&
                (!b.valid() || ids.contains(b)) && a != b && (dyn(a) || dyn(b));
     };
+    for (const auto &j : m.welds)
+        if (!endpoints(j.body_a, j.body_b, j.id) || !point(j.local_a) || !point(j.local_b) ||
+            !range(j.reference, -1e6, 1e6) || !range(j.frequency, 0, 1000) ||
+            !range(j.damping_ratio, 0, 10))
+            return bad("Invalid weld", j.id);
     for (const auto &j : m.hinges)
         if (!endpoints(j.body_a, j.body_b, j.id) || !point(j.local_a) || !point(j.local_b) ||
             !range(j.reference, -1e6, 1e6) || !range(j.lower, -1e6, 1e6) ||

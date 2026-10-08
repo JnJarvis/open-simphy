@@ -521,3 +521,220 @@ TEST_CASE("Circle versus rectangular plane wall reflects an elastic normal impac
     REQUIRE(std::abs(w->snapshot().bodies[0].velocity.y) < .001);
     REQUIRE(w->snapshot().bodies[1].center == wall.center);
 }
+
+TEST_CASE("Hooke spring period damping and gravity equilibrium match analytic references",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = 1.0 / 240;
+    scene::CircleBody b;
+    b.id = {1};
+    b.center = {2.2, 0};
+    b.mass = 2;
+    b.inertia = 1;
+    b.radius = .1;
+    m.bodies = {b};
+    scene::DistanceLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.local_b = {0, 0};
+    j.length = 2;
+    j.stiffness = 8;
+    j.collide_connected = true;
+    m.links = {j};
+    auto w = make(m);
+    for (int i = 0; i < 377; ++i)
+        REQUIRE(w->step().has_value()); // half period pi/sqrt(k/m).
+    REQUIRE(w->snapshot().bodies[0].center.x == Catch::Approx(1.8).margin(.003));
+    REQUIRE(std::abs(w->snapshot().bodies[0].velocity.x) < .004);
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().bodies[0].center == b.center);
+    m.links[0].damping_ratio = 1;
+    w = make(m);
+    for (int i = 0; i < 960; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.x == Catch::Approx(2).margin(.002));
+    m.gravity = {0, -10};
+    m.bodies[0].center = {0, -2};
+    w = make(m);
+    for (int i = 0; i < 2400; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.y ==
+            Catch::Approx(-4.5).margin(.015)); // extension mg/k.
+}
+TEST_CASE("Slack ropes permit free motion inside bounds and stop outward travel",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = 1.0 / 120;
+    scene::CircleBody b;
+    b.id = {1};
+    b.radius = .1;
+    b.center = {1, 0};
+    b.velocity = {1, 0};
+    m.bodies = {b};
+    scene::DistanceLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.local_b = {0, 0};
+    j.length = 2;
+    j.limit = true;
+    j.minimum = 0;
+    j.maximum = 2;
+    m.links = {j};
+    auto w = make(m);
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.x == Catch::Approx(1.5).margin(.002));
+    REQUIRE(w->snapshot().bodies[0].velocity.x == Catch::Approx(1).margin(.002));
+    for (int i = 0; i < 180; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.x <= 2.01);
+    REQUIRE(std::abs(w->snapshot().bodies[0].velocity.x) < .01);
+    m.bodies[0].velocity = {-1, 0};
+    m.links[0].minimum = .5;
+    w = make(m);
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.x >= .49);
+}
+TEST_CASE("Welds retain anchors and relative angle with rigid and damped rotation",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = 1.0 / 120;
+    scene::CircleBody a;
+    a.id = {1};
+    a.radius = .1;
+    a.center = {0, 0};
+    a.velocity = {1, 0};
+    a.angular_velocity = 1;
+    scene::CircleBody b = a;
+    b.id = {2};
+    b.center = {2, 0};
+    b.angle = .3;
+    b.velocity = {1, 2};
+    m.bodies = {a, b};
+    scene::WeldLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.body_b = {2};
+    j.local_a = {1, 0};
+    j.local_b = {-std::cos(.3), std::sin(.3)};
+    j.reference = .3;
+    m.welds = {j};
+    auto w = make(m);
+    for (int i = 0; i < 240; ++i)
+        REQUIRE(w->step().has_value());
+    auto s = w->snapshot();
+    REQUIRE(s.bodies[1].angle - s.bodies[0].angle == Catch::Approx(.3).margin(.005));
+    REQUIRE(std::hypot(s.bodies[1].center.x - s.bodies[0].center.x,
+                       s.bodies[1].center.y - s.bodies[0].center.y) ==
+            Catch::Approx(2).margin(.01));
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().bodies[1].center == b.center);
+    m.welds[0].frequency = 2;
+    m.welds[0].damping_ratio = 1;
+    m.welds[0].reference = 0;
+    // Relaxation reference assumes no persistent spin or centrifugal loading.
+    for (auto &body : m.bodies) {
+        body.velocity = {};
+        body.angular_velocity = 0;
+    }
+    w = make(m);
+    for (int i = 0; i < 600; ++i)
+        REQUIRE(w->step().has_value());
+    s = w->snapshot();
+    REQUIRE(s.bodies[1].angle - s.bodies[0].angle == Catch::Approx(0).margin(.01));
+}
+TEST_CASE("Concave compound notch stays empty during actual circle contacts", "[unit][mechanism]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = 1.0 / 120;
+    scene::CircleBody shape;
+    shape.id = {1};
+    shape.static_body = true;
+    scene::RigidFixture x;
+    x.vertices = {{0, 0}, {3, 0}, {3, 1}, {0, 1}};
+    scene::RigidFixture y;
+    y.vertices = {{0, 1}, {1, 1}, {1, 3}, {0, 3}};
+    shape.fixtures = {x, y};
+    scene::CircleBody ball;
+    ball.id = {2};
+    ball.radius = .1;
+    ball.center = {2, 2};
+    ball.velocity = {0, -1};
+    ball.restitution = 0;
+    m.bodies = {shape, ball};
+    auto w = make(m);
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[1].center.y == Catch::Approx(1.5).margin(.002));
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[1].center.y == Catch::Approx(1.1).margin(.015));
+}
+
+TEST_CASE("Zero stiffness remains free and direct damping dissipates physical kinetic energy",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = 1.0 / 120;
+    scene::CircleBody b;
+    b.id = {1};
+    b.mass = 2;
+    b.center = {2, 0};
+    b.velocity = {1, 0};
+    b.radius = .1;
+    m.bodies = {b};
+    scene::DistanceLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.local_b = {0, 0};
+    j.length = 2;
+    j.spring = true;
+    m.links = {j};
+    auto w = make(m);
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].center.x == Catch::Approx(3).margin(.002));
+    m.links[0].damping_coefficient = .6;
+    w = make(m);
+    double previous = 1;
+    for (int i = 0; i < 120; ++i) {
+        REQUIRE(w->step().has_value());
+        const auto speed = w->snapshot().bodies[0].velocity.x;
+        REQUIRE(speed <= previous);
+        REQUIRE(speed > 0);
+        previous = speed;
+    }
+    REQUIRE(previous == Catch::Approx(std::exp(-.3)).margin(.001)); // v=v0 exp(-b*t/m).
+}
+
+TEST_CASE("Off-center spring stiffness retains force units and torque lever arm",
+          "[unit][mechanism]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = .001;
+    scene::CircleBody b;
+    b.id = {1};
+    b.center = {2.2, 0};
+    b.mass = 2;
+    b.inertia = 1;
+    b.radius = .1;
+    m.bodies = {b};
+    scene::DistanceLink j;
+    j.id = {1};
+    j.body_a = {1};
+    j.local_a = {0, 1};
+    j.local_b = {0, 1};
+    j.length = 2;
+    j.stiffness = 8;
+    m.links = {j};
+    auto w = make(m);
+    REQUIRE(w->step().has_value());
+    auto s = w->snapshot();
+    // F=-k*.2=-1.6 N, a=-.8; torque=+1.6 N*m, alpha=1.6.
+    REQUIRE(s.bodies[0].velocity.x == Catch::Approx(-.0008).margin(.000005));
+    REQUIRE(s.bodies[0].angular_velocity == Catch::Approx(.0016).margin(.00001));
+}

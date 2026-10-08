@@ -27,6 +27,16 @@ struct DistanceLink {
     math::Vec2 local_a{}, local_b{};
     double length = 1;
     bool collide_connected = false;
+    double stiffness = 0, damping_ratio = 0, minimum = .01, maximum = 20000;
+    double damping_coefficient = -1;
+    bool spring = false;
+    bool limit = false;
+};
+struct WeldLink {
+    core::EntityId id, body_a, body_b;
+    math::Vec2 local_a{}, local_b{};
+    double reference = 0, frequency = 0, damping_ratio = 0;
+    bool collide_connected = false;
 };
 struct HingeLink {
     core::EntityId id, body_a, body_b;
@@ -54,6 +64,7 @@ struct Mechanism {
     std::vector<DistanceLink> links;
     std::vector<HingeLink> hinges;
     std::vector<WindingLink> windings;
+    std::vector<WeldLink> welds;
     MaterialMixer friction_mixer = MaterialMixer::geometric_mean;
     MaterialMixer restitution_mixer = MaterialMixer::maximum;
 };

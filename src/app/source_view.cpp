@@ -7,9 +7,11 @@
 #define STBI_ONLY_PNG
 #define STBI_MAX_DIMENSIONS 8192
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <set>
 #include <sstream>
 #include <stb_image.h>
 #include <stdexcept>
@@ -135,7 +137,12 @@ void SourceView::drag(math::Vec2 target) {
                          len = std::hypot(dx, dy);
             if (len < 1e-6)
                 return;
-            target = {j.local_b.x + dx * j.length / len, j.local_b.y + dy * j.length / len};
+            double distance = j.length;
+            if (j.limit)
+                distance = std::clamp(len, j.minimum, j.maximum);
+            else if (j.spring || j.stiffness > 0 || j.damping_coefficient >= 0)
+                continue;
+            target = {j.local_b.x + dx * distance / len, j.local_b.y + dy * distance / len};
             break;
         }
     checked(world_->relocate(*dragging_, target));
@@ -409,6 +416,29 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
             fallback.push_back(f);
         }
         const auto &fixtures = b.fixtures.empty() ? fallback : b.fixtures;
+        std::set<std::array<double, 4>> polygon_edges;
+        if (fixtures.size() > 1)
+            for (const auto &fixture : fixtures)
+                for (std::size_t k = 0; k < fixture.vertices.size(); ++k) {
+                    auto a = fixture.vertices[k],
+                         end = fixture.vertices[(k + 1) % fixture.vertices.size()];
+                    polygon_edges.insert({a.x, a.y, end.x, end.y});
+                }
+        double body_minx = 1e30, body_maxx = -1e30, body_miny = 1e30, body_maxy = -1e30;
+        for (const auto &f : fixtures) {
+            if (f.vertices.empty()) {
+                body_minx = std::min(body_minx, f.center.x - f.radius);
+                body_maxx = std::max(body_maxx, f.center.x + f.radius);
+                body_miny = std::min(body_miny, f.center.y - f.radius);
+                body_maxy = std::max(body_maxy, f.center.y + f.radius);
+            } else
+                for (auto q : f.vertices) {
+                    body_minx = std::min(body_minx, q.x);
+                    body_maxx = std::max(body_maxx, q.x);
+                    body_miny = std::min(body_miny, q.y);
+                    body_maxy = std::max(body_maxy, q.y);
+                }
+        }
         for (const auto &f : fixtures) {
             std::vector<math::Vec2> points = f.vertices;
             if (points.empty())
@@ -417,19 +447,12 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
                     points.push_back(
                         {f.center.x + f.radius * std::cos(a), f.center.y + f.radius * std::sin(a)});
                 }
-            double minx = points.front().x, maxx = minx, miny = points.front().y, maxy = miny;
-            for (auto q : points) {
-                minx = std::min(minx, q.x);
-                maxx = std::max(maxx, q.x);
-                miny = std::min(miny, q.y);
-                maxy = std::max(maxy, q.y);
-            }
             std::vector<SDL_Vertex> vertices;
             std::vector<int> indices;
             std::vector<SDL_FPoint> outline;
             for (auto q : points) {
-                const SDL_FPoint uv{float((q.x - minx) / (maxx - minx)),
-                                    float(1 - (q.y - miny) / (maxy - miny))};
+                const SDL_FPoint uv{float((q.x - body_minx) / (body_maxx - body_minx)),
+                                    float(1 - (q.y - body_miny) / (body_maxy - body_miny))};
                 q = rotated(q, sample.angle);
                 auto projected = project({sample.center.x + q.x, sample.center.y + q.y});
                 vertices.push_back({projected, fill, uv});
@@ -446,8 +469,19 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
                                            indices.data(), int(indices.size())),
                         "Draw rigid fixture");
             color(r, selected_ == b.id ? scene::Color{1, 1, 1, 1} : style.outline);
-            require_sdl(SDL_RenderLines(r, outline.data(), int(outline.size())),
-                        "Draw fixture outline");
+            if (fixtures.size() == 1 || f.vertices.empty()) {
+                require_sdl(SDL_RenderLines(r, outline.data(), int(outline.size())),
+                            "Draw fixture outline");
+                continue;
+            }
+            for (std::size_t edge = 0; edge < points.size(); ++edge) {
+                const auto a = points[edge], end = points[(edge + 1) % points.size()];
+                const bool internal = polygon_edges.contains({end.x, end.y, a.x, a.y});
+                if (!internal)
+                    require_sdl(SDL_RenderLine(r, outline[edge].x, outline[edge].y,
+                                               outline[edge + 1].x, outline[edge + 1].y),
+                                "Draw fixture boundary");
+            }
         }
     }
     for (const auto &h : source_.definition().hinges) {
@@ -456,6 +490,16 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
         auto point = project({a.center.x + q.x, a.center.y + q.y});
         color(r, {.8, .8, .3, 1});
         panel(r, point.x - 3, point.y - 3, 6, 6);
+    }
+    for (const auto &w : source_.definition().welds) {
+        const auto &a = samples.at(w.body_a);
+        auto q = rotated(w.local_a, a.angle);
+        auto point = project({a.center.x + q.x, a.center.y + q.y});
+        color(r, {.85, .85, .85, 1});
+        require_sdl(SDL_RenderLine(r, point.x - 4, point.y - 4, point.x + 4, point.y + 4),
+                    "Draw weld");
+        require_sdl(SDL_RenderLine(r, point.x - 4, point.y + 4, point.x + 4, point.y - 4),
+                    "Draw weld");
     }
     for (const auto &w : source_.definition().windings) {
         const auto &a = samples.at(w.body_a), &b = samples.at(w.body_b);
@@ -482,9 +526,23 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
         }
         auto pa = project(wa), pb = project(wb);
         color(r, source_.joint_colors().at(j.id));
-        for (int offset = -1; offset <= 1; ++offset)
-            require_sdl(SDL_RenderLine(r, pa.x + float(offset), pa.y, pb.x + float(offset), pb.y),
-                        "Draw suspension");
+        if (j.stiffness > 0) {
+            const float dx = pb.x - pa.x, dy = pb.y - pa.y, length = std::hypot(dx, dy);
+            std::vector<SDL_FPoint> coil{pa};
+            if (length > 1)
+                for (int k = 1; k < 20; ++k) {
+                    const float t = float(k) / 20,
+                                offset = (k == 1 || k == 19) ? 0 : (k % 2 ? 4.0f : -4.0f);
+                    coil.push_back({pa.x + t * dx - offset * dy / length,
+                                    pa.y + t * dy + offset * dx / length});
+                }
+            coil.push_back(pb);
+            require_sdl(SDL_RenderLines(r, coil.data(), int(coil.size())), "Draw spring");
+        } else
+            for (int offset = -1; offset <= 1; ++offset)
+                require_sdl(
+                    SDL_RenderLine(r, pa.x + float(offset), pa.y, pb.x + float(offset), pb.y),
+                    "Draw suspension");
         panel(r, pb.x - 2, pb.y - 2, 4, 4);
     }
     float textY = top + 136;
@@ -551,9 +609,9 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     label(14, 128, "IMPORTED BODIES");
     label(14, 150,
           std::to_string(state.bodies.size()) + " bodies / " +
-              std::to_string(source_.definition().links.size() +
-                             source_.definition().hinges.size() +
-                             source_.definition().windings.size()) +
+              std::to_string(
+                  source_.definition().links.size() + source_.definition().hinges.size() +
+                  source_.definition().windings.size() + source_.definition().welds.size()) +
               " joints",
           l.left - 24);
     float row = 176 - list_scroll_;

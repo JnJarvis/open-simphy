@@ -8,23 +8,23 @@ scene. Failed or canceled opens retain the previous scene/source project.
 
 The app has two explicit modes:
 
-- **Experimental 2D rigid mechanics:** circles, rectangles, convex polygons and
-  compound fixtures, finite static planes, rigid distance joints, hinges and winding
-  joints can play, step, reset and be dragged. A bounded JavaScript bridge
+- **Experimental 2D rigid mechanics:** circles, rectangles, exact convex pieces of simple polygons and
+  compound fixtures, finite static planes, rigid/elastic distance, spring, rope,
+  hinge, winding and weld joints can play, step, reset and be dragged. A bounded JavaScript bridge
   reconstructs supported startup-created copies and button actions. The supplied
   Newton Cradle shows the original ball, five colored textured copies, suspensions,
   its description and working Reset Cradle button. Pull a ball outward/upward,
   release it and press Play. Motion transfers through real circle contacts.
 - **Source preview:** unsupported profiles retain the original archive, outlines
   and feature report. They cannot play. This currently includes the supplied
-  charge/prismatic, resonance/spring, optics and circuit examples. The supplied
+  charge/prismatic, resonance/line-controller, optics and circuit examples. The supplied
   Static and Kinetic Friction is supported, including its three sliders and RESET
   callback.
 
 The mechanics profile is experimental. It does not reproduce every source solver
 setting or all JavaScript APIs. Collision callbacks/sounds, dynamic scripting after
-startup, unsupported force/controller types, concave/large polygons without
-decomposition and additional joints/domains remain unsupported. Force modes 0/1/2
+startup, unsupported force/controller types, holes/crossing boundaries and geometry beyond
+the supported resource envelope, plus additional joints/domains remain unsupported. Force modes 0/1/2
 and property index 4 (friction) are supported; coefficient mixing preserves the
 source geometric-mean/minimum/maximum preferences independently. Unknown APIs and resource failures retain source
 preview rather than inventing replacement particles. See the
@@ -103,3 +103,28 @@ The 67-file bundled audit completes ten seconds plus reset for Newton Cradle and
 Static and Kinetic Friction. The other 65 still report missing domains/features.
 This is general support for these primitives, not a claim of all-file compatibility.
 The coordinator capability matrix records each file's current blocking feature.
+
+## Elastic mechanics and exact polygon pieces (INT-009)
+
+Simple polygons with up to64 boundary vertices are split into convex pieces that
+preserve their occupied area, including concave cutouts. Crossing/touching boundaries
+and holes require a separately described shape. Compound bodies allow up to256
+fixtures, with the4096 aggregate limit retained. Internal edges are hidden and body
+textures remain continuous across pieces.
+
+Authored SpringJoint, frequency-based DistanceJoint, bounded RopeJoint and rigid/
+angular-soft WeldJoint now have runtime implementations and reset behavior. Springs
+use actual stiffness/axial damping and angular lever arms; zero stiffness remains
+free. These do not yet supply line/prismatic constraints, fields, particle systems,
+tracers, all body-controller properties, graphs/events, optics, circuits or3D.
+Required missing features still prevent playback: opening and displaying a file
+are not evidence that its entire simulation executes. The bundled coverage remains
+2/67 until those additional behaviors are implemented and tested.
+
+For the independently authored geometry/elastic native check:
+```text
+python tests/compatibility/ssim/INT-009-native.py build/elastic-smoke.ssim
+opensim_demo --smoke-elastic build/elastic-smoke.ssim
+```
+This checks spring extension and rope bounds through actual mouse events, then
+Play/Reset/callback behavior. It is synthetic evidence, separate from bundled coverage.

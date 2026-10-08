@@ -153,3 +153,15 @@ TEST_CASE("SSIM invalid UTF8 and excessive expansion are rejected") {
                       true))
               .error());
 }
+
+TEST_CASE("SSIM polygon centroid metadata does not translate existing vertices twice") {
+    const auto xml =
+        scene("<Bodies><Body Name='triangle'><Transform><Translation x='2' "
+              "y='3'/><Rotation>0</Rotation></Transform><Fixtures><Fixture><Shape "
+              "q:type='Polygon'><LocalCenter x='3' y='4'/><Vertex x='2' y='3'/><Vertex x='4' "
+              "y='3'/><Vertex x='3' y='6'/></Shape></Fixture></Fixtures></Body></Bodies>");
+    auto parsed = compat::inspect_ssim(archive({{"simulation.xml", xml}}));
+    REQUIRE(parsed.value());
+    REQUIRE(parsed.value()->outlines.size() == 1);
+    CHECK(parsed.value()->outlines[0].points[0] == math::Vec2{4, 6});
+}

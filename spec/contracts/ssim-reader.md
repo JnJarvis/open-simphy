@@ -28,3 +28,9 @@ Preview budgets: 4096 outlines, 262144 points, 4096 vertices per polygon;
 world preview coordinates limited to magnitude 1e9. Geometry beyond these budgets
 is omitted with a counted diagnostic; original source remains fully retained.
 At most 128 detailed omission messages plus the total omitted count are emitted.
+
+Vertex-based shapes store fixture-local vertex coordinates directly; LocalCenter
+is centroid metadata and must not be added again. The observed Body and joints
+Demo polygons have nonzero LocalCenter matching their vertex centroids. Parametric
+circle/rectangle outlines use their local center and local rotation before the
+body transform. This is preview geometry evidence, not a physics-model default.

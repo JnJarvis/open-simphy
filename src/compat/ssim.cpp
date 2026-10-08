@@ -172,6 +172,10 @@ void outline(Project &project, pugi::xml_node shape) {
                          {width / 2, height / 2},
                          {-width / 2, height / 2}};
     } else if (kind == "Polygon" || kind == "Triangle" || kind == "Segment") {
+        // Serialized vertices already occupy fixture-local coordinates;
+        // LocalCenter records their centroid, not an additional translation.
+        local = {};
+        local_angle = 0;
         for (auto vertex : shape.children("Vertex")) {
             math::Vec2 point{};
             if (!vector(vertex, point) || result.points.size() >= 4096) {

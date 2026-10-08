@@ -1,0 +1,342 @@
+{
+  "date": "2026-10-08",
+  "commit": "011cddab003cda08a29fbfa6a73616a89b18cb3c",
+  "method": "Actual local archives: bounded import, controls, 600 fixed steps and reset. RUN is limited-profile playback, not whole-file compatibility or parity.",
+  "files": [
+    {
+      "file": "3D car Racing Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "3D Joints Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "3D world Bridge Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "3d world HeightField test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "3d world Plane test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "3d world weldjoint demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Particle Cradle.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Spring joint Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Theed RayCast Car Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Charge oscillation.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported force/filter/charge/inactive state"
+    },
+    {
+      "file": "Newton Cradle.ssim",
+      "status": "RUN",
+      "detail": "bodies=7 fixtures=7 hinges=0 windings=0 welds=0 time=10 travel=873.926"
+    },
+    {
+      "file": "Potentiometer Experiment.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Other domains/fields/controllers require source preview"
+    },
+    {
+      "file": "Prism Dispersion.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Resonance in Action.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported joint profile: LineJoint"
+    },
+    {
+      "file": "Rotation Toppling.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported embedded widget: checkbox"
+    },
+    {
+      "file": "Static and Kinetic Friction.ssim",
+      "status": "RUN",
+      "detail": "bodies=4 fixtures=4 hinges=1 windings=1 welds=0 time=10 travel=0.00510971"
+    },
+    {
+      "file": "Body and joints Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported rigid shape: Ring"
+    },
+    {
+      "file": "Circuit Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Other domains/fields/controllers require source preview"
+    },
+    {
+      "file": "collapsible_Panel_test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Fields Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Particle systems/tracers require their runtime features"
+    },
+    {
+      "file": "Geometry Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Graph Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Particle systems/tracers require their runtime features"
+    },
+    {
+      "file": "Gui Interaction Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Liquid Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Particle systems/tracers require their runtime features"
+    },
+    {
+      "file": "MultiTouch Test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Optics Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Plotter_Test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported embedded widget: bean"
+    },
+    {
+      "file": "Spring Controller Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported rigid shape: Ring"
+    },
+    {
+      "file": "Tracers Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Particle systems/tracers require their runtime features"
+    },
+    {
+      "file": "Day on Mercury.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Doppler Effect Simulation.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Egg_in_solution (OsmoticPressure).ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Electric field lines.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Lenz_Law3D.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Micrometer.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Polarization3D.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Solar System.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Vernier Calliper.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Wave Ripples.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "15-Puzzle.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Invalid widget bounds"
+    },
+    {
+      "file": "Analog Clock.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Script: ReferenceError: Actions is not defined"
+    },
+    {
+      "file": "Animating background.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Arrow and Bow game.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Canvas Clock Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Canvas FireWorks.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Cloth Simulation.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Flappy Bird Xperia X1.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Freecell.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Script: ReferenceError: Console is not defined"
+    },
+    {
+      "file": "Helicopter Game.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "MS Paint Clone.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported embedded widget: menubar"
+    },
+    {
+      "file": "Path svg test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Serpent and Worms.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported embedded widget: checkbox"
+    },
+    {
+      "file": "Torus.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "Unsupported embedded widget: bean"
+    },
+    {
+      "file": "Tower Game.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Physics playground.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Pointer Test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "SolarSystem Test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "3D Audio with Spectrum.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Ferrari Car Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Skinning and Morphing Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Spline Editor Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "SpotLight Texture Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Teapot Material Demo.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "TransformControl Test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Transmission Material Test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Voxel painter.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    },
+    {
+      "file": "Water Sky test.ssim",
+      "status": "UNSUPPORTED",
+      "detail": "No supported 2D rigid bodies; scene needs another simulation domain"
+    }
+  ]
+}

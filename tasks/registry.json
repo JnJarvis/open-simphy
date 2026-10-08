@@ -1092,14 +1092,16 @@
       "id": "INT-008",
       "title": "General imported rigid fixtures and common 2D constraints",
       "stage": 3,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
         "INT-006",
         "COMPAT-004"
       ],
-      "blocks": [],
+      "blocks": [
+        "INT-009"
+      ],
       "gates": [],
       "allowed_paths": [
         "src/scene/",
@@ -1129,6 +1131,92 @@
       "description": "tasks/items/INT-008.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-008.md",
+      "reviewer": "user",
+      "merged_commit": "659159bcaacef9dcc05764b0750185cc3c965840"
+    },
+    {
+      "id": "INT-009",
+      "title": "Exact polygon pieces and elastic rigid constraints",
+      "stage": 3,
+      "status": "REVIEW",
+      "priority": 0,
+      "owner": "codex-worker",
+      "dependencies": [
+        "INT-008"
+      ],
+      "blocks": [
+        "INT-010"
+      ],
+      "gates": [],
+      "allowed_paths": [
+        "src/scene/",
+        "src/physics/",
+        "src/compat/",
+        "src/app/",
+        "tests/unit/scene/",
+        "tests/unit/physics/",
+        "tests/compatibility/ssim/",
+        "spec/contracts/mechanism.md",
+        "spec/contracts/rigid-mechanism.md",
+        "rfcs/INT-009-elastic-geometry.md",
+        "README.md",
+        "docs/ssim.md",
+        "docs/demo.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/mechanism.md",
+        "spec/contracts/rigid-mechanism.md",
+        "research/PHYSICS_2D.md",
+        "research/FILE_FORMAT.md"
+      ],
+      "description": "tasks/items/INT-009.md",
+      "block_reason": null,
+      "completion_report": "tasks/reports/INT-009.md",
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "INT-010",
+      "title": "Driven mechanisms and live body properties",
+      "stage": 3,
+      "status": "BLOCKED",
+      "priority": 0,
+      "owner": null,
+      "dependencies": [
+        "INT-009"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/scene/",
+        "src/physics/",
+        "src/compat/",
+        "src/app/",
+        "tests/unit/scene/",
+        "tests/unit/physics/",
+        "tests/compatibility/ssim/",
+        "spec/contracts/mechanism.md",
+        "spec/contracts/rigid-mechanism.md",
+        "rfcs/INT-010-driven-mechanics.md",
+        "README.md",
+        "docs/ssim.md",
+        "docs/demo.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/mechanism.md",
+        "spec/contracts/rigid-mechanism.md",
+        "research/PHYSICS_2D.md",
+        "research/SCRIPTING.md",
+        "research/FILE_FORMAT.md",
+        "research/GUI_WIDGETS.md"
+      ],
+      "description": "tasks/items/INT-010.md",
+      "block_reason": null,
+      "completion_report": null,
       "reviewer": null,
       "merged_commit": null
     }

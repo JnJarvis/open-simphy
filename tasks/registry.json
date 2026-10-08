@@ -1181,7 +1181,7 @@
       "id": "INT-010",
       "title": "Driven mechanisms and live body properties",
       "stage": 3,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [

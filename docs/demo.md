@@ -1,6 +1,8 @@
-# Particle editor and simulation demo
+# Open Simphy workspace preview
 
-This is a small particle editor and gravity simulation. Three cyan
+This is the runnable application workspace for interface feedback, backed by the
+particle editor and gravity simulation. Its layout is a starting point for the main
+application, not finished UI styling or a complete simulator. Three cyan
 particles move independently; the gray axes are reference lines, not collision
 surfaces. Particles can leave the screen. Press R to bring them back.
 
@@ -11,7 +13,7 @@ surfaces. Particles can leave the screen. Press R to bring them back.
 - R: stop simulation and return to authoring the initial scene at time zero.
 - Escape or window close: exit.
 
-The title bar shows simulation time and controls. Resize preserves world scale and
+The title bar and viewport header show simulation time. Resize preserves world scale and
 center; minimizing skips rendering. Errors pause playback and appear in the title
 and console. Recoverable output-size errors clear when the window fits again.
 
@@ -28,13 +30,30 @@ and console. Recoverable output-size errors clear when the window fits again.
 
 Editing requires Authoring mode. Pausing an advanced simulation does not enable
 editing: use Reset first. Reset retains the authored document, history and selection.
-The toolbar provides Play/Pause, Step, Reset, Add, Undo and Redo. Error/status text
+The toolbar provides Play/Pause, Step, Reset, Add, Delete, Undo, Redo, Home and Help. Error/status text
 appears at the bottom. No save/load, collisions or advanced object types yet.
 
-The canvas excludes the properties panel, and CPU pixels are copied one-to-one.
+The canvas excludes the header, toolbar, object list, inspector and status bar.
+CPU pixels are copied one-to-one into its own rectangle; input subtracts the same
+physical viewport origin before picking or dragging.
 UI size follows display scaling independently of physical world pixels per meter.
 High-DPI layout uses adaptive toolbar widths and scrolling properties; moving a
 window between scales cancels an active drag before refreshing coordinate mapping.
+
+## Workspace layout for feedback
+
+The left Scene Objects panel selects particles by identity. The right Properties
+panel edits selected objects and world gravity. At compact window sizes, Objects
+and Properties share tabs on the right; scroll the list to reach additional objects.
+Home returns the camera to the initial center and scale. Help or F1 opens a guide;
+Escape closes the guide without exiting. Disabled-looking edit/history controls
+reflect simulation mode, selection and history availability.
+
+The scene list and viewport share one real selection and undo history. No fake
+Save/Open/import buttons are shown: their file integration is still pending.
+UI text currently uses SDL's built-in debug font; typography, docking, themes and
+richer object tools are future refinements. The application still starts with the
+three-particle demo so feedback can focus on layout and actual interactions.
 
 ## Build and run
 

@@ -21,7 +21,7 @@ Host::Host(bool fail_window) {
     require_sdl(SDL_Init(SDL_INIT_VIDEO), "Initialize video");
     if (fail_window)
         throw std::runtime_error("Create window: injected failure");
-    window_.reset(SDL_CreateWindow("Open Simphy", 1200, 760,
+    window_.reset(SDL_CreateWindow("Open Simphy", 1440, 900,
                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY));
     require_sdl(bool(window_), "Create window");
     require_sdl(SDL_SetWindowMinimumSize(window_.get(), 800, 680), "Set minimum editor size");
@@ -40,14 +40,10 @@ renderer::Extent Host::extent() const {
         return {0, 0};
     return {static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h)};
 }
-renderer::Extent Host::canvas_extent() const {
-    const auto size = extent();
-    if (!size.width || !size.height)
-        return {0, 0};
-    const float scale = std::max(1.0f, SDL_GetWindowDisplayScale(window_.get()));
-    const auto panel = static_cast<std::uint32_t>(std::ceil(280 * scale));
-    return {size.width > panel ? size.width - panel : 0, size.height};
+Workspace Host::workspace() const {
+    return Workspace::layout(extent(), SDL_GetWindowDisplayScale(window_.get()));
 }
+renderer::Extent Host::canvas_extent() const { return workspace().canvas; }
 void Host::title(const std::string &text) {
     require_sdl(SDL_SetWindowTitle(window_.get(), text.c_str()), "Set title");
 }
@@ -89,7 +85,9 @@ core::Result<void> Host::present(const renderer::Frame &frame, const char *captu
         std::memcpy(static_cast<std::uint8_t *>(pixels) + std::size_t(y) * pitch,
                     frame.bytes().data() + std::size_t(y) * frame.stride(), frame.stride());
     SDL_UnlockTexture(texture_.get());
-    const SDL_FRect destination{0, 0, static_cast<float>(frame.width()),
+    const auto layout = workspace();
+    const SDL_FRect destination{static_cast<float>(layout.x), static_cast<float>(layout.y),
+                                static_cast<float>(frame.width()),
                                 static_cast<float>(frame.height())};
     if (!SDL_SetRenderDrawColor(device_.get(), 16, 20, 28, 255) ||
         !SDL_RenderClear(device_.get()) ||

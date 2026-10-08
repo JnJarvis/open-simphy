@@ -134,6 +134,94 @@ std::vector<std::uint8_t> member(const Project &p, const std::string &name, std:
         throw std::runtime_error("Source member CRC failure");
     return bytes;
 }
+// Deterministic ear clipping preserves the authored occupied boundary. No hull.
+std::vector<std::vector<math::Vec2>> pieces(std::vector<math::Vec2> v) {
+    constexpr double eps = 1e-10;
+    const auto cross = [](math::Vec2 a, math::Vec2 b, math::Vec2 c) {
+        return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    };
+    if (v.size() > 64 || v.size() < 3)
+        throw std::runtime_error("Polygon vertex budget (3..64)");
+    for (auto q : v)
+        if (!math::finite(q) || std::abs(q.x) > 1000 || std::abs(q.y) > 1000)
+            throw std::runtime_error("Polygon outside local envelope");
+    if (v.front() == v.back())
+        v.pop_back();
+    const auto on = [&](math::Vec2 a, math::Vec2 b, math::Vec2 q) {
+        return std::abs(cross(a, b, q)) <= eps && q.x >= std::min(a.x, b.x) - eps &&
+               q.x <= std::max(a.x, b.x) + eps && q.y >= std::min(a.y, b.y) - eps &&
+               q.y <= std::max(a.y, b.y) + eps;
+    };
+    for (std::size_t i = 0; i < v.size(); ++i) {
+        auto a = v[i], b = v[(i + 1) % v.size()];
+        if (a == b)
+            throw std::runtime_error("Duplicate polygon edge");
+        for (std::size_t j = i + 1; j < v.size(); ++j) {
+            if (j == i + 1 || (i == 0 && j + 1 == v.size()))
+                continue;
+            auto c = v[j], d = v[(j + 1) % v.size()];
+            const double ab = cross(a, b, c), ac = cross(a, b, d), cd = cross(c, d, a),
+                         ce = cross(c, d, b);
+            if (((ab > eps && ac < -eps) || (ab < -eps && ac > eps)) &&
+                ((cd > eps && ce < -eps) || (cd < -eps && ce > eps)))
+                throw std::runtime_error("Self-intersecting polygon");
+            if (on(a, b, c) || on(a, b, d) || on(c, d, a) || on(c, d, b))
+                throw std::runtime_error("Touching polygon boundary or hole");
+        }
+    }
+    bool changed = true;
+    while (changed && v.size() > 3) {
+        changed = false;
+        for (std::size_t i = 0; i < v.size(); ++i) {
+            if (on(v[(i + v.size() - 1) % v.size()], v[(i + 1) % v.size()], v[i])) {
+                v.erase(v.begin() + static_cast<std::ptrdiff_t>(i));
+                changed = true;
+                break;
+            }
+        }
+    }
+    double area = 0;
+    for (std::size_t i = 0; i < v.size(); ++i)
+        area += v[i].x * v[(i + 1) % v.size()].y - v[i].y * v[(i + 1) % v.size()].x;
+    if (std::abs(area) <= eps)
+        throw std::runtime_error("Degenerate polygon");
+    if (area < 0)
+        std::reverse(v.begin(), v.end());
+    bool convex = v.size() <= 8;
+    for (std::size_t i = 0; i < v.size(); ++i)
+        convex = convex && cross(v[i], v[(i + 1) % v.size()], v[(i + 2) % v.size()]) > eps;
+    if (convex)
+        return {v};
+    std::vector<std::vector<math::Vec2>> out;
+    while (v.size() > 3) {
+        bool ear = false;
+        for (std::size_t i = 0; i < v.size(); ++i) {
+            const auto before = (i + v.size() - 1) % v.size(), after = (i + 1) % v.size();
+            auto a = v[before], b = v[i], c = v[after];
+            if (cross(a, b, c) <= eps)
+                continue;
+            bool occupied = false;
+            for (std::size_t k = 0; k < v.size(); ++k) {
+                if (k == before || k == i || k == after)
+                    continue;
+                occupied = occupied || (cross(a, b, v[k]) >= -eps && cross(b, c, v[k]) >= -eps &&
+                                        cross(c, a, v[k]) >= -eps);
+            }
+            if (occupied)
+                continue;
+            out.push_back({a, b, c});
+            v.erase(v.begin() + static_cast<std::ptrdiff_t>(i));
+            ear = true;
+            break;
+        }
+        if (!ear)
+            throw std::runtime_error("Polygon cannot be decomposed without losing geometry");
+    }
+    if (cross(v[0], v[1], v[2]) <= eps)
+        throw std::runtime_error("Degenerate polygon piece");
+    out.push_back(v);
+    return out;
+}
 const char *bridge = R"JS(
 class Vector2 {
  constructor(x=0,y=0){this.x=x;this.y=y;}
@@ -145,7 +233,7 @@ class Vector2 {
 class Color {
  constructor(name){const colors={white:[1,1,1,1],pink:[1,.68,.76,1],yellow:[1,1,0,1],red:[1,0,0,1],green:[0,.5,0,1],orange:[1,.647,0,1],black:[0,0,0,1],blue:[0,0,1,1]};if(!colors[name])throw Error('Unsupported color '+name);this.rgba=colors[name];}
 }
-let __bodies=__seed.bodies, __links=__seed.links, __next=__bodies.length+1, __joint=__links.length+1;
+let __bodies=__seed.bodies, __links=__seed.links, __next=__bodies.length+1, __joint=__links.reduce((n,j)=>Math.max(n,j.id),0)+1;
 const __initial=JSON.parse(JSON.stringify(__seed.bodies));
 class Body {
  constructor(d){this.d=d;}
@@ -267,7 +355,7 @@ struct MechanicalSource::Impl {
             b.sensor = num(context, v.value, "sensor") != 0;
             auto fs = field(context, v.value, "fixtures");
             const double nf = num(context, fs.value, "length");
-            if (nf < 0 || nf > 64)
+            if (nf < 0 || nf > 256)
                 throw std::runtime_error("Fixture budget");
             for (unsigned k = 0; k < static_cast<unsigned>(nf); ++k) {
                 Value fv(context, JS_GetPropertyUint32(context, fs.value, k));
@@ -324,6 +412,18 @@ struct MechanicalSource::Impl {
             auto b = field(context, v.value, "pb");
             j.local_b = vec(context, b.value);
             j.length = num(context, v.value, "length");
+            const auto optional = [&](const char *key, double fallback) {
+                auto value = field(context, v.value, key);
+                return JS_IsUndefined(value.value) ? fallback : number(context, value.value);
+            };
+            j.stiffness = optional("stiffness", 0);
+            j.spring = optional("elastic", 0) != 0;
+            j.damping_ratio = optional("damping", 0);
+            j.damping_coefficient = optional("coefficient", -1);
+            j.minimum = optional("minimum", .01);
+            j.maximum = optional("maximum", 20000);
+            j.limit = optional("limit", 0) != 0;
+            j.collide_connected = optional("collision", 0) != 0;
             auto c = field(context, v.value, "color");
             next_colors.emplace(j.id, rgba(context, c.value));
             next.links.push_back(j);
@@ -352,6 +452,8 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
         if (world.child("Circuit") || world.child("Geometry") ||
             world.child("Fields").first_child() || world.child("Controllers").first_child())
             throw std::runtime_error("Other domains/fields/controllers require source preview");
+        if (world.child("ParticleSystem").first_child() || world.child("Tracers").first_child())
+            throw std::runtime_error("Particle systems/tracers require their runtime features");
         p->definition.gravity = point(world.child("Gravity"));
         std::string mix = world.child("Preferences").child("coeffMixer").child_value();
         if (!mix.empty()) {
@@ -453,7 +555,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             unsigned fi = 0;
             double bound = 1e-4;
             for (auto fx : fixtures.children("Fixture")) {
-                if (fi >= 64)
+                if (fi >= 256)
                     throw std::runtime_error("Fixture budget");
                 auto sh = fx.child("Shape");
                 const std::string type = sh.attribute("xsi:type").value();
@@ -481,12 +583,13 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                         throw std::runtime_error("Dynamic plane unsupported");
                 } else if (type == "Polygon" || type == "Triangle") {
                     for (auto q : sh.children("Vertex")) {
+                        if (vertices.size() >= 64)
+                            throw std::runtime_error("Polygon vertex budget (3..64)");
                         auto pt = point(q);
                         vertices.push_back({pt.x - com.x, pt.y - com.y});
                     }
-                    if (vertices.size() < 3 || vertices.size() > 8)
-                        throw std::runtime_error(
-                            "Polygon requires convex decomposition outside this profile");
+                    if (vertices.size() < 3 || vertices.size() > 64)
+                        throw std::runtime_error("Polygon vertex budget (3..64)");
                 } else if (type != "Circle")
                     throw std::runtime_error("Unsupported rigid shape: " + type);
                 auto filter = fx.child("Filter");
@@ -499,25 +602,34 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                                                          : 2147483647ULL;
                 if (fx.child("Sticky").text().as_bool(false))
                     throw std::runtime_error("Sticky fixture unsupported");
-                Value f(p->context, JS_NewObject(p->context)),
-                    vs(p->context, JS_NewArray(p->context));
-                for (unsigned k = 0; k < vertices.size(); ++k) {
-                    JS_SetPropertyUint32(p->context, vs.value, k, vector(p->context, vertices[k]));
-                    bound = std::max(bound, std::hypot(vertices[k].x, vertices[k].y));
+                const auto geometry =
+                    vertices.empty() ? std::vector<std::vector<math::Vec2>>{{}} : pieces(vertices);
+                for (const auto &piece : geometry) {
+                    if (fi >= 256)
+                        throw std::runtime_error("Decomposed fixture budget");
+                    vertices = piece;
+                    Value f(p->context, JS_NewObject(p->context)),
+                        vs(p->context, JS_NewArray(p->context));
+                    for (unsigned k = 0; k < vertices.size(); ++k) {
+                        JS_SetPropertyUint32(p->context, vs.value, k,
+                                             vector(p->context, vertices[k]));
+                        bound = std::max(bound, std::hypot(vertices[k].x, vertices[k].y));
+                    }
+                    if (vertices.empty())
+                        bound = std::max(bound, std::hypot(fc.x, fc.y) + radius);
+                    JS_SetPropertyStr(p->context, f.value, "vertices",
+                                      JS_DupValue(p->context, vs.value));
+                    JS_SetPropertyStr(p->context, f.value, "center", vector(p->context, fc));
+                    put(p->context, f.value, "radius", radius);
+                    put(p->context, f.value, "friction", scalar(fx.child("Friction"), .2));
+                    put(p->context, f.value, "restitution", scalar(fx.child("Restitution")));
+                    put(p->context, f.value, "sensor",
+                        fx.child("Sensor").text().as_bool(false) ? 1 : 0);
+                    put(p->context, f.value, "category", double(category));
+                    put(p->context, f.value, "mask", double(mask));
+                    JS_SetPropertyUint32(p->context, fs.value, fi++,
+                                         JS_DupValue(p->context, f.value));
                 }
-                if (vertices.empty())
-                    bound = std::max(bound, std::hypot(fc.x, fc.y) + radius);
-                JS_SetPropertyStr(p->context, f.value, "vertices",
-                                  JS_DupValue(p->context, vs.value));
-                JS_SetPropertyStr(p->context, f.value, "center", vector(p->context, fc));
-                put(p->context, f.value, "radius", radius);
-                put(p->context, f.value, "friction", scalar(fx.child("Friction"), .2));
-                put(p->context, f.value, "restitution", scalar(fx.child("Restitution")));
-                put(p->context, f.value, "sensor",
-                    fx.child("Sensor").text().as_bool(false) ? 1 : 0);
-                put(p->context, f.value, "category", double(category));
-                put(p->context, f.value, "mask", double(mask));
-                JS_SetPropertyUint32(p->context, fs.value, fi++, JS_DupValue(p->context, f.value));
             }
             JS_SetPropertyStr(p->context, v.value, "fixtures", JS_DupValue(p->context, fs.value));
             JS_SetPropertyStr(p->context, v.value, "com", vector(p->context, com));
@@ -554,22 +666,41 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             if (node.child("DynamicallyAddedJoint").text().as_bool(false))
                 continue;
             const std::string jt = node.attribute("xsi:type").value();
-            if (jt != "DistanceJoint" && jt != "RevoluteJoint" && jt != "SpindleJoint")
+            if (jt != "DistanceJoint" && jt != "RevoluteJoint" && jt != "SpindleJoint" &&
+                jt != "SpringJoint" && jt != "RopeJoint" && jt != "WeldJoint")
                 throw std::runtime_error("Unsupported joint profile: " + jt);
-            if (scalar(node.child("Frequency")) != 0)
-                throw std::runtime_error("Spring profile unsupported");
+            const double source_frequency = scalar(node.child("Frequency"));
+            if (source_frequency < 0 || (source_frequency != 0 && jt != "DistanceJoint" &&
+                                         jt != "SpringJoint" && jt != "WeldJoint"))
+                throw std::runtime_error("Unsupported elastic parameters for joint: " + jt);
             auto ia = ids.find(node.child("BodyId1").child_value()),
                  ib = ids.find(node.child("BodyId2").child_value());
             if (ia == ids.end() || ib == ids.end() || ia->second == 0)
                 throw std::runtime_error("Unresolved authored distance joint");
-            auto a = point(node.child(jt == "RevoluteJoint" ? "Anchor" : "Anchor1")),
-                 b = point(node.child(jt == "RevoluteJoint" ? "Anchor" : "Anchor2"));
+            auto a = point(node.child((jt == "RevoluteJoint" || jt == "WeldJoint") ? "Anchor"
+                                                                                   : "Anchor1")),
+                 b = point(node.child((jt == "RevoluteJoint" || jt == "WeldJoint") ? "Anchor"
+                                                                                   : "Anchor2"));
             const auto wa = a, wb = b;
             auto ca = centers.at(ia->second);
             a = rotate({a.x - ca.x, a.y - ca.y}, -angles.at(ia->second));
             if (ib->second) {
                 auto cb = centers.at(ib->second);
                 b = rotate({b.x - cb.x, b.y - cb.y}, -angles.at(ib->second));
+            }
+            if (jt == "WeldJoint") {
+                scene::WeldLink w;
+                w.id = {3073ULL + joint++};
+                w.body_a = {ia->second};
+                w.body_b = {ib->second};
+                w.local_a = a;
+                w.local_b = b;
+                w.reference = -scalar(node.child("ReferenceAngle"));
+                w.frequency = scalar(node.child("Frequency"));
+                w.damping_ratio = scalar(node.child("DampingRatio"));
+                w.collide_connected = node.child("CollisionAllowed").text().as_bool(false);
+                p->definition.welds.push_back(w);
+                continue;
             }
             if (jt == "RevoluteJoint") {
                 scene::HingeLink h;
@@ -613,7 +744,44 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             put(p->context, v.value, "id", ++joint);
             put(p->context, v.value, "a", ia->second);
             put(p->context, v.value, "b", ib->second);
-            put(p->context, v.value, "length", scalar(node.child("Distance")));
+            const double length = scalar(node.child(jt == "SpringJoint" ? "distance" : "Distance"),
+                                         std::hypot(wb.x - wa.x, wb.y - wa.y));
+            put(p->context, v.value, "length", length);
+            double stiffness = jt == "SpringJoint" ? scalar(node.child("SpringConstant")) : 0;
+            const double frequency = scalar(node.child("Frequency"));
+            if (jt == "DistanceJoint" && frequency > 0) {
+                const auto inv = [&](unsigned body_id) {
+                    if (!body_id)
+                        return 0.0;
+                    Value body_value(p->context,
+                                     JS_GetPropertyUint32(p->context, bodies.value, body_id - 1));
+                    return num(p->context, body_value.value, "static")
+                               ? 0.0
+                               : 1.0 / num(p->context, body_value.value, "mass");
+                };
+                const double inverse_mass = inv(ia->second) + inv(ib->second);
+                if (inverse_mass <= 0)
+                    throw std::runtime_error("Spring requires dynamic mass");
+                stiffness =
+                    4 * std::numbers::pi * std::numbers::pi * frequency * frequency / inverse_mass;
+            }
+            put(p->context, v.value, "stiffness", stiffness);
+            put(p->context, v.value, "elastic", jt == "SpringJoint" || stiffness > 0 ? 1 : 0);
+            put(p->context, v.value, "damping",
+                jt == "SpringJoint" ? 0 : scalar(node.child("DampingRatio")));
+            if (jt == "SpringJoint")
+                put(p->context, v.value, "coefficient", scalar(node.child("DampingRatio")));
+            put(p->context, v.value, "collision",
+                node.child("CollisionAllowed").text().as_bool(false) ? 1 : 0);
+            if (jt == "RopeJoint") {
+                // Independent lower/upper limit flags select the active unilateral bounds.
+                const bool lower = node.child("LowerLimitEnabled").text().as_bool(false);
+                const bool upper = node.child("UpperLimitEnabled").text().as_bool(true);
+                put(p->context, v.value, "limit", 1);
+                put(p->context, v.value, "minimum", lower ? scalar(node.child("LowerLimit")) : .01);
+                put(p->context, v.value, "maximum",
+                    upper ? scalar(node.child("UpperLimit"), length) : 20000);
+            }
             JS_SetPropertyStr(p->context, v.value, "pa", vector(p->context, a));
             JS_SetPropertyStr(p->context, v.value, "pb", vector(p->context, b));
             JS_SetPropertyStr(p->context, v.value, "color",

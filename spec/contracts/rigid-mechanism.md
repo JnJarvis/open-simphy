@@ -2,7 +2,7 @@
 
 SI, binary64 canonical values, +y up, radians. Fixture: circle(center,radius) or
 strictly convex CCW polygon(3..8 vertices); material, sensor, category/mask per
-fixture. Max 64 fixtures/body, 4096 total; local geometry <=1000. A body's COM-local
+fixture. Max 256 fixtures/body, 4096 total; local geometry <=1000. A body's COM-local
 fixture values preserve its explicit mass/inertia and rotation. Existing empty
 fixture vector means one centered circle. Hinge: COM-local anchors, optional angular
 limits/motor; body_b zero denotes ground. Winding: signed radii and endpoint anchors,
@@ -17,3 +17,21 @@ Nested source dialog/panel layouts expose text/button/slider controls; numeric
 sliders bind their named scalar, and friction expressions update contacts live.
 
 MaterialMixer selects geometric mean/minimum/maximum independently for friction and restitution. Defaults retain the original circle backend. Import preserves coeffMixer indices 0/1/2.
+
+INT-009 additive constraints: DistanceLink stiffness defaults zero (rigid rod),
+damping_ratio defaults zero. Positive stiffness enables a Hooke spring, with damping
+2*zeta*sqrt(k*reduced_mass). Optional limit/minimum (including zero)/maximum allows slack rope bounds;
+limits disabled by default. WeldLink fixes coincident anchors and relative B-A angle;
+frequency zero is rigid, positive Hz softens rotation with damping_ratio. Total joint
+budget remains 1024 including welds. Simple source polygons are decomposed into
+area-preserving convex fixtures before canonical validation; canonical polygons
+remain strictly convex 3..8, with existing fixture budgets. No hull approximation.
+
+DistanceLink damping_coefficient=-1 selects the ratio; nonnegative N*s/m values
+override the ratio. Source SpringJoint uses the direct coefficient, even though
+its saved field is named DampingRatio; the public API numeric vector is in INT-009
+RFC/report. Effective anchor mass includes rotational lever arms each microstep.
+
+DistanceLink spring=false preserves rigid defaults. Explicit spring=true allows
+zero stiffness (free link), optionally with direct viscous damping. Positive
+stiffness enables spring behavior even when the flag is false.

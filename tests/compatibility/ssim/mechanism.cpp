@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <cmath>
@@ -83,7 +84,7 @@ TEST_CASE("Script distance anchors use the body's rotated local frame",
 namespace {
 compat::Project rigid_project(std::string shape, std::string controllers = "",
                               std::string script = "", std::string gui = "", double com = 0,
-                              double angle = 0) {
+                              double angle = 0, const std::string &joints = "") {
     std::string b = body;
     const auto mass_center = b.find("<LocalCenter");
     const auto mass_end = b.find("/>", mass_center);
@@ -93,12 +94,16 @@ compat::Project rigid_project(std::string shape, std::string controllers = "",
               "<Rotation>" + std::to_string(angle) + "</Rotation>");
     const auto begin = b.find("<Shape"), end = b.find("</Shape>", begin);
     b.replace(begin, end + 8 - begin, shape);
-    std::string xml = "<Simulation xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-                      "version='4.1'><World><Gravity x='0' y='-10'/><Bodies>" +
-                      b + "</Bodies><BodyControllers>" + controllers +
-                      "</BodyControllers><ScriptManager><Script><![CDATA[" + script +
-                      "]]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[" + gui +
-                      "]]></GuiXML></GuiManager></World></Simulation>";
+    std::string xml =
+        "<Simulation xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+        "version='4.1'><World><Gravity x='0' y='-10'/><Bodies>" +
+        b +
+        "<Body "
+        "Id=\"ground\"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body></Bodies><Joints>" +
+        joints + "</Joints><BodyControllers>" + controllers +
+        "</BodyControllers><ScriptManager><Script><![CDATA[" + script +
+        "]]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[" + gui +
+        "]]></GuiXML></GuiManager></World></Simulation>";
     mz_zip_archive zip{};
     REQUIRE(mz_zip_writer_init_heap(&zip, 0, 0));
     REQUIRE(
@@ -145,13 +150,19 @@ TEST_CASE("General rectangle, nested sliders, force/friction controllers and res
     REQUIRE(source.definition().bodies[0].center == math::Vec2{2, 3});
     REQUIRE(source.definition().bodies[0].angle == .4);
 }
-TEST_CASE("Concave source polygons and unknown required controllers retain diagnostics",
+TEST_CASE("Simple concave polygons preserve area and unknown controllers retain diagnostics",
           "[compatibility][rigid]") {
-    REQUIRE(
-        compat::MechanicalSource::create(
-            rigid_project(
-                R"(<Shape xsi:type="Polygon"><LocalCenter x="0" y="0"/><Vertex x="0" y="0"/><Vertex x="1" y="0"/><Vertex x=".2" y=".2"/><Vertex x="0" y="1"/></Shape>)"))
-            .error());
+    auto result = compat::MechanicalSource::create(rigid_project(
+        R"(<Shape xsi:type="Polygon"><LocalCenter x="0" y="0"/><Vertex x="0" y="0"/><Vertex x="1" y="0"/><Vertex x=".2" y=".2"/><Vertex x="0" y="1"/></Shape>)"));
+    REQUIRE(result.value());
+    REQUIRE(result.value()->definition().bodies[0].fixtures.size() == 2);
+    double area = 0;
+    for (const auto &f : result.value()->definition().bodies[0].fixtures)
+        for (std::size_t i = 0; i < f.vertices.size(); ++i) {
+            const auto a = f.vertices[i], b = f.vertices[(i + 1) % f.vertices.size()];
+            area += (a.x * b.y - a.y * b.x) / 2;
+        }
+    REQUIRE(std::abs(area - .2) < 1e-12); // Hull would incorrectly occupy .5.
     REQUIRE(compat::MechanicalSource::create(
                 rigid_project(rectangle, R"(<BodyController type="UnknownForce" bodyid="a"/>)"))
                 .error());
@@ -176,4 +187,101 @@ TEST_CASE("Source origin, local COM, fixture pose and script COM positions are d
     REQUIRE(source.definition().bodies[0].center == math::Vec2{2, 3});
     REQUIRE(source.apply_action("World.getBody('ball').setRotation(.4)").has_value());
     REQUIRE(source.definition().bodies[0].center == math::Vec2{2, 3});
+}
+
+TEST_CASE("Polygon pieces retain notches, clockwise outlines and reject crossing boundaries",
+          "[compatibility][rigid]") {
+    const auto shape = [](const std::vector<math::Vec2> &v) {
+        std::string out = "<Shape xsi:type='Polygon'><LocalCenter x='0' y='0'/>";
+        for (auto q : v)
+            out += "<Vertex x='" + std::to_string(q.x) + "' y='" + std::to_string(q.y) + "'/>";
+        return out + "</Shape>";
+    };
+    std::vector<math::Vec2> outline{{0, 0}, {3, 0}, {3, 1}, {1, 1}, {1, 3}, {0, 3}};
+    const auto coverage = [](const scene::CircleBody &shape_body, math::Vec2 p) {
+        unsigned count = 0;
+        for (const auto &f : shape_body.fixtures) {
+            bool in = true;
+            for (std::size_t i = 0; i < f.vertices.size(); ++i) {
+                auto a = f.vertices[i], b = f.vertices[(i + 1) % f.vertices.size()];
+                in = in && (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) >= -1e-10;
+            }
+            count += in ? 1 : 0;
+        }
+        return count;
+    };
+    for (int order = 0; order < 2; ++order) {
+        auto result = compat::MechanicalSource::create(rigid_project(shape(outline)));
+        REQUIRE(result.value());
+        const auto &b = result.value()->definition().bodies[0];
+        REQUIRE(b.fixtures.size() == 4);
+        // Interior points deliberately avoid shared triangle boundaries.
+        REQUIRE(coverage(b, {.23, 2.51}) == 1);
+        REQUIRE(coverage(b, {2.51, .23}) == 1);
+        REQUIRE(coverage(b, {2, 2}) == 0);
+        double area = 0;
+        for (const auto &f : b.fixtures) {
+            REQUIRE(f.friction == .3);
+            REQUIRE(f.restitution == 1);
+            for (std::size_t i = 0; i < 3; ++i) {
+                auto a = f.vertices[i], z = f.vertices[(i + 1) % 3];
+                area += (a.x * z.y - a.y * z.x) / 2;
+            }
+        }
+        REQUIRE(std::abs(area - 5) < 1e-12);
+        std::reverse(outline.begin(), outline.end());
+    }
+    REQUIRE(compat::MechanicalSource::create(rigid_project(shape({{0, 0}, {2, 2}, {0, 2}, {2, 0}})))
+                .error());
+    REQUIRE(compat::MechanicalSource::create(rigid_project(shape({{0, 0}, {2, 0}, {1, 0}, {1, 1}})))
+                .error());
+    REQUIRE(compat::MechanicalSource::create(rigid_project(shape(std::vector<math::Vec2>(65))))
+                .error());
+    std::vector<math::Vec2> many;
+    for (int i = 0; i < 12; ++i)
+        many.push_back(
+            {std::cos(i * 6.283185307179586 / 12), std::sin(i * 6.283185307179586 / 12)});
+    auto large = compat::MechanicalSource::create(rigid_project(shape(many)));
+    REQUIRE(large.value());
+    REQUIRE(large.value()->definition().bodies[0].fixtures.size() == 10);
+}
+
+TEST_CASE("Authored elastic distance rope and weld parameters survive source reset",
+          "[compatibility][rigid]") {
+    const std::string common =
+        "<BodyId1>a</BodyId1><BodyId2>ground</BodyId2><CollisionAllowed>true</CollisionAllowed>";
+    const std::string anchors = "<Anchor1 x='0' y='0'/><Anchor2 x='2' y='0'/>";
+    const auto source = [&](const std::string &joint) {
+        auto result =
+            compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 0, 0, joint));
+        REQUIRE(result.value());
+        return *result.value();
+    };
+    auto spring = source("<Joint xsi:type='SpringJoint'>" + common + anchors +
+                         "<SpringConstant>8</SpringConstant><DampingRatio>.6</"
+                         "DampingRatio><Frequency>7</Frequency><distance>2</distance></Joint>");
+    REQUIRE(spring.definition().links[0].stiffness == 8);
+    REQUIRE(spring.definition().links[0].damping_coefficient == .6);
+    REQUIRE(spring.definition().links[0].collide_connected);
+    REQUIRE(spring.apply_action("World.getBody('ball').reset()").has_value());
+    REQUIRE(spring.definition().links[0].stiffness == 8);
+    auto distance = source(
+        "<Joint xsi:type='DistanceJoint'>" + common + anchors +
+        "<Frequency>2</Frequency><DampingRatio>.5</DampingRatio><Distance>2</Distance></Joint>");
+    REQUIRE(std::abs(distance.definition().links[0].stiffness - 157.913670417) < 1e-6);
+    REQUIRE(distance.definition().links[0].damping_ratio == .5);
+    auto rope =
+        source("<Joint xsi:type='RopeJoint'>" + common + anchors +
+               "<LowerLimitEnabled>true</LowerLimitEnabled><UpperLimitEnabled>true</"
+               "UpperLimitEnabled><LowerLimit>0</LowerLimit><UpperLimit>3</UpperLimit></Joint>");
+    REQUIRE(rope.definition().links[0].limit);
+    REQUIRE(rope.definition().links[0].minimum == 0);
+    REQUIRE(rope.definition().links[0].maximum == 3);
+    auto weld = source("<Joint xsi:type='WeldJoint'>" + common +
+                       "<Anchor x='0' "
+                       "y='0'/><ReferenceAngle>.3</ReferenceAngle><Frequency>2</"
+                       "Frequency><DampingRatio>.7</DampingRatio></Joint>");
+    REQUIRE(weld.definition().welds.size() == 1);
+    REQUIRE(weld.definition().welds[0].reference == -.3);
+    REQUIRE(weld.definition().welds[0].frequency == 2);
 }

@@ -5,7 +5,8 @@ workspace preview. The current slice models free particles under uniform gravity
 with a real editor, toolbar, scene list, viewport and property inspector.
 The native document codec exists. The app opens real `.ssim` archives and now has
 an experimental 2D rigid mechanism path: circles, rectangles, convex polygon
-fixtures, finite planes, distance/hinge/winding joints and force/friction controls.
+fixtures (including exact pieces for simple concave polygons), finite planes,
+distance/spring/rope/hinge/winding/weld joints and force/friction controls.
 Newton Cradle and Static and Kinetic Friction run with textures, contacts, playback
 and reset. Additional joint/controller families, event scripts, sound, optics,
 circuits and 3D remain incomplete. See [SSIM opening](docs/ssim.md). This is an early application,

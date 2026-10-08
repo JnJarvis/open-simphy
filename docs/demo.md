@@ -206,3 +206,20 @@ transfer. On the development Windows machine, Debug rendering measured mean 7.23
 p95 10.41ms, physics 1.24ms and rendering 5.99ms (~138 uncapped FPS, 80 samples).
 That measurement is hardware-specific and excludes initial archive/image loading.
 All-file compatibility remains unfinished; unsupported scenes still display diagnostics.
+
+## Elastic mechanics and exact polygon pieces (INT-009)
+
+Simple polygons with up to64 boundary vertices are split into convex pieces that
+preserve their occupied area, including concave cutouts. Crossing/touching boundaries
+and holes require a separately described shape. Compound bodies allow up to256
+fixtures, with the4096 aggregate limit retained. Internal edges are hidden and body
+textures remain continuous across pieces.
+
+Authored SpringJoint, frequency-based DistanceJoint, bounded RopeJoint and rigid/
+angular-soft WeldJoint now have runtime implementations and reset behavior. Springs
+use actual stiffness/axial damping and angular lever arms; zero stiffness remains
+free. These do not yet supply line/prismatic constraints, fields, particle systems,
+tracers, all body-controller properties, graphs/events, optics, circuits or3D.
+Required missing features still prevent playback: opening and displaying a file
+are not evidence that its entire simulation executes. The bundled coverage remains
+2/67 until those additional behaviors are implemented and tested.

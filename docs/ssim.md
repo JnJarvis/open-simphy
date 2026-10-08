@@ -8,20 +8,25 @@ scene. Failed or canceled opens retain the previous scene/source project.
 
 The app has two explicit modes:
 
-- **Experimental circle mechanics:** eligible single-circle bodies and rigid
-  distance joints can play, step, reset and be dragged. A bounded JavaScript bridge
+- **Experimental 2D rigid mechanics:** circles, rectangles, convex polygons and
+  compound fixtures, finite static planes, rigid distance joints, hinges and winding
+  joints can play, step, reset and be dragged. A bounded JavaScript bridge
   reconstructs supported startup-created copies and button actions. The supplied
   Newton Cradle shows the original ball, five colored textured copies, suspensions,
   its description and working Reset Cradle button. Pull a ball outward/upward,
   release it and press Play. Motion transfers through real circle contacts.
 - **Source preview:** unsupported profiles retain the original archive, outlines
   and feature report. They cannot play. This currently includes the supplied
-  charge/prismatic, resonance/spring, plane/friction, optics and circuit examples.
+  charge/prismatic, resonance/spring, optics and circuit examples. The supplied
+  Static and Kinetic Friction is supported, including its three sliders and RESET
+  callback.
 
 The mechanics profile is experimental. It does not reproduce every source solver
 setting or all JavaScript APIs. Collision callbacks/sounds, dynamic scripting after
-startup, arbitrary forces/controllers, compound/non-circle geometry and other
-joints/domains remain unsupported. Unknown APIs and resource failures retain source
+startup, unsupported force/controller types, concave/large polygons without
+decomposition and additional joints/domains remain unsupported. Force modes 0/1/2
+and property index 4 (friction) are supported; coefficient mixing preserves the
+source geometric-mean/minimum/maximum preferences independently. Unknown APIs and resource failures retain source
 preview rather than inventing replacement particles. See the
 [profile contract](../spec/contracts/mechanism.md). Source widget buttons honor
 bounded canvas positions; read-only descriptions dock at the top right to fit the
@@ -35,6 +40,9 @@ opensim_demo --inspect path/to/project.ssim
 opensim_demo --inspect-directory path/to/local/examples
 opensim_demo --smoke-source path/to/project.ssim
 opensim_demo --smoke-mechanism "path/to/Newton Cradle.ssim"
+opensim_demo --smoke-rigid "path/to/Static and Kinetic Friction.ssim"
+opensim_demo --check-mechanics path/to/project.ssim
+opensim_demo --audit-mechanics-directory path/to/local/examples
 ```
 
 The reader supports observed XML root versions 4.0, 4.1 and 4.2 with bounded stored
@@ -73,3 +81,25 @@ microsteps per canonical fixed step. This resolves close-chain transfer that was
 incorrect when the previous backend refreshed contacts once per eight-substep frame.
 Materials and authored damping remain intact; no source filename triggers special
 physics. See demo.md for measured rendering and cradle regression commands.
+
+## Rigid friction profile (INT-008)
+
+The real friction archive contains a wedge, block, ground plane, hinged pulley and
+winding string. Slider values feed the actual forces/materials before each step;
+changing them keeps runtime positions and clock. The source RESET script restores
+and repositions bodies. Picking tests fixture geometry, including rotated polygons.
+Imported XML body origin and local COM are distinct; snapshots/script positions are
+world COM and radians. Density does not overwrite explicit imported mass/inertia.
+
+A 7555x4087 source JPEG exposed the old 4096-side image limit. Referenced images now
+accept up to 8192 per side/32Mi source pixels, decoded sequentially and bilinearly
+reduced to <=2048 per side; <=16Mi aggregate retained pixels and <=16MiB encoded
+member limit remain. Original source bytes are unchanged. Built-in procedural brush
+patterns currently use their source fill color; exact source visual/solver parity
+is not claimed. Source plane is a finite 700-wide/50-deep box when no size is given;
+its surface must lie inside the supported world envelope.
+
+The 67-file bundled audit completes ten seconds plus reset for Newton Cradle and
+Static and Kinetic Friction. The other 65 still report missing domains/features.
+This is general support for these primitives, not a claim of all-file compatibility.
+The coordinator capability matrix records each file's current blocking feature.

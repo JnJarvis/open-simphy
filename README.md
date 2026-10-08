@@ -4,10 +4,11 @@ A modular, independent open-source simulator project with a working Windows
 workspace preview. The current slice models free particles under uniform gravity,
 with a real editor, toolbar, scene list, viewport and property inspector.
 The native document codec exists. The app opens real `.ssim` archives and now has
-an experimental circular-mechanism path: the supplied Newton Cradle reconstructs
-script-created balls, textures, distance joints and controls, with drag, collisions,
-playback and reset. Other bodies/joints, event scripts, sound, optics, circuits and
-3D remain incomplete. See [SSIM opening](docs/ssim.md). This is an early application,
+an experimental 2D rigid mechanism path: circles, rectangles, convex polygon
+fixtures, finite planes, distance/hinge/winding joints and force/friction controls.
+Newton Cradle and Static and Kinetic Friction run with textures, contacts, playback
+and reset. Additional joint/controller families, event scripts, sound, optics,
+circuits and 3D remain incomplete. See [SSIM opening](docs/ssim.md). This is an early application,
 not a finished product or a claim of full SimPHY compatibility.
 
 ## Try the demo

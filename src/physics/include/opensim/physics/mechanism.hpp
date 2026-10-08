@@ -13,6 +13,8 @@ class Mechanism {
     scene::MechanismSnapshot snapshot() const;
     core::Result<void> step();
     core::Result<void> reset();
+    core::Result<void> forces(const std::vector<scene::AppliedForce> &);
+    core::Result<void> friction(core::EntityId, double);
     core::Result<void> relocate(core::EntityId, math::Vec2);
 };
 } // namespace opensim::physics

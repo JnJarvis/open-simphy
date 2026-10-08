@@ -122,20 +122,19 @@ bool EditorUI::open_file(const std::string &path, Session &session) {
                       << '\n';
         }
         if (mechanical)
-            std::cerr
-                << "Open Simphy: experimental circle/distance mechanics available; source solver "
-                   "parity, event callbacks and audio unavailable.\n";
+            std::cerr << "Open Simphy: experimental 2D rigid mechanics available; source solver "
+                         "parity, event callbacks and audio unavailable.\n";
     } else {
         std::cerr << "Open Simphy: source preview only: " << prepared.error()->message << '\n';
     }
     mechanical_ = std::move(mechanical);
     source_ = std::move(next);
     source_scroll_ = 0;
-    message_ = mechanical_ ? "Source opened with experimental circle mechanics."
+    message_ = mechanical_ ? "Source opened with experimental 2D rigid mechanics."
                            : "SSIM source opened. Unsupported mechanics remain preview-only.";
     std::cerr << "Open Simphy: opened " << std::quoted(path)
               << (mechanical_
-                      ? " with experimental circle/distance mechanics."
+                      ? " with experimental 2D rigid mechanics."
                       : " for source preview only; required simulation features are unavailable.")
               << " Outlines=" << source_->outlines.size()
               << ", omitted=" << source_->omitted_outlines

@@ -294,10 +294,71 @@ void verify_imported_cradle(const scene::Mechanism &definition) {
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
     bool benchmark = false, benchmark_legacy = false;
-    bool smoke_mechanics = false;
+    bool smoke_mechanics = false, smoke_rigid = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
+        if ((arg == "--check-mechanics" || arg == "--audit-mechanics-directory") && i + 1 < argc) {
+            const auto check = [](const std::filesystem::path &path) {
+                try {
+                    auto parsed = app::read_project(path);
+                    if (parsed.error())
+                        throw std::runtime_error(parsed.error()->message);
+                    auto prepared = compat::MechanicalSource::create(*parsed.value());
+                    if (prepared.error())
+                        throw std::runtime_error(prepared.error()->message);
+                    auto source = *prepared.value();
+                    auto runtime = physics::Mechanism::create(source.definition());
+                    if (runtime.error())
+                        throw std::runtime_error(runtime.error()->message);
+                    auto world = *runtime.value();
+                    const auto initial = world->snapshot();
+                    for (int step = 0; step < 600; ++step) {
+                        auto c = source.controls(world->snapshot());
+                        if (c.error())
+                            throw std::runtime_error(c.error()->message);
+                        checked(world->forces(c.value()->forces));
+                        for (const auto &[id, mu] : c.value()->friction)
+                            checked(world->friction(id, mu));
+                        checked(world->step());
+                    }
+                    double travel = 0;
+                    auto final = world->snapshot();
+                    for (std::size_t i = 0; i < final.bodies.size(); ++i)
+                        travel = std::max(
+                            travel,
+                            std::hypot(final.bodies[i].center.x - initial.bodies[i].center.x,
+                                       final.bodies[i].center.y - initial.bodies[i].center.y));
+                    checked(world->reset());
+                    expect(world->snapshot().time == 0, "Rigid reset failed");
+                    std::cout << path.filename().string()
+                              << " | RUN | bodies=" << initial.bodies.size() << " fixtures=";
+                    std::size_t fixtures = 0;
+                    for (const auto &b : source.definition().bodies)
+                        fixtures += b.fixtures.size();
+                    std::cout << fixtures << " hinges=" << source.definition().hinges.size()
+                              << " windings=" << source.definition().windings.size()
+                              << " time=" << final.time << " travel=" << travel << '\n';
+                    return true;
+                } catch (const std::exception &e) {
+                    std::cout << path.filename().string() << " | UNSUPPORTED | " << e.what()
+                              << '\n';
+                    return false;
+                }
+            };
+            const auto path = app::utf8_path(argv[++i]);
+            if (arg == "--check-mechanics")
+                return check(path) ? 0 : 1;
+            unsigned total = 0, supported = 0;
+            for (const auto &entry : std::filesystem::recursive_directory_iterator(path))
+                if (entry.is_regular_file() && entry.path().extension() == ".ssim") {
+                    ++total;
+                    if (check(entry.path()))
+                        ++supported;
+                }
+            std::cout << "Audited " << total << " files; completed playback " << supported << '\n';
+            return 0;
+        }
         if ((arg == "--inspect" || arg == "--inspect-directory") && i + 1 < argc) {
             const auto inspect = [](const std::filesystem::path &path) {
                 auto parsed = app::read_project(path);
@@ -326,7 +387,10 @@ int main(int argc, char **argv) {
             return count && !failed ? 0 : 1;
         } else if (arg == "--open" && i + 1 < argc)
             open_path = argv[++i];
-        else if (arg == "--smoke-mechanism" && i + 1 < argc) {
+        else if (arg == "--smoke-rigid" && i + 1 < argc) {
+            smoke_source = argv[++i];
+            smoke_rigid = true;
+        } else if (arg == "--smoke-mechanism" && i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_mechanics = true;
         } else if (arg == "--smoke-source" && i + 1 < argc)
@@ -386,6 +450,109 @@ int main(int argc, char **argv) {
                                  SDL_GetWindowDisplayScale(host.window()));
                     });
                 }));
+            if (smoke_rigid) {
+                auto *view = ui.mechanical();
+                expect(view != nullptr, "Required rigid source profile unavailable");
+                // Exercise actual source controls before requiring dynamic motion: a friction demo
+                // may start in equilibrium.
+                const auto control_layout = host.workspace();
+                int control_width = 0, control_height = 0;
+                app::require_sdl(SDL_GetWindowSize(host.window(), &control_width, &control_height),
+                                 "Rigid control coordinates");
+                for (const auto &widget : view->widgets())
+                    if (widget.slider) {
+                        const double fraction = widget.maximum > 1 ? .95 : .1;
+                        const double cw =
+                            double(control_layout.canvas.width) / control_layout.scale;
+                        const double ch =
+                            double(control_layout.canvas.height) / control_layout.scale;
+                        const double px =
+                            control_layout.x + (std::clamp(widget.position.x, 8.0,
+                                                           std::max(8.0, cw - widget.size.x - 8)) +
+                                                widget.size.x * fraction) *
+                                                   control_layout.scale;
+                        const double py =
+                            control_layout.y + (std::clamp(widget.position.y, 8.0,
+                                                           std::max(8.0, ch - widget.size.y - 8)) +
+                                                widget.size.y * .5) *
+                                                   control_layout.scale;
+                        SDL_Event control{};
+                        control.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+                        control.button.button = SDL_BUTTON_LEFT;
+                        control.button.x = float(px * control_width / host.extent().width);
+                        control.button.y = float(py * control_height / host.extent().height);
+                        expect(ui.event(control, session, host), "Initial rigid slider failed");
+                        control.type = SDL_EVENT_MOUSE_BUTTON_UP;
+                        expect(ui.event(control, session, host),
+                               "Initial rigid slider release failed");
+                        expect(std::abs(widget.value -
+                                        (widget.minimum +
+                                         fraction * (widget.maximum - widget.minimum))) < .001,
+                               "Initial slider value not applied");
+                    }
+                const auto rigid_initial = view->snapshot();
+                key(SDLK_SPACE, session, ui, host);
+                for (int i = 0; i < 180; ++i)
+                    ui.tick(view->definition().fixed_dt);
+                expect(view->snapshot().time > 2.9, "Rigid playback stopped");
+                double movement = 0;
+                auto final = view->snapshot();
+                for (std::size_t i = 0; i < rigid_initial.bodies.size(); ++i)
+                    movement = std::max(
+                        movement,
+                        std::hypot(final.bodies[i].center.x - rigid_initial.bodies[i].center.x,
+                                   final.bodies[i].center.y - rigid_initial.bodies[i].center.y));
+                expect(movement > .01, "Rigid source did not move");
+                checked(host.present_overlay(
+                    [&](SDL_Renderer *r) {
+                        ui.paint(r, session, host.extent(),
+                                 SDL_GetWindowDisplayScale(host.window()));
+                    },
+                    "smoke-rigid.bmp"));
+                key(SDLK_R, session, ui, host);
+                expect(view->snapshot().time == 0, "Rigid reset failed");
+                const auto l = host.workspace();
+                int ww = 0, wh = 0;
+                app::require_sdl(SDL_GetWindowSize(host.window(), &ww, &wh), "Rigid pointer size");
+                unsigned sliders = 0, buttons = 0;
+                for (const auto &w : view->widgets())
+                    if (w.slider || w.button) {
+                        const double vw = double(l.canvas.width) / l.scale,
+                                     vh = double(l.canvas.height) / l.scale;
+                        const double x =
+                            l.x + (std::clamp(w.position.x, 8.0, std::max(8.0, vw - w.size.x - 8)) +
+                                   w.size.x * .8) *
+                                      l.scale;
+                        const double y =
+                            l.y + (std::clamp(w.position.y, 8.0, std::max(8.0, vh - w.size.y - 8)) +
+                                   w.size.y * .5) *
+                                      l.scale;
+                        SDL_Event e{};
+                        e.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+                        e.button.button = SDL_BUTTON_LEFT;
+                        e.button.x = float(x * ww / host.extent().width);
+                        e.button.y = float(y * wh / host.extent().height);
+                        expect(ui.event(e, session, host), "Rigid control failed");
+                        e.type = SDL_EVENT_MOUSE_BUTTON_UP;
+                        expect(ui.event(e, session, host), "Rigid release failed");
+                        if (w.slider) {
+                            ++sliders;
+                            expect(std::abs(w.value - (w.minimum + .8 * (w.maximum - w.minimum))) <
+                                       .001,
+                                   "Slider value was not applied");
+                        } else {
+                            ++buttons;
+                            expect(view->snapshot().time == 0, "Script reset did not reconstruct");
+                        }
+                    }
+                key(SDLK_SPACE, session, ui, host);
+                for (int i = 0; i < 60; ++i)
+                    ui.tick(view->definition().fixed_dt);
+                expect(view->snapshot().time > .99, "Changed-control playback stopped");
+                std::cout << "PASS: rigid playback, movement=" << movement
+                          << ", sliders=" << sliders << ", callbacks=" << buttons
+                          << ", reset and changed-control playback\n";
+            }
             if (auto *view = ui.mechanical(); view && smoke_mechanics) {
                 expect(!view->definition().bodies.empty(), "Empty mechanical source");
                 verify_imported_cradle(view->definition());

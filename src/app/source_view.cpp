@@ -5,7 +5,7 @@
 #define STBI_NO_STDIO
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
-#define STBI_MAX_DIMENSIONS 4096
+#define STBI_MAX_DIMENSIONS 8192
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -39,6 +39,29 @@ std::string number(double n) {
 math::Vec2 rotated(math::Vec2 p, double a) {
     return {p.x * std::cos(a) - p.y * std::sin(a), p.x * std::sin(a) + p.y * std::cos(a)};
 }
+bool hit(const scene::CircleBody &body, const scene::CircleSample &sample, math::Vec2 world) {
+    auto q = rotated({world.x - sample.center.x, world.y - sample.center.y}, -sample.angle);
+    if (body.fixtures.empty())
+        return std::hypot(q.x, q.y) <= body.radius;
+    for (const auto &f : body.fixtures) {
+        if (f.vertices.empty()) {
+            if (std::hypot(q.x - f.center.x, q.y - f.center.y) <= f.radius)
+                return true;
+            continue;
+        }
+        bool inside = true;
+        for (std::size_t i = 0; i < f.vertices.size(); ++i) {
+            auto a = f.vertices[i], b = f.vertices[(i + 1) % f.vertices.size()];
+            if ((b.x - a.x) * (q.y - a.y) - (b.y - a.y) * (q.x - a.x) < 0) {
+                inside = false;
+                break;
+            }
+        }
+        if (inside)
+            return true;
+    }
+    return false;
+}
 } // namespace
 SourceView::SourceView(compat::MechanicalSource s)
     : source_(std::move(s)), camera_(source_.camera_center()), scale_(source_.camera_scale()) {
@@ -47,20 +70,38 @@ SourceView::SourceView(compat::MechanicalSource s)
         int w = 0, h = 0, channels = 0;
         if (!stbi_info_from_memory(bytes.data(), static_cast<int>(bytes.size()), &w, &h,
                                    &channels) ||
-            w <= 0 || h <= 0 || w > 4096 || h > 4096 ||
-            std::size_t(w) * h > 16 * 1024 * 1024 - pixels)
+            w <= 0 || h <= 0 || w > 8192 || h > 8192 || std::size_t(w) * h > 32 * 1024 * 1024)
             throw std::runtime_error("Source image dimension budget");
-        pixels += std::size_t(w) * h;
         std::unique_ptr<unsigned char, decltype(&stbi_image_free)> image(
             stbi_load_from_memory(bytes.data(), static_cast<int>(bytes.size()), &w, &h, &channels,
                                   4),
             stbi_image_free);
         if (!image)
             throw std::runtime_error("Decode source image failed");
-        decoded_.emplace(
-            name, DecodedImage{w, h,
-                               std::vector<std::uint8_t>(image.get(),
-                                                         image.get() + std::size_t(w) * h * 4)});
+        const double reduction = std::min(1.0, 2048.0 / std::max(w, h));
+        const int tw = std::max(1, int(w * reduction)), th = std::max(1, int(h * reduction));
+        if (std::size_t(tw) * th > 16 * 1024 * 1024 - pixels)
+            throw std::runtime_error("Retained source image budget");
+        pixels += std::size_t(tw) * th;
+        std::vector<std::uint8_t> retained(std::size_t(tw) * th * 4);
+        for (int y = 0; y < th; ++y)
+            for (int x = 0; x < tw; ++x) {
+                const double sx = std::clamp((x + .5) * w / tw - .5, 0.0, double(w - 1));
+                const double sy = std::clamp((y + .5) * h / th - .5, 0.0, double(h - 1));
+                const int ix = int(sx), iy = int(sy), jx = std::min(ix + 1, w - 1),
+                          jy = std::min(iy + 1, h - 1);
+                const double dx = sx - ix, dy = sy - iy;
+                for (unsigned channel = 0; channel < 4; ++channel) {
+                    const auto at = [&](int px, int py) {
+                        return double(image.get()[(std::size_t(py) * w + px) * 4 + channel]);
+                    };
+                    const double upper = (1 - dx) * at(ix, iy) + dx * at(jx, iy),
+                                 bottom = (1 - dx) * at(ix, jy) + dx * at(jx, jy);
+                    retained[(std::size_t(y) * tw + x) * 4 + channel] =
+                        static_cast<std::uint8_t>(std::round((1 - dy) * upper + dy * bottom));
+                }
+            }
+        decoded_.emplace(name, DecodedImage{tw, th, std::move(retained)});
     }
     replace_world();
 }
@@ -107,7 +148,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
             remainder_ = 0;
         } else if (button == 1) {
             running_ = false;
-            checked(world_->step());
+            step();
         } else if (button == 2)
             reset();
         else if (button == 7) {
@@ -167,12 +208,23 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
             auto p = *mapped.value();
             const double x = p.x / l.scale, y = p.y / l.scale;
             if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
+                slider_.reset();
                 if (dragging_) {
                     drag(local(p, l));
                     dragging_.reset();
                     running_ = resume_drag_;
                     remainder_ = 0;
                 }
+                return true;
+            }
+            if (e.type == SDL_EVENT_MOUSE_MOTION && slider_) {
+                const auto &w = source_.widgets().at(*slider_);
+                const double left = double(l.x) / l.scale, vw = double(l.canvas.width) / l.scale;
+                const double wx =
+                    left + std::clamp(w.position.x, 8.0, std::max(8.0, vw - w.size.x - 8));
+                const double fraction = std::clamp((x - wx) / w.size.x, 0.0, 1.0);
+                checked(
+                    source_.set_slider(*slider_, w.minimum + fraction * (w.maximum - w.minimum)));
                 return true;
             }
             if (e.type == SDL_EVENT_MOUSE_MOTION && dragging_) {
@@ -190,6 +242,22 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                 const float left = float(l.x) / l.scale, top = float(l.y) / l.scale,
                             vw = float(l.canvas.width) / l.scale,
                             vh = float(l.canvas.height) / l.scale;
+                for (std::size_t i = 0; i < source_.widgets().size(); ++i) {
+                    const auto &w = source_.widgets()[i];
+                    if (!w.slider)
+                        continue;
+                    const double wx = left + std::clamp(w.position.x, 8.0,
+                                                        std::max(8.0, double(vw) - w.size.x - 8));
+                    const double wy = top + std::clamp(w.position.y, 8.0,
+                                                       std::max(8.0, double(vh) - w.size.y - 8));
+                    if (x >= wx && x < wx + w.size.x && y >= wy && y < wy + w.size.y) {
+                        slider_ = i;
+                        checked(source_.set_slider(
+                            i, w.minimum + std::clamp((x - wx) / w.size.x, 0.0, 1.0) *
+                                               (w.maximum - w.minimum)));
+                        return true;
+                    }
+                }
                 for (const auto &w : source_.widgets())
                     if (w.button) {
                         const float wx =
@@ -216,9 +284,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                         const auto &defs = source_.definition().bodies;
                         auto found = std::find_if(defs.begin(), defs.end(),
                                                   [&](const auto &d) { return d.id == b.id; });
-                        if (found != defs.end() && !found->static_body &&
-                            std::hypot(world.x - b.center.x, world.y - b.center.y) <=
-                                found->radius) {
+                        if (found != defs.end() && !found->static_body && hit(*found, b, world)) {
                             selected_ = b.id;
                             dragging_ = b.id;
                             resume_drag_ = running_;
@@ -238,15 +304,25 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
     }
     return true;
 }
+void SourceView::step() {
+    const auto controls = source_.controls(world_->snapshot());
+    if (controls.error())
+        throw std::runtime_error(controls.error()->message);
+    checked(world_->forces(controls.value()->forces));
+    for (const auto &[id, mu] : controls.value()->friction)
+        checked(world_->friction(id, mu));
+    checked(world_->step());
+}
 void SourceView::tick(double dt) {
     if (!running_ || dragging_)
         return;
     remainder_ += std::clamp(dt, 0.0, .25);
     unsigned steps = 0;
     while (remainder_ >= source_.definition().fixed_dt && steps++ < 32) {
-        auto r = world_->step();
-        if (r.error()) {
-            status_ = r.error()->message;
+        try {
+            step();
+        } catch (const std::exception &error) {
+            status_ = error.what();
             running_ = false;
             std::cerr << "Open Simphy: " << status_ << std::endl;
             break;
@@ -326,29 +402,74 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
         const auto &style = source_.styles().at(b.id);
         SDL_FColor fill{static_cast<float>(style.fill.r), static_cast<float>(style.fill.g),
                         static_cast<float>(style.fill.b), static_cast<float>(style.fill.a)};
-        std::vector<SDL_Vertex> vertices{{center, fill, {.5f, .5f}}};
-        std::vector<int> indices;
-        std::vector<SDL_FPoint> outline;
-        for (int i = 0; i <= 64; ++i) {
-            double a = 2 * std::numbers::pi * i / 64;
-            float cx = float(std::cos(a)), cy = float(std::sin(a));
-            SDL_FPoint p{center.x + radius * cx, center.y + radius * cy};
-            vertices.push_back({p, fill, {.5f + .5f * cx, .5f + .5f * cy}});
-            outline.push_back(p);
-            if (i < 64) {
-                indices.push_back(0);
-                indices.push_back(i + 1);
-                indices.push_back(i + 2);
-            }
+        std::vector<scene::RigidFixture> fallback;
+        if (b.fixtures.empty()) {
+            scene::RigidFixture f;
+            f.radius = b.radius;
+            fallback.push_back(f);
         }
-        SDL_Texture *image = style.image.empty() ? nullptr : images_.at(style.image).get();
-        require_sdl(SDL_RenderGeometry(r, image, vertices.data(), static_cast<int>(vertices.size()),
-                                       indices.data(), static_cast<int>(indices.size())),
-                    "Draw textured circle");
-        color(r, selected_ == b.id ? scene::Color{255 / 255.0, 255 / 255.0, 255 / 255.0, 1}
-                                   : style.outline);
-        require_sdl(SDL_RenderLines(r, outline.data(), static_cast<int>(outline.size())),
-                    "Draw circle outline");
+        const auto &fixtures = b.fixtures.empty() ? fallback : b.fixtures;
+        for (const auto &f : fixtures) {
+            std::vector<math::Vec2> points = f.vertices;
+            if (points.empty())
+                for (int i = 0; i < 64; ++i) {
+                    const double a = 2 * std::numbers::pi * i / 64;
+                    points.push_back(
+                        {f.center.x + f.radius * std::cos(a), f.center.y + f.radius * std::sin(a)});
+                }
+            double minx = points.front().x, maxx = minx, miny = points.front().y, maxy = miny;
+            for (auto q : points) {
+                minx = std::min(minx, q.x);
+                maxx = std::max(maxx, q.x);
+                miny = std::min(miny, q.y);
+                maxy = std::max(maxy, q.y);
+            }
+            std::vector<SDL_Vertex> vertices;
+            std::vector<int> indices;
+            std::vector<SDL_FPoint> outline;
+            for (auto q : points) {
+                const SDL_FPoint uv{float((q.x - minx) / (maxx - minx)),
+                                    float(1 - (q.y - miny) / (maxy - miny))};
+                q = rotated(q, sample.angle);
+                auto projected = project({sample.center.x + q.x, sample.center.y + q.y});
+                vertices.push_back({projected, fill, uv});
+                outline.push_back(projected);
+            }
+            for (int i = 1; i + 1 < int(vertices.size()); ++i) {
+                indices.push_back(0);
+                indices.push_back(i);
+                indices.push_back(i + 1);
+            }
+            outline.push_back(outline.front());
+            SDL_Texture *image = style.image.empty() ? nullptr : images_.at(style.image).get();
+            require_sdl(SDL_RenderGeometry(r, image, vertices.data(), int(vertices.size()),
+                                           indices.data(), int(indices.size())),
+                        "Draw rigid fixture");
+            color(r, selected_ == b.id ? scene::Color{1, 1, 1, 1} : style.outline);
+            require_sdl(SDL_RenderLines(r, outline.data(), int(outline.size())),
+                        "Draw fixture outline");
+        }
+    }
+    for (const auto &h : source_.definition().hinges) {
+        const auto &a = samples.at(h.body_a);
+        auto q = rotated(h.local_a, a.angle);
+        auto point = project({a.center.x + q.x, a.center.y + q.y});
+        color(r, {.8, .8, .3, 1});
+        panel(r, point.x - 3, point.y - 3, 6, 6);
+    }
+    for (const auto &w : source_.definition().windings) {
+        const auto &a = samples.at(w.body_a), &b = samples.at(w.body_b);
+        const double dx = b.center.x - a.center.x, dy = b.center.y - a.center.y,
+                     d = std::hypot(dx, dy);
+        if (d <= std::abs(w.radius_a - w.radius_b))
+            continue;
+        const double angle = std::atan2(dy, dx) + std::asin((w.radius_a - w.radius_b) / d);
+        auto pa = project(
+            {a.center.x + std::sin(angle) * w.radius_a, a.center.y - std::cos(angle) * w.radius_a});
+        auto pb = project(
+            {b.center.x + std::sin(angle) * w.radius_b, b.center.y - std::cos(angle) * w.radius_b});
+        color(r, {1, .65, 0, 1});
+        require_sdl(SDL_RenderLine(r, pa.x, pa.y, pb.x, pb.y), "Draw winding thread");
     }
     for (const auto &j : source_.definition().links) {
         const auto &a = samples.at(j.body_a);
@@ -368,7 +489,25 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     }
     float textY = top + 136;
     for (const auto &w : source_.widgets()) {
-        if (w.button) {
+        if (w.slider) {
+            const float x = left + std::clamp(float(w.position.x), 8.0f,
+                                              std::max(8.0f, vw - float(w.size.x) - 8));
+            const float y = top + std::clamp(float(w.position.y), 8.0f,
+                                             std::max(8.0f, vh - float(w.size.y) - 8));
+            std::string caption = w.text;
+            auto marker = caption.find("value");
+            if (marker != std::string::npos)
+                caption.replace(marker, 5, number(w.value));
+            color(r, {.18, .18, .18, 1});
+            panel(r, x, y, float(w.size.x), float(w.size.y));
+            color(r, {.9, .9, .9, 1});
+            label(x + 6, y + 2, caption, float(w.size.x) - 12);
+            color(r, {.4, .4, .4, 1});
+            panel(r, x, y + 27, float(w.size.x), 3);
+            color(r, {.9, .65, .2, 1});
+            const float value = float((w.value - w.minimum) / (w.maximum - w.minimum));
+            panel(r, x + float(w.size.x) * value - 3, y + 23, 6, 11);
+        } else if (w.button) {
             float x = left + std::clamp(float(w.position.x), 8.0f,
                                         std::max(8.0f, vw - float(w.size.x) - 8)),
                   y = top + std::clamp(float(w.position.y), 8.0f,
@@ -411,8 +550,11 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     color(r, {230 / 255.0, 230 / 255.0, 230 / 255.0, 1});
     label(14, 128, "IMPORTED BODIES");
     label(14, 150,
-          std::to_string(state.bodies.size()) + " circles / " +
-              std::to_string(source_.definition().links.size()) + " distance joints",
+          std::to_string(state.bodies.size()) + " bodies / " +
+              std::to_string(source_.definition().links.size() +
+                             source_.definition().hinges.size() +
+                             source_.definition().windings.size()) +
+              " joints",
           l.left - 24);
     float row = 176 - list_scroll_;
     for (const auto &b : source_.definition().bodies) {
@@ -448,7 +590,7 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
         property("Friction: " + number(b.friction));
         property("Damping: " + number(b.damping));
     } else
-        property("Click / drag a ball to inspect.");
+        property("Click / drag a body to inspect.");
     color(r, {28 / 255.0, 28 / 255.0, 28 / 255.0, 1});
     panel(r, l.left, 90, l.width - l.left, 22);
     color(r, {225 / 255.0, 225 / 255.0, 225 / 255.0, 1});

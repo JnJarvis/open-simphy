@@ -20,6 +20,8 @@ class SourceView {
     bool running_ = false;
     float list_scroll_ = 0;
     std::optional<core::EntityId> selected_, dragging_;
+    std::optional<std::size_t> slider_;
+    void step();
     bool resume_drag_ = false;
     std::string status_ =
         "Experimental simulation: collision sounds and some scripted events are not supported yet.";

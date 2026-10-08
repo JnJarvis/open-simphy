@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <locale>
 #include <miniz.h>
 #include <numbers>
@@ -37,6 +39,12 @@ double number(JSContext *c, JSValueConst v) {
 double num(JSContext *c, JSValueConst v, const char *key) {
     auto f = field(c, v, key);
     return number(c, f.value);
+}
+std::uint64_t bits_value(JSContext *c, JSValueConst v, const char *key) {
+    const double n = num(c, v, key);
+    if (n < 0 || n > 9007199254740991.0 || std::floor(n) != n)
+        throw std::runtime_error("Invalid integer filter bits");
+    return static_cast<std::uint64_t>(n);
 }
 math::Vec2 vec(JSContext *c, JSValueConst v) { return {num(c, v, "x"), num(c, v, "y")}; }
 JSValue vector(JSContext *c, math::Vec2 v) {
@@ -138,10 +146,14 @@ class Color {
  constructor(name){const colors={white:[1,1,1,1],pink:[1,.68,.76,1],yellow:[1,1,0,1],red:[1,0,0,1],green:[0,.5,0,1],orange:[1,.647,0,1],black:[0,0,0,1],blue:[0,0,1,1]};if(!colors[name])throw Error('Unsupported color '+name);this.rgba=colors[name];}
 }
 let __bodies=__seed.bodies, __links=__seed.links, __next=__bodies.length+1, __joint=__links.length+1;
+const __initial=JSON.parse(JSON.stringify(__seed.bodies));
 class Body {
  constructor(d){this.d=d;}
  setFillColor(c){this.d.fill=c.rgba.slice();}
- setPosition(v){this.d.center={x:v.x,y:v.y};this.d.velocity={x:0,y:0};}
+ setPosition(v,y){const p=typeof v==='object'?v:{x:v,y:y};this.d.center={x:p.x,y:p.y};this.d.velocity={x:0,y:0};}
+ getPosition(){return new Vector2(this.d.center.x,this.d.center.y);}
+ setRotation(a){if(!Number.isFinite(a))throw Error('Invalid angle');this.d.angle=a;this.d.angular=0;}
+ reset(){const initial=__initial.find(b=>b.id===this.d.id);if(!initial)throw Error('Missing initial body');Object.assign(this.d,JSON.parse(JSON.stringify(initial)));}
  getVelocity(){return new Vector2(this.d.velocity.x,this.d.velocity.y);}
 }
 function __local(body,p){const x=p.x-body.d.center.x,y=p.y-body.d.center.y,c=Math.cos(body.d.angle),s=Math.sin(body.d.angle);return {x:c*x+s*y,y:-s*x+c*y};}
@@ -154,6 +166,7 @@ const World={
 const Resources={getSound(name){return {isPlaying(){return false;},play(){throw Error('Collision audio unsupported in experimental mechanics');}};}};
 // No host modules, I/O, network, native handles or clocks are installed.
 Date=undefined;
+var sin=Math.sin,cos=Math.cos,tan=Math.tan,sqrt=Math.sqrt,abs=Math.abs,min=Math.min,max=Math.max,pi=Math.PI;
 Math.random=()=>{throw Error('Random script API not supported');};
 )JS";
 } // namespace
@@ -162,6 +175,14 @@ struct MechanicalSource::Impl {
     JSContext *context = nullptr;
     std::chrono::steady_clock::time_point deadline{};
     scene::Mechanism definition;
+    struct Controller {
+        core::EntityId body;
+        std::string enabled, x, y, friction;
+        math::Vec2 point{};
+        int mode = 0;
+        double initial_angle = 0;
+    };
+    std::vector<Controller> controllers;
     std::map<core::EntityId, BodyStyle> styles;
     std::map<core::EntityId, scene::Color> joint_colors;
     std::map<std::string, std::vector<std::uint8_t>> images;
@@ -241,6 +262,34 @@ struct MechanicalSource::Impl {
             b.gravity_scale = num(context, v.value, "gravityScale");
             b.fixed_rotation = num(context, v.value, "fixed") != 0;
             b.static_body = num(context, v.value, "static") != 0;
+            b.category = bits_value(context, v.value, "category");
+            b.mask = bits_value(context, v.value, "mask");
+            b.sensor = num(context, v.value, "sensor") != 0;
+            auto fs = field(context, v.value, "fixtures");
+            const double nf = num(context, fs.value, "length");
+            if (nf < 0 || nf > 64)
+                throw std::runtime_error("Fixture budget");
+            for (unsigned k = 0; k < static_cast<unsigned>(nf); ++k) {
+                Value fv(context, JS_GetPropertyUint32(context, fs.value, k));
+                scene::RigidFixture f;
+                auto cp = field(context, fv.value, "center");
+                f.center = vec(context, cp.value);
+                f.radius = num(context, fv.value, "radius");
+                f.friction = num(context, fv.value, "friction");
+                f.restitution = num(context, fv.value, "restitution");
+                f.sensor = num(context, fv.value, "sensor") != 0;
+                f.category = bits_value(context, fv.value, "category");
+                f.mask = bits_value(context, fv.value, "mask");
+                auto vs = field(context, fv.value, "vertices");
+                const double nv = num(context, vs.value, "length");
+                if (nv < 0 || nv > 8)
+                    throw std::runtime_error("Polygon vertex budget");
+                for (unsigned t = 0; t < static_cast<unsigned>(nv); ++t) {
+                    Value q(context, JS_GetPropertyUint32(context, vs.value, t));
+                    f.vertices.push_back(vec(context, q.value));
+                }
+                b.fixtures.push_back(std::move(f));
+            }
             BodyStyle style;
             auto fill = field(context, v.value, "fill");
             style.fill = rgba(context, fill.value);
@@ -282,6 +331,10 @@ struct MechanicalSource::Impl {
         const auto valid = scene::validate(next);
         if (valid.error())
             throw std::runtime_error(valid.error()->message);
+        for (const auto &c : controllers)
+            if (std::none_of(next.bodies.begin(), next.bodies.end(),
+                             [&](const auto &b) { return b.id == c.body; }))
+                throw std::runtime_error("Action removed a required controlled body");
         definition = std::move(next);
         styles = std::move(next_styles);
         joint_colors = std::move(next_colors);
@@ -300,6 +353,19 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             world.child("Fields").first_child() || world.child("Controllers").first_child())
             throw std::runtime_error("Other domains/fields/controllers require source preview");
         p->definition.gravity = point(world.child("Gravity"));
+        std::string mix = world.child("Preferences").child("coeffMixer").child_value();
+        if (!mix.empty()) {
+            for (auto &ch : mix)
+                if (ch == ',')
+                    ch = ' ';
+            std::istringstream in(mix);
+            int friction = 0, restitution = 0;
+            if (!(in >> friction >> restitution) || friction < 0 || friction > 2 ||
+                restitution < 0 || restitution > 2 || (in >> std::ws && !in.eof()))
+                throw std::runtime_error("Invalid coefficient mixer");
+            p->definition.friction_mixer = static_cast<scene::MaterialMixer>(friction);
+            p->definition.restitution_mixer = static_cast<scene::MaterialMixer>(restitution);
+        }
         p->definition.fixed_dt = 1.0 / scalar(world.child("Settings").child("StepFrequency"), 60);
         auto camera = root.child("Camera");
         if (camera.child("Translation")) {
@@ -323,7 +389,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
         std::map<unsigned, double> angles;
         unsigned index = 0;
         for (auto body : world.child("Bodies").children()) {
-            if (std::string(body.name()) != "Body")
+            if (std::string(body.name()) != "Body" && std::string(body.name()) != "PlaneBody")
                 throw std::runtime_error("Non-circular body type");
             const std::string key = body.attribute("Id").value();
             if (key.empty() || ids.contains(key))
@@ -340,21 +406,18 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             if (index >= 256)
                 throw std::runtime_error("Body budget");
             auto fixture = fixtures.first_child();
-            if (fixture.next_sibling())
-                throw std::runtime_error("Compound fixtures require full rigid profile");
+
             auto shape = fixture.child("Shape");
-            if (std::string(shape.attribute("xsi:type").value()) != "Circle")
-                throw std::runtime_error("Non-circle shape requires source preview");
+
             if (mode != "NORMAL" && mode != "INFINITE" && mode != "FIXED_ANGULAR_VELOCITY")
                 throw std::runtime_error("Unsupported source mass mode");
             auto local = point(shape.child("LocalCenter"));
             auto com = point(mass.child("LocalCenter"));
-            if (std::hypot(local.x - com.x, local.y - com.y) > 1e-10)
-                throw std::runtime_error("Off-center circle requires full rigid profile");
+
             double angle =
                 scalar(body.child("Transform").child("Rotation")) * std::numbers::pi / 180;
             auto origin = point(body.child("Transform").child("Translation")),
-                 offset = rotate(local, angle);
+                 offset = rotate(com, angle);
             math::Vec2 center{origin.x + offset.x, origin.y + offset.y};
             double angular = scalar(body.child("AngularVelocity")) * std::numbers::pi / 180;
             if (mode == "FIXED_ANGULAR_VELOCITY" && std::abs(angular) > 1e-12)
@@ -362,7 +425,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             if ((body.child("AccumulatedForce") &&
                  point(body.child("AccumulatedForce")) != math::Vec2{}) ||
                 scalar(body.child("AccumulatedTorque")) != 0 || scalar(body.child("Charge")) != 0 ||
-                fixture.child("Filter") || fixture.child("Sensor") ||
+
                 body.child("Active").text().as_bool(true) == false)
                 throw std::runtime_error("Unsupported force/filter/charge/inactive state");
             Value v(p->context, JS_NewObject(p->context));
@@ -378,10 +441,96 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                               vector(p->context, point(body.child("Velocity"))));
             put(p->context, v.value, "angle", angle);
             put(p->context, v.value, "angular", mode == "FIXED_ANGULAR_VELOCITY" ? 0 : angular);
-            put(p->context, v.value, "radius", scalar(shape.child("Radius")));
+            const auto bits = [](pugi::xml_node group) {
+                std::uint64_t out = 0;
+                for (auto n : group.children()) {
+                    std::istringstream in(n.attribute("Value").value());
+                    std::uint64_t value = 0;
+                    if (!(in >> value) || value > 2147483647ULL || (in >> std::ws && !in.eof()))
+                        throw std::runtime_error("Invalid source category filter");
+                    out |= value;
+                }
+                return out;
+            };
+            Value fs(p->context, JS_NewArray(p->context));
+            unsigned fi = 0;
+            double bound = 1e-4;
+            for (auto fx : fixtures.children("Fixture")) {
+                if (fi >= 64)
+                    throw std::runtime_error("Fixture budget");
+                auto sh = fx.child("Shape");
+                const std::string type = sh.attribute("xsi:type").value();
+                const auto lc = point(sh.child("LocalCenter"));
+                const math::Vec2 fc{lc.x - com.x, lc.y - com.y};
+                std::vector<math::Vec2> vertices;
+                double radius = scalar(sh.child("Radius"), .5);
+                if (type == "Rectangle" || type == "Plane") {
+                    const double width = type == "Plane" ? sh.attribute("planeSize").as_double(700)
+                                                         : scalar(sh.child("Width"));
+                    const double height = type == "Plane" ? 50 : scalar(sh.child("Height"));
+                    if (!std::isfinite(width) || width <= 0 || width > 1000 ||
+                        !std::isfinite(height) || height <= 0 || height > 1000)
+                        throw std::runtime_error("Invalid rectangle/plane size");
+                    const double y = type == "Plane" ? -height / 2 : 0;
+                    const double rot = scalar(sh.child("LocalRotation")) * std::numbers::pi / 180;
+                    for (auto q : std::vector<math::Vec2>{{-width / 2, y - height / 2},
+                                                          {width / 2, y - height / 2},
+                                                          {width / 2, y + height / 2},
+                                                          {-width / 2, y + height / 2}}) {
+                        q = rotate(q, rot);
+                        vertices.push_back({q.x + fc.x, q.y + fc.y});
+                    }
+                    if (type == "Plane" && mode != "INFINITE")
+                        throw std::runtime_error("Dynamic plane unsupported");
+                } else if (type == "Polygon" || type == "Triangle") {
+                    for (auto q : sh.children("Vertex")) {
+                        auto pt = point(q);
+                        vertices.push_back({pt.x - com.x, pt.y - com.y});
+                    }
+                    if (vertices.size() < 3 || vertices.size() > 8)
+                        throw std::runtime_error(
+                            "Polygon requires convex decomposition outside this profile");
+                } else if (type != "Circle")
+                    throw std::runtime_error("Unsupported rigid shape: " + type);
+                auto filter = fx.child("Filter");
+                const std::string ft = filter.attribute("xsi:type").value();
+                if (filter && ft != "CategoryFilter" && ft != "DefaultFilter")
+                    throw std::runtime_error("Unsupported collision filter");
+                const auto category =
+                    ft == "CategoryFilter" ? bits(filter.child("PartOfGroups")) : 1;
+                const auto mask = ft == "CategoryFilter" ? bits(filter.child("CollideWithGroups"))
+                                                         : 2147483647ULL;
+                if (fx.child("Sticky").text().as_bool(false))
+                    throw std::runtime_error("Sticky fixture unsupported");
+                Value f(p->context, JS_NewObject(p->context)),
+                    vs(p->context, JS_NewArray(p->context));
+                for (unsigned k = 0; k < vertices.size(); ++k) {
+                    JS_SetPropertyUint32(p->context, vs.value, k, vector(p->context, vertices[k]));
+                    bound = std::max(bound, std::hypot(vertices[k].x, vertices[k].y));
+                }
+                if (vertices.empty())
+                    bound = std::max(bound, std::hypot(fc.x, fc.y) + radius);
+                JS_SetPropertyStr(p->context, f.value, "vertices",
+                                  JS_DupValue(p->context, vs.value));
+                JS_SetPropertyStr(p->context, f.value, "center", vector(p->context, fc));
+                put(p->context, f.value, "radius", radius);
+                put(p->context, f.value, "friction", scalar(fx.child("Friction"), .2));
+                put(p->context, f.value, "restitution", scalar(fx.child("Restitution")));
+                put(p->context, f.value, "sensor",
+                    fx.child("Sensor").text().as_bool(false) ? 1 : 0);
+                put(p->context, f.value, "category", double(category));
+                put(p->context, f.value, "mask", double(mask));
+                JS_SetPropertyUint32(p->context, fs.value, fi++, JS_DupValue(p->context, f.value));
+            }
+            JS_SetPropertyStr(p->context, v.value, "fixtures", JS_DupValue(p->context, fs.value));
+            JS_SetPropertyStr(p->context, v.value, "com", vector(p->context, com));
+            put(p->context, v.value, "radius", bound);
+            put(p->context, v.value, "category", 1);
+            put(p->context, v.value, "mask", 2147483647);
+            put(p->context, v.value, "sensor", 0);
             put(p->context, v.value, "mass", scalar(mass.child("Mass")));
             put(p->context, v.value, "inertia", scalar(mass.child("Inertia")));
-            put(p->context, v.value, "friction", scalar(fixture.child("Friction"), .3));
+            put(p->context, v.value, "friction", scalar(fixture.child("Friction"), .2));
             put(p->context, v.value, "restitution", scalar(fixture.child("Restitution"), 0));
             put(p->context, v.value, "damping", scalar(body.child("LinearDamping")));
             put(p->context, v.value, "angularDamping", scalar(body.child("AngularDamping")));
@@ -392,31 +541,76 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                               color(p->context, body.child("FillColor")));
             JS_SetPropertyStr(p->context, v.value, "outline",
                               color(p->context, body.child("OutlineColor")));
-            JS_SetPropertyStr(
-                p->context, v.value, "image",
-                JS_NewString(p->context, body.child("Brush").attribute("name").value()));
+            std::string brush = body.child("Brush").attribute("name").value();
+            if (brush.rfind("Pattern_", 0) == 0)
+                brush.clear();
+            JS_SetPropertyStr(p->context, v.value, "image",
+                              JS_NewString(p->context, brush.c_str()));
             JS_SetPropertyUint32(p->context, bodies.value, id - 1,
                                  JS_DupValue(p->context, v.value));
         }
         if (!index)
-            throw std::runtime_error("No circular mechanical bodies");
-        unsigned joint = 0;
+            throw std::runtime_error(
+                "No supported 2D rigid bodies; scene needs another simulation domain");
+        unsigned joint = 0, distance_index = 0;
         for (auto node : world.child("Joints").children("Joint")) {
             if (node.child("DynamicallyAddedJoint").text().as_bool(false))
                 continue;
-            if (std::string(node.attribute("xsi:type").value()) != "DistanceJoint" ||
-                scalar(node.child("Frequency")) != 0)
-                throw std::runtime_error("Unsupported joint profile");
+            const std::string jt = node.attribute("xsi:type").value();
+            if (jt != "DistanceJoint" && jt != "RevoluteJoint" && jt != "SpindleJoint")
+                throw std::runtime_error("Unsupported joint profile: " + jt);
+            if (scalar(node.child("Frequency")) != 0)
+                throw std::runtime_error("Spring profile unsupported");
             auto ia = ids.find(node.child("BodyId1").child_value()),
                  ib = ids.find(node.child("BodyId2").child_value());
             if (ia == ids.end() || ib == ids.end() || ia->second == 0)
                 throw std::runtime_error("Unresolved authored distance joint");
-            auto a = point(node.child("Anchor1")), b = point(node.child("Anchor2"));
+            auto a = point(node.child(jt == "RevoluteJoint" ? "Anchor" : "Anchor1")),
+                 b = point(node.child(jt == "RevoluteJoint" ? "Anchor" : "Anchor2"));
+            const auto wa = a, wb = b;
             auto ca = centers.at(ia->second);
             a = rotate({a.x - ca.x, a.y - ca.y}, -angles.at(ia->second));
             if (ib->second) {
                 auto cb = centers.at(ib->second);
                 b = rotate({b.x - cb.x, b.y - cb.y}, -angles.at(ib->second));
+            }
+            if (jt == "RevoluteJoint") {
+                scene::HingeLink h;
+                h.id = {1025ULL + joint++};
+                h.body_a = {ia->second};
+                h.body_b = {ib->second};
+                h.local_a = a;
+                h.local_b = b;
+                h.reference = -scalar(node.child("ReferenceAngle"));
+                h.lower = -scalar(node.child("UpperLimit"));
+                h.upper = -scalar(node.child("LowerLimit"));
+                h.limit = node.child("LimitEnabled").text().as_bool(false);
+                h.motor = node.child("MotorEnabled").text().as_bool(false);
+                h.speed = -scalar(node.child("MotorSpeed"));
+                h.max_torque = scalar(node.child("MaximumMotorTorque"));
+                h.collide_connected = node.child("CollisionAllowed").text().as_bool(false);
+                p->definition.hinges.push_back(h);
+                continue;
+            }
+            if (jt == "SpindleJoint") {
+                if (!ib->second)
+                    throw std::runtime_error("Winding needs two explicit bodies");
+                const double length = std::hypot(wb.x - wa.x, wb.y - wa.y);
+                if (length < .01)
+                    throw std::runtime_error("Invalid winding anchors");
+                const math::Vec2 n{(wb.x - wa.x) / length, (wb.y - wa.y) / length};
+                auto spool_a = centers.at(ia->second), spool_b = centers.at(ib->second);
+                scene::WindingLink w;
+                w.id = {2049ULL + joint++};
+                w.body_a = {ia->second};
+                w.body_b = {ib->second};
+                w.local_a = a;
+                w.local_b = b;
+                w.radius_a = (wa.x - spool_a.x) * n.y - (wa.y - spool_a.y) * n.x;
+                w.radius_b = (wb.x - spool_b.x) * n.y - (wb.y - spool_b.y) * n.x;
+                w.collide_connected = node.child("CollisionAllowed").text().as_bool(false);
+                p->definition.windings.push_back(w);
+                continue;
             }
             Value v(p->context, JS_NewObject(p->context));
             put(p->context, v.value, "id", ++joint);
@@ -427,13 +621,125 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             JS_SetPropertyStr(p->context, v.value, "pb", vector(p->context, b));
             JS_SetPropertyStr(p->context, v.value, "color",
                               color(p->context, node.child("JointColor")));
-            JS_SetPropertyUint32(p->context, links.value, joint - 1,
+            JS_SetPropertyUint32(p->context, links.value, distance_index++,
                                  JS_DupValue(p->context, v.value));
         }
         JS_SetPropertyStr(p->context, seed.value, "bodies", JS_DupValue(p->context, bodies.value));
         JS_SetPropertyStr(p->context, seed.value, "links", JS_DupValue(p->context, links.value));
         Value global(p->context, JS_GetGlobalObject(p->context));
         JS_SetPropertyStr(p->context, global.value, "__seed", JS_DupValue(p->context, seed.value));
+        pugi::xml_document gui;
+        const auto source = world.child("GuiManager").child("GuiXML").child_value();
+        if (*source && !gui.load_string(source))
+            throw std::runtime_error("Invalid GUI XML");
+        double row = 16;
+        std::function<void(pugi::xml_node, unsigned)> widgets = [&](pugi::xml_node parent,
+                                                                    unsigned depth) {
+            if (depth > 16)
+                throw std::runtime_error("Widget nesting budget");
+            for (auto node : parent.children()) {
+                const std::string kind = node.name();
+                if (kind == "dialog" || kind == "panel") {
+                    widgets(node, depth + 1);
+                    continue;
+                }
+                if (kind != "button" && kind != "textarea" && kind != "label" && kind != "slider")
+                    throw std::runtime_error("Unsupported embedded widget: " + kind);
+                if (p->widgets.size() >= 64)
+                    throw std::runtime_error("Widget budget");
+                SourceWidget w;
+                w.button = kind == "button";
+                w.slider = kind == "slider";
+                w.text = node.attribute("text").value();
+                w.action = node.attribute("action").value();
+                w.name = node.attribute("name").value();
+                if (w.text.size() > 65536 || w.action.size() > 4096 || w.name.size() > 128)
+                    throw std::runtime_error("Widget text budget");
+                w.position = {16, row};
+                w.size = {300, w.button || w.slider ? 36.0 : 80.0};
+                std::string bounds = node.attribute("rectbounds").value();
+                if (!bounds.empty()) {
+                    for (auto &ch : bounds)
+                        if (ch == ',')
+                            ch = ' ';
+                    std::istringstream in(bounds);
+                    in.imbue(std::locale::classic());
+                    if (!(in >> w.position.x >> w.position.y >> w.size.x >> w.size.y))
+                        throw std::runtime_error("Invalid widget bounds");
+                }
+                if (!math::finite(w.position) || !math::finite(w.size) || w.size.x <= 0 ||
+                    w.size.y <= 0 || w.size.x > 4096 || w.size.y > 4096 ||
+                    std::abs(w.position.x) > 10000 || std::abs(w.position.y) > 10000)
+                    throw std::runtime_error("Invalid widget bounds");
+                row += w.size.y + 8;
+                if (w.slider) {
+                    if (w.name.empty() ||
+                        !(std::isalpha(static_cast<unsigned char>(w.name[0])) ||
+                          w.name[0] == '_') ||
+                        !std::all_of(w.name.begin(), w.name.end(),
+                                     [](unsigned char c) { return std::isalnum(c) || c == '_'; }))
+                        throw std::runtime_error("Invalid slider variable");
+                    w.minimum = node.attribute("minimum").as_double(0);
+                    w.maximum = node.attribute("maximum").as_double(1);
+                    w.value = node.attribute("value").as_double(0);
+                    if (!std::isfinite(w.minimum) || !std::isfinite(w.maximum) ||
+                        !std::isfinite(w.value) || w.minimum >= w.maximum || w.value < w.minimum ||
+                        w.value > w.maximum || std::abs(w.minimum) > 1e9 ||
+                        std::abs(w.maximum) > 1e9)
+                        throw std::runtime_error("Invalid slider range");
+                    JS_SetPropertyStr(p->context, global.value, w.name.c_str(),
+                                      JS_NewFloat64(p->context, w.value));
+                }
+                if (w.button && w.action.empty() && !w.name.empty())
+                    w.action = w.name + "_onClick()";
+                p->widgets.push_back(std::move(w));
+            }
+        };
+        widgets(gui.child("desktop"), 0);
+        for (auto node : world.child("BodyControllers").children("BodyController")) {
+            if (p->controllers.size() >= 1024)
+                throw std::runtime_error("Controller budget");
+            const auto id = ids.find(node.attribute("bodyid").value());
+            if (id == ids.end() || !id->second)
+                throw std::runtime_error("Unresolved controller body");
+            Impl::Controller c;
+            c.body = {id->second};
+            c.initial_angle = angles.at(id->second);
+            const std::string kind = node.attribute("type").value();
+            if (kind == "ForceController") {
+                c.enabled = node.attribute("enabled").value();
+                if (c.enabled.empty())
+                    c.enabled = "true";
+                c.x = node.child("xExpr").child_value();
+                c.y = node.child("yExpr").child_value();
+                c.point = point(node.child("ExtForcePoint"));
+                const double mode_value = scalar(node.child("ForceMode"));
+                if (mode_value < 0 || mode_value > 2 || std::floor(mode_value) != mode_value)
+                    throw std::runtime_error("Invalid force mode");
+                c.mode = static_cast<int>(mode_value);
+                if (c.mode < 0 || c.mode > 2)
+                    throw std::runtime_error("Unsupported force mode");
+            } else if (kind == "ValuePropertiesController") {
+                std::istringstream fields(node.attribute("enabled").value());
+                std::string expr;
+                unsigned i = 0;
+                while (std::getline(fields, expr, ';')) {
+                    if (!expr.empty() && expr != "null") {
+                        if (i != 4)
+                            throw std::runtime_error("Unsupported value property index: " +
+                                                     std::to_string(i));
+                        c.friction = expr;
+                    }
+                    ++i;
+                }
+                if (i > 15)
+                    throw std::runtime_error("Property expression budget");
+            } else
+                throw std::runtime_error("Unsupported controller: " + kind);
+            if (c.enabled.size() + c.x.size() + c.y.size() + c.friction.size() > 4096)
+                throw std::runtime_error("Controller expression budget");
+            p->controllers.push_back(std::move(c));
+        }
         { Value boot(p->context, p->eval(bridge)); }
         const std::string script = world.child("ScriptManager").child("Script").child_value();
         if (script.size() > 1024 * 1024)
@@ -447,36 +753,14 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
             if (!style.image.empty() && !p->images.contains(style.image))
                 p->images.emplace(style.image, member(project, style.image, 16 * 1024 * 1024));
         }
-        pugi::xml_document gui;
-        const auto source = world.child("GuiManager").child("GuiXML").child_value();
-        if (*source && !gui.load_string(source))
-            throw std::runtime_error("Invalid GUI XML");
-        for (auto node : gui.child("desktop").children()) {
-            const std::string kind = node.name();
-            if (kind != "button" && kind != "textarea")
-                throw std::runtime_error("Unsupported embedded widget");
-            if (p->widgets.size() >= 64)
-                throw std::runtime_error("Widget budget");
-            SourceWidget w;
-            w.button = kind == "button";
-            w.text = node.attribute("text").value();
-            w.action = node.attribute("action").value();
-            if (w.text.size() > 65536 || w.action.size() > 4096)
-                throw std::runtime_error("Widget text budget");
-            std::string bounds = node.attribute("rectbounds").value();
-            for (auto &ch : bounds)
-                if (ch == ',')
-                    ch = ' ';
-            std::istringstream in(bounds);
-            in.imbue(std::locale::classic());
-            if (!(in >> w.position.x >> w.position.y >> w.size.x >> w.size.y) ||
-                !math::finite(w.position) || !math::finite(w.size) || w.size.x <= 0 ||
-                w.size.y <= 0 || std::abs(w.position.x) > 10000 || std::abs(w.position.y) > 10000 ||
-                w.size.x > 4096 || w.size.y > 4096)
-                throw std::runtime_error("Invalid widget bounds");
-            p->widgets.push_back(std::move(w));
-        }
         p->ready = true;
+        MechanicalSource candidate(p);
+        scene::MechanismSnapshot initial;
+        for (const auto &b : p->definition.bodies)
+            initial.bodies.push_back({b.id, b.center, b.velocity, b.angle, b.angular_velocity});
+        const auto controls = candidate.controls(initial);
+        if (controls.error())
+            throw std::runtime_error(controls.error()->message);
         return core::Result<MechanicalSource>::success(MechanicalSource(std::move(p)));
     } catch (const std::exception &e) {
         return core::Result<MechanicalSource>::failure({core::Code::unsupported_feature,
@@ -513,6 +797,75 @@ core::Result<void> MechanicalSource::apply_action(std::string_view action) {
                                             e.what(),
                                             {},
                                             "compat.action"});
+    }
+}
+core::Result<void> MechanicalSource::set_slider(std::size_t index, double value) {
+    if (index >= impl_->widgets.size() || !impl_->widgets[index].slider || !std::isfinite(value) ||
+        value < impl_->widgets[index].minimum || value > impl_->widgets[index].maximum)
+        return core::Result<void>::failure({core::Code::invalid_argument,
+                                            core::Severity::error,
+                                            "Invalid slider value",
+                                            {},
+                                            "compat.controls"});
+    auto &w = impl_->widgets[index];
+    Value global(impl_->context, JS_GetGlobalObject(impl_->context));
+    JS_SetPropertyStr(impl_->context, global.value, w.name.c_str(),
+                      JS_NewFloat64(impl_->context, value));
+    w.value = value;
+    return core::Result<void>::success();
+}
+core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSnapshot &state) {
+    try {
+        if (impl_->poisoned)
+            throw std::runtime_error("Reopen source after failed controller");
+        SourceControls result;
+        Value global(impl_->context, JS_GetGlobalObject(impl_->context));
+        put(impl_->context, global.value, "T", state.time);
+        put(impl_->context, global.value, "t", state.time);
+        const auto expression = [&](const std::string &code) {
+            Value n(impl_->context, impl_->eval("(" + code + ")"));
+            return number(impl_->context, n.value);
+        };
+        for (const auto &c : impl_->controllers) {
+            if (!c.friction.empty()) {
+                const double mu = expression(c.friction);
+                if (mu < 0 || mu > 1e6)
+                    throw std::runtime_error("Invalid friction expression");
+                result.friction[c.body] = mu;
+                continue;
+            }
+            Value enabled(impl_->context, impl_->eval("Boolean(" + c.enabled + ")"));
+            if (!JS_ToBool(impl_->context, enabled.value))
+                continue;
+            scene::AppliedForce f;
+            f.body = c.body;
+            f.force = {expression(c.x), expression(c.y)};
+            f.local_point = c.point;
+            auto body = std::find_if(state.bodies.begin(), state.bodies.end(),
+                                     [&](const auto &b) { return b.id == c.body; });
+            if (body == state.bodies.end())
+                throw std::runtime_error("Missing controlled body");
+            if (c.mode == 1)
+                f.force = rotate(f.force, body->angle);
+            if (c.mode == 2) {
+                f.wrapped = true;
+                auto point = rotate(c.point, c.initial_angle);
+                const double length = std::hypot(f.force.x, f.force.y);
+                f.torque_arm =
+                    length > 0 ? (point.x * f.force.y - point.y * f.force.x) / length : 0;
+            }
+            if (std::abs(f.force.x) > 1e9 || std::abs(f.force.y) > 1e9)
+                throw std::runtime_error("Force expression envelope");
+            result.forces.push_back(f);
+        }
+        return core::Result<SourceControls>::success(std::move(result));
+    } catch (const std::exception &e) {
+        impl_->poisoned = true;
+        return core::Result<SourceControls>::failure({core::Code::unsupported_feature,
+                                                      core::Severity::error,
+                                                      e.what(),
+                                                      {},
+                                                      "compat.controls"});
     }
 }
 } // namespace opensim::compat

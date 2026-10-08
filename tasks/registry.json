@@ -716,7 +716,8 @@
         "INT-002"
       ],
       "blocks": [
-        "IO-002"
+        "IO-002",
+        "PLAT-001"
       ],
       "gates": [],
       "allowed_paths": [
@@ -764,6 +765,35 @@
         "spec/contracts/scene.md"
       ],
       "description": "tasks/items/IO-002.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "PLAT-001",
+      "title": "Specify bounded reads and safe file replacement",
+      "stage": 2,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "IO-001"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "spec/contracts/files.md",
+        "rfcs/PLAT-001-files.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/interfaces.md",
+        "spec/testing.md",
+        "spec/contracts/core.md",
+        "spec/contracts/serialization.md"
+      ],
+      "description": "tasks/items/PLAT-001.md",
       "block_reason": null,
       "completion_report": null,
       "reviewer": null,

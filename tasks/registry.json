@@ -677,7 +677,8 @@
         "BUILD-004"
       ],
       "blocks": [
-        "IO-001"
+        "IO-001",
+        "INT-003"
       ],
       "gates": [],
       "allowed_paths": [
@@ -803,7 +804,7 @@
       "id": "COMPAT-003",
       "title": "Inspect real SSIM archives and bounded container validation",
       "stage": 0,
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": 1,
       "owner": "codex-worker",
       "dependencies": [],
@@ -822,6 +823,37 @@
         "research/EVIDENCE_REVIEW.md"
       ],
       "description": "tasks/items/COMPAT-003.md",
+      "block_reason": null,
+      "completion_report": "tasks/reports/COMPAT-003.md",
+      "reviewer": "user",
+      "merged_commit": "ee1ea9509961bf2af690f877d8eb400939f52836"
+    },
+    {
+      "id": "INT-003",
+      "title": "Build application workspace for interface feedback",
+      "stage": 2,
+      "status": "IN_PROGRESS",
+      "priority": 1,
+      "owner": "codex-worker",
+      "dependencies": [
+        "INT-002"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "src/app/",
+        "tests/integration/app/",
+        "docs/demo.md",
+        "README.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/editor.md",
+        "spec/contracts/renderer.md",
+        "spec/contracts/scene.md"
+      ],
+      "description": "tasks/items/INT-003.md",
       "block_reason": null,
       "completion_report": null,
       "reviewer": null,

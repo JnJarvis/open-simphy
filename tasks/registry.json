@@ -403,7 +403,8 @@
         "IO-001",
         "IO-002",
         "PHY-002",
-        "REN-003"
+        "REN-003",
+        "SCENE-003"
       ],
       "gates": [],
       "allowed_paths": [
@@ -438,7 +439,8 @@
       ],
       "blocks": [
         "EDT-001",
-        "INT-001"
+        "INT-001",
+        "SCENE-003"
       ],
       "gates": [],
       "allowed_paths": [
@@ -877,7 +879,8 @@
         "INT-003"
       ],
       "blocks": [
-        "INT-004"
+        "INT-004",
+        "SCENE-003"
       ],
       "gates": [],
       "allowed_paths": [
@@ -960,6 +963,37 @@
         "spec/contracts/renderer.md"
       ],
       "description": "tasks/items/INT-005.md",
+      "block_reason": null,
+      "completion_report": null,
+      "reviewer": null,
+      "merged_commit": null
+    },
+    {
+      "id": "SCENE-003",
+      "title": "Specify compound rigid bodies and immutable body snapshots",
+      "stage": 3,
+      "status": "IN_PROGRESS",
+      "priority": 0,
+      "owner": "codex-worker",
+      "dependencies": [
+        "COMPAT-004",
+        "SCENE-002",
+        "PHY-002"
+      ],
+      "blocks": [],
+      "gates": [],
+      "allowed_paths": [
+        "rfcs/SCENE-003-rigid-bodies.md",
+        "spec/contracts/rigid-scene.md"
+      ],
+      "spec_refs": [
+        "spec/architecture.md",
+        "spec/testing.md",
+        "spec/contracts/scene.md",
+        "spec/contracts/physics.md",
+        "rfcs/COMPAT-004-ssim-opening.md"
+      ],
+      "description": "tasks/items/SCENE-003.md",
       "block_reason": null,
       "completion_report": null,
       "reviewer": null,

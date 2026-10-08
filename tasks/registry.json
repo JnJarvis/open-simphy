@@ -944,7 +944,7 @@
       "id": "INT-005",
       "title": "Neutral workspace theme and scalable desktop text",
       "stage": 3,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -964,7 +964,7 @@
       ],
       "description": "tasks/items/INT-005.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/INT-005.md",
       "reviewer": null,
       "merged_commit": null
     },
@@ -972,7 +972,7 @@
       "id": "SCENE-003",
       "title": "Specify compound rigid bodies and immutable body snapshots",
       "stage": 3,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -995,7 +995,7 @@
       ],
       "description": "tasks/items/SCENE-003.md",
       "block_reason": null,
-      "completion_report": null,
+      "completion_report": "tasks/reports/SCENE-003.md",
       "reviewer": null,
       "merged_commit": null
     }

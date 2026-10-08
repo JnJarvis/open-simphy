@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-003 workspace merged. COMPAT-004 delivery direction merged. INT-004 implements real SSIM opening/source preview; all 14 final native CI jobs passed; awaiting review.
+INT-004 source opening merged. INT-005 neutral theme/scalable fonts/terminal diagnostics and SCENE-003 rigid-body producer contract are in review. Imported simulations still require body/contact/joint support.
 
-DONE: 24 | REVIEW: 1 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
+DONE: 25 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 2
 
 ```mermaid
 flowchart TD
@@ -35,7 +35,9 @@ flowchart TD
   COMPAT_003["COMPAT-003: Inspect real SSIM archives and bounded container validation<br/>DONE"]
   INT_003["INT-003: Build application workspace for interface feedback<br/>DONE"]
   COMPAT_004["COMPAT-004: Define SSIM opening and rigid-body migration<br/>DONE"]
-  INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>REVIEW"]
+  INT_004["INT-004: Open real SSIM archives and inspect project contents<br/>DONE"]
+  INT_005["INT-005: Neutral workspace theme and scalable desktop text<br/>REVIEW"]
+  SCENE_003["SCENE-003: Specify compound rigid bodies and immutable body snapshots<br/>REVIEW"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001
@@ -81,4 +83,8 @@ flowchart TD
   INT_003 --> COMPAT_004
   COMPAT_004 --> INT_004
   INT_003 --> INT_004
+  INT_004 --> INT_005
+  COMPAT_004 --> SCENE_003
+  SCENE_002 --> SCENE_003
+  PHY_002 --> SCENE_003
 ```

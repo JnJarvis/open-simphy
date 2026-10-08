@@ -181,3 +181,28 @@ The cradle smoke additionally checks one- and two-ball releases through the actu
 imported bodies/materials/joints, output count, quiet middle balls, return swing,
 length stability, overlap and energy. This check expects a five-ball cradle geometry;
 it is a diagnostic command, not a generic simulation compatibility test.
+
+## Imported rigid friction demonstration (INT-008)
+
+Open `Static and Kinetic Friction.ssim`. Play/Step/Reset are available and the actual
+wedge, block, pulley, string and ground are rendered. Use the F, block-friction and
+ground-friction sliders while running. The starting values can hold the scene in
+static equilibrium; increasing F or reducing friction makes it slip. Its embedded
+RESET button executes the authored body reset/position/angle operations.
+
+Verification commands:
+```text
+opensim_demo --smoke-rigid "path/to/Static and Kinetic Friction.ssim"
+opensim_demo --check-mechanics "path/to/Static and Kinetic Friction.ssim"
+opensim_demo --audit-mechanics-directory "path/to/bundled/simulations"
+opensim_demo --benchmark-mechanism "path/to/Static and Kinetic Friction.ssim"
+```
+Native smoke uses actual slider clicks to exceed the static-friction threshold and
+requires movement, checks three controls, invokes RESET and plays again. Headless
+checks independently cover static threshold, sliding deceleration, inclined-plane
+friction, coefficient mixers, explicit COM/mass/inertia, angular forces, winding
+impulse/torque reaction, hinge limits, polygons, sensors/filtering and retained cradle
+transfer. On the development Windows machine, Debug rendering measured mean 7.23ms,
+p95 10.41ms, physics 1.24ms and rendering 5.99ms (~138 uncapped FPS, 80 samples).
+That measurement is hardware-specific and excludes initial archive/image loading.
+All-file compatibility remains unfinished; unsupported scenes still display diagnostics.

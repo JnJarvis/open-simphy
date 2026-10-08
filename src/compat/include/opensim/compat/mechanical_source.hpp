@@ -11,7 +11,13 @@ struct BodyStyle {
 struct SourceWidget {
     std::string text, action;
     math::Vec2 position{}, size{150, 32};
-    bool button = false;
+    bool button = false, slider = false;
+    std::string name;
+    double minimum = 0, maximum = 1, value = 0;
+};
+struct SourceControls {
+    std::vector<scene::AppliedForce> forces;
+    std::map<core::EntityId, double> friction;
 };
 class MechanicalSource {
     struct Impl;
@@ -28,5 +34,7 @@ class MechanicalSource {
     math::Vec2 camera_center() const;
     double camera_scale() const;
     core::Result<void> apply_action(std::string_view);
+    core::Result<void> set_slider(std::size_t, double);
+    core::Result<SourceControls> controls(const scene::MechanismSnapshot &);
 };
 } // namespace opensim::compat

@@ -56,3 +56,5 @@ circle velocity transfer; constrained pendulum length/energy bounds; reset exact
 initial publication; drag/release; script-generated bodies/colors/constraints;
 unknown API/loop timeout/over-limit rollback; assets/gui actions; actual seven-file
 corpus classification and native visual comparison without importing fixtures into Git.
+
+INT-008 reviewed additive extension: explicit fixture vector overrides geometry/material/filter for general rigid bodies; empty retains the centered circle contract. See rigid-mechanism.md and rfcs/INT-008-rigid-mechanics.md. Snapshots retain COM pose/velocity semantics. Particle/native-v1 contracts remain unchanged.

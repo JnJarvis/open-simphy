@@ -268,3 +268,256 @@ TEST_CASE("Oblique elastic circle impact matches analytic normal impulse",
                 math::dot(s.bodies[1].velocity, s.bodies[1].velocity) ==
             Catch::Approx(4.25).margin(.03));
 }
+
+namespace {
+scene::RigidFixture box(double x, double y, double mu = 0) {
+    scene::RigidFixture f;
+    f.vertices = {{-x, -y}, {x, -y}, {x, y}, {-x, y}};
+    f.friction = mu;
+    return f;
+}
+scene::Mechanism friction_world(double mu) {
+    scene::Mechanism m;
+    m.gravity = {0, -10};
+    scene::CircleBody ground;
+    ground.id = {1};
+    ground.static_body = true;
+    ground.center = {0, -.5};
+    ground.fixtures = {box(20, .5, mu)};
+    scene::CircleBody block;
+    block.id = {2};
+    block.center = {0, .51};
+    block.fixed_rotation = true;
+    block.fixtures = {box(.5, .5, mu)};
+    m.bodies = {ground, block};
+    return m;
+}
+} // namespace
+TEST_CASE("Static friction threshold and kinetic deceleration match Coulomb reference",
+          "[unit][rigid][friction]") {
+    auto w = make(friction_world(.5));
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->forces({{{2}, {4, 0}, {}, false, 0}}).has_value());
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(std::abs(w->snapshot().bodies[1].velocity.x) < .01);
+    REQUIRE(std::abs(w->snapshot().bodies[1].center.x) < .01);
+    REQUIRE(w->forces({{{2}, {6, 0}, {}, false, 0}}).has_value());
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[1].velocity.x == Catch::Approx(1).margin(.06));
+    REQUIRE(w->forces({}).has_value());
+    for (int i = 0; i < 6; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[1].velocity.x == Catch::Approx(.5).margin(.08));
+    REQUIRE(w->friction({1}, 0).has_value());
+    REQUIRE(w->friction({2}, 0).has_value());
+    const double v = w->snapshot().bodies[1].velocity.x;
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[1].velocity.x == Catch::Approx(v).margin(.03));
+    REQUIRE(w->friction({2}, -1).error());
+    REQUIRE(w->forces({{{99}, {1, 0}, {}, false, 0}}).error());
+}
+TEST_CASE("Rigid angular force and compound COM use explicit inertia", "[unit][rigid]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    scene::CircleBody b;
+    b.id = {1};
+    b.mass = 2;
+    b.inertia = 4;
+    b.fixtures = {box(.5, .5), box(.25, .25)};
+    b.fixtures[1].vertices.clear();
+    b.fixtures[1].center = {2, 0};
+    b.fixtures[1].radius = .25;
+    m.bodies = {b};
+    auto w = make(m);
+    REQUIRE(w->forces({{{1}, {2, 0}, {0, 1}, false, 0}}).has_value());
+    // Rotation changes the fixed body point's moment arm; wrapped mode holds torque -2 Nm.
+    REQUIRE(w->forces({{{1}, {2, 0}, {}, true, -1}}).has_value());
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    auto s = w->snapshot();
+    REQUIRE(s.bodies[0].velocity.x == Catch::Approx(1).margin(.002));
+    REQUIRE(s.bodies[0].angular_velocity == Catch::Approx(-.5).margin(.002));
+    REQUIRE(s.bodies[0].center.y == Catch::Approx(0).margin(.001));
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().bodies[0].center == b.center);
+    REQUIRE(w->snapshot().bodies[0].angle == 0);
+}
+TEST_CASE("Revolute constraint retains anchor under off-center force", "[unit][rigid]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    scene::CircleBody b;
+    b.id = {1};
+    b.fixtures = {box(.5, .5)};
+    m.bodies = {b};
+    m.hinges.push_back({{1}, {1}, {}, {}, {}, 0, 0, 0, 0, 0, false, false, false});
+    auto w = make(m);
+    REQUIRE(w->forces({{{1}, {5, 0}, {0, 1}, false, 0}}).has_value());
+    for (int i = 0; i < 120; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(std::hypot(w->snapshot().bodies[0].center.x, w->snapshot().bodies[0].center.y) < .005);
+    REQUIRE(std::abs(w->snapshot().bodies[0].angle) > .1);
+}
+TEST_CASE("Winding transfers spool rotation into linear impulse with torque reaction",
+          "[unit][rigid][winding]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    m.fixed_dt = .001;
+    scene::CircleBody a;
+    a.id = {1};
+    a.radius = .1;
+    a.inertia = 1;
+    auto b = a;
+    b.id = {2};
+    b.center = {3, 0};
+    b.angular_velocity = 1;
+    m.bodies = {a, b};
+    m.windings.push_back({{1}, {1}, {2}, {}, {0, 1}, 0, -3 / std::sqrt(10.0), true});
+    auto w = make(m);
+    REQUIRE(w->step().has_value());
+    auto s = w->snapshot();
+    // Independently measured public-API numerical vector (see RFC), with short-step drift bound.
+    REQUIRE(s.bodies[0].velocity.x == Catch::Approx(-.310344827586).margin(.02));
+    REQUIRE(s.bodies[0].velocity.y == Catch::Approx(-.103448275862).margin(.02));
+    REQUIRE(s.bodies[1].angular_velocity == Catch::Approx(.689655172414).margin(.03));
+    REQUIRE(s.bodies[0].velocity.x + s.bodies[1].velocity.x == Catch::Approx(0).margin(.00001));
+    for (int i = 0; i < 2000; ++i)
+        REQUIRE(w->step().has_value());
+    const auto after = w->snapshot();
+    REQUIRE(std::abs(after.bodies[1].angular_velocity) < 1.01);
+    REQUIRE(w->reset().has_value());
+    REQUIRE(w->snapshot().bodies[1].angular_velocity == 1);
+}
+TEST_CASE("Polygon contacts exchange velocity and sensors/filter bypass response",
+          "[unit][rigid]") {
+    for (int mode = 0; mode < 3; ++mode) {
+        scene::Mechanism m;
+        m.gravity = {0, 0};
+        scene::CircleBody a;
+        a.id = {1};
+        a.fixed_rotation = true;
+        a.center = {-2, 0};
+        a.velocity = {2, 0};
+        auto f = box(.5, .5);
+        f.restitution = 1;
+        if (mode == 1)
+            f.sensor = true;
+        if (mode == 2)
+            f.mask = 0;
+        a.fixtures = {f};
+        auto b = a;
+        b.id = {2};
+        b.center = {0, 0};
+        b.velocity = {};
+        b.fixtures[0].sensor = false;
+        b.fixtures[0].mask = ~std::uint64_t{0};
+        m.bodies = {a, b};
+        auto w = make(m);
+        for (int i = 0; i < 90; ++i)
+            REQUIRE(w->step().has_value());
+        auto s = w->snapshot();
+        if (mode == 0) {
+            REQUIRE(s.bodies[0].velocity.x == Catch::Approx(0).margin(.03));
+            REQUIRE(s.bodies[1].velocity.x == Catch::Approx(2).margin(.03));
+        } else {
+            REQUIRE(s.bodies[0].velocity.x == Catch::Approx(2).margin(.001));
+            REQUIRE(s.bodies[1].velocity.x == Catch::Approx(0).margin(.001));
+        }
+    }
+}
+
+TEST_CASE("Inclined triangle contact holds above threshold and slides below it",
+          "[unit][rigid][friction]") {
+    scene::Mechanism m;
+    m.gravity = {0, -10};
+    scene::CircleBody wedge;
+    wedge.id = {1};
+    wedge.static_body = true;
+    scene::RigidFixture plane;
+    plane.vertices = {{-5, -2}, {5, -2}, {5, 3}};
+    plane.friction = .7;
+    wedge.fixtures = {plane};
+    wedge.radius = 6;
+    scene::CircleBody block;
+    block.id = {2};
+    block.fixed_rotation = true;
+    block.angle = std::atan(.5);
+    block.center = {0, .5 + .25 * std::sqrt(1.25)};
+    block.fixtures = {box(.25, .25, .7)};
+    m.bodies = {wedge, block};
+    auto w = make(m);
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(std::abs(w->snapshot().bodies[1].velocity.x) < .01);
+    REQUIRE(w->friction({1}, .1).has_value());
+    REQUIRE(w->friction({2}, .1).has_value());
+    for (int i = 0; i < 60; ++i)
+        REQUIRE(w->step().has_value());
+    // a=g(sin(theta)-mu*cos(theta)); ax=-a*cos(theta)=-3.2 m/s^2.
+    REQUIRE(w->snapshot().bodies[1].velocity.x == Catch::Approx(-3.2).margin(.12));
+    REQUIRE(w->snapshot().bodies[1].velocity.y == Catch::Approx(-1.6).margin(.12));
+}
+
+TEST_CASE("Contact friction mixers preserve independent surface coefficients",
+          "[unit][rigid][friction]") {
+    for (auto mode : {scene::MaterialMixer::minimum, scene::MaterialMixer::geometric_mean,
+                      scene::MaterialMixer::maximum}) {
+        auto m = friction_world(.5);
+        m.bodies[0].fixtures[0].friction = 0;
+        m.friction_mixer = mode;
+        auto w = make(m);
+        for (int i = 0; i < 60; ++i)
+            REQUIRE(w->step().has_value());
+        REQUIRE(w->forces({{{2}, {4, 0}, {}, false, 0}}).has_value());
+        for (int i = 0; i < 60; ++i)
+            REQUIRE(w->step().has_value());
+        if (mode == scene::MaterialMixer::maximum)
+            REQUIRE(std::abs(w->snapshot().bodies[1].velocity.x) < .01);
+        else
+            REQUIRE(w->snapshot().bodies[1].velocity.x == Catch::Approx(4).margin(.02));
+    }
+}
+
+TEST_CASE("Hinge angular limits stop a motor at the declared bound", "[unit][rigid]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    scene::CircleBody b;
+    b.id = {1};
+    b.fixtures = {box(.5, .5)};
+    m.bodies = {b};
+    // Canonical hinge angle is body_b minus body_a; a ground endpoint means -body_a.angle.
+    m.hinges.push_back({{1}, {1}, {}, {}, {}, 0, -.2, .3, 1, 5, true, true, false});
+    auto w = make(m);
+    for (int i = 0; i < 180; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].angle == Catch::Approx(-.3).margin(.02));
+    REQUIRE(std::abs(w->snapshot().bodies[0].angular_velocity) < .02);
+}
+
+TEST_CASE("Circle versus rectangular plane wall reflects an elastic normal impact",
+          "[unit][rigid]") {
+    scene::Mechanism m;
+    m.gravity = {0, 0};
+    scene::CircleBody circle;
+    circle.id = {1};
+    circle.radius = .25;
+    circle.center = {-2, 0};
+    circle.velocity = {2, 0};
+    circle.friction = 0;
+    circle.restitution = 1;
+    scene::CircleBody wall;
+    wall.id = {2};
+    wall.static_body = true;
+    wall.fixtures = {box(.5, 5)};
+    wall.fixtures[0].restitution = 1;
+    m.bodies = {circle, wall};
+    auto w = make(m);
+    for (int i = 0; i < 90; ++i)
+        REQUIRE(w->step().has_value());
+    REQUIRE(w->snapshot().bodies[0].velocity.x == Catch::Approx(-2).margin(.02));
+    REQUIRE(std::abs(w->snapshot().bodies[0].velocity.y) < .001);
+    REQUIRE(w->snapshot().bodies[1].center == wall.center);
+}

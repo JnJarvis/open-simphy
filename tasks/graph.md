@@ -2,9 +2,9 @@
 
 Updated 2026-10-08 from [registry.json](registry.json). Registry is authoritative.
 
-INT-009 is approved and merged. INT-010 is submitted for REVIEW: actual Resonance in Action runs all four oscillators, its driven platform, frequency control and reset;115 local tests, native cradle/friction/driven regressions and all14 platform CI jobs pass. Independent review/merge remain outstanding. INT-007 navigation remains serialized/blocked. INT-011 scopes charged mechanics, bounded electric/magnetic fields and required callbacks/force displays/tracers after merged INT-010. Bundled coverage is3/67 limited-profile executions (the corpus includes non-2D files); see [current file blockers](reports/INT-010-capabilities.json). All required 2D families remain part of the objective; opening or partially running a file is not completion.
+INT-010 is user approved and merged: actual Resonance in Action runs all four oscillators, its driven platform, frequency control and reset;115 local tests, native regressions and all14 platform CI jobs passed. INT-007 navigation remains serialized/blocked. INT-011 is now claimed IN_PROGRESS for charged mechanics, bounded electric/magnetic fields and required callbacks/force displays/tracers. Bundled coverage remains3/67 limited-profile executions (the corpus includes non-2D files); see [current file blockers](reports/INT-010-capabilities.json). All required 2D families remain part of the objective; opening or partially running a file is not completion.
 
-DONE: 29 | REVIEW: 2 | IN_PROGRESS: 0 | READY: 1 | BLOCKED: 4
+DONE: 30 | REVIEW: 1 | IN_PROGRESS: 1 | READY: 1 | BLOCKED: 3
 
 ```mermaid
 flowchart TD
@@ -42,8 +42,8 @@ flowchart TD
   INT_007["INT-007: Continuous circle contacts, viewport navigation and responsive Open<br/>BLOCKED"]
   INT_008["INT-008: General imported rigid fixtures and common 2D constraints<br/>DONE"]
   INT_009["INT-009: Exact polygon pieces and elastic rigid constraints<br/>DONE"]
-  INT_011["INT-011: Charged mechanics and electromagnetic fields<br/>BLOCKED"]
-  INT_010["INT-010: Driven mechanisms and live body properties<br/>REVIEW"]
+  INT_011["INT-011: Charged mechanics and electromagnetic fields<br/>IN_PROGRESS"]
+  INT_010["INT-010: Driven mechanisms and live body properties<br/>DONE"]
   BUILD_001 --> REN_001
   BUILD_001 --> BUILD_002
   BUILD_002 --> TEST_001

@@ -1181,7 +1181,7 @@
       "id": "INT-010",
       "title": "Driven mechanisms and live body properties",
       "stage": 3,
-      "status": "REVIEW",
+      "status": "DONE",
       "priority": 0,
       "owner": "codex-worker",
       "dependencies": [
@@ -1219,16 +1219,16 @@
       "description": "tasks/items/INT-010.md",
       "block_reason": null,
       "completion_report": "tasks/reports/INT-010.md",
-      "reviewer": null,
-      "merged_commit": null
+      "reviewer": "user-reviewer",
+      "merged_commit": "cd665169f414685b775035130f49fae26f06bfb5"
     },
     {
       "id": "INT-011",
       "title": "Charged mechanics and electromagnetic fields",
       "stage": 3,
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "priority": 0,
-      "owner": null,
+      "owner": "codex-worker",
       "dependencies": [
         "INT-010"
       ],
@@ -1261,7 +1261,7 @@
         "research/GRAPHING_DATA.md"
       ],
       "description": "tasks/items/INT-011.md",
-      "block_reason": "Requires merged INT-010 live mechanism interfaces",
+      "block_reason": null,
       "completion_report": null,
       "reviewer": null,
       "merged_commit": null

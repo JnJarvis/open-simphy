@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <cmath>
@@ -84,7 +85,9 @@ TEST_CASE("Script distance anchors use the body's rotated local frame",
 namespace {
 compat::Project rigid_project(std::string shape, std::string controllers = "",
                               std::string script = "", std::string gui = "", double com = 0,
-                              double angle = 0, const std::string &joints = "") {
+                              double angle = 0, const std::string &joints = "",
+                              const std::string &fields = "", const std::string &ground_name = "",
+                              const std::string &extra_bodies = "") {
     std::string b = body;
     const auto mass_center = b.find("<LocalCenter");
     const auto mass_end = b.find("/>", mass_center);
@@ -94,16 +97,16 @@ compat::Project rigid_project(std::string shape, std::string controllers = "",
               "<Rotation>" + std::to_string(angle) + "</Rotation>");
     const auto begin = b.find("<Shape"), end = b.find("</Shape>", begin);
     b.replace(begin, end + 8 - begin, shape);
-    std::string xml =
-        "<Simulation xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-        "version='4.1'><World><Gravity x='0' y='-10'/><Bodies>" +
-        b +
-        "<Body "
-        "Id=\"ground\"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body></Bodies><Joints>" +
-        joints + "</Joints><BodyControllers>" + controllers +
-        "</BodyControllers><ScriptManager><Script><![CDATA[" + script +
-        "]]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[" + gui +
-        "]]></GuiXML></GuiManager></World></Simulation>";
+    std::string xml = "<Simulation xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+                      "version='4.1'><World><Gravity x='0' y='-10'/><Bodies>" +
+                      b +
+                      "<Body "
+                      "Id=\"ground\" Name=\"" +
+                      ground_name + "\"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body>" +
+                      extra_bodies + "</Bodies><Joints>" + joints + "</Joints><BodyControllers>" +
+                      controllers + "</BodyControllers><ScriptManager><Script><![CDATA[" + script +
+                      "]]></Script></ScriptManager><GuiManager><GuiXML><![CDATA[" + gui +
+                      "]]></GuiXML></GuiManager></World>" + fields + "</Simulation>";
     mz_zip_archive zip{};
     REQUIRE(mz_zip_writer_init_heap(&zip, 0, 0));
     REQUIRE(
@@ -122,6 +125,188 @@ compat::Project rigid_project(std::string shape, std::string controllers = "",
 const std::string rectangle =
     R"(<Shape xsi:type="Rectangle"><LocalCenter x="0" y="0"/><Width>2</Width><Height>1</Height><LocalRotation>0</LocalRotation></Shape>)";
 } // namespace
+TEST_CASE("Source line axis and anchors preserve reference frames without disabled infinity limits",
+          "[compatibility][INT-010]") {
+    const std::string line =
+        R"(<Joint xsi:type="LineJoint"><BodyId1>a</BodyId1><BodyId2>a</BodyId2><LocalAnchor x="3" y="4"/><LineAngle>1.5707963267948966</LineAngle><LimitEnabled>false</LimitEnabled><LowerLimit>-Infinity</LowerLimit><UpperLimit>Infinity</UpperLimit></Joint>)";
+    // Replace B with a separately defined body by making A the fixtureless ground.
+    auto grounded = line;
+    grounded.replace(grounded.find("<BodyId1>a"), 10, "<BodyId1>ground");
+    auto result =
+        compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 0, 0, grounded));
+    REQUIRE(result.value());
+    auto s = result.value()->definition().slides.at(0);
+    REQUIRE_FALSE(s.body_a.valid());
+    REQUIRE(s.body_b == core::EntityId{1});
+    REQUIRE(s.local_a == math::Vec2{3, 4});
+    REQUIRE(std::abs(s.axis.x) < 1e-12);
+    REQUIRE(s.axis.y == 1);
+    REQUIRE_FALSE(s.limit);
+    auto enabled = grounded;
+    enabled.replace(enabled.find("<LimitEnabled>false"), 19, "<LimitEnabled>true");
+    REQUIRE(compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 0, 0, enabled))
+                .error());
+    REQUIRE(
+        compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 0, 0, line)).error());
+}
+TEST_CASE("Required top level force fields cannot be silently omitted",
+          "[compatibility][INT-010]") {
+    auto r = compat::MechanicalSource::create(rigid_project(
+        rectangle, "", "", "", 0, 0, "",
+        R"(<Fields><Field xsi:type="GravitationalField" enabled="true"><xExprForce>10</xExprForce><yExprForce>0</yExprForce></Field></Fields>)"));
+    REQUIRE(r.error());
+    REQUIRE(r.error()->message.find("fields") != std::string::npos);
+}
+TEST_CASE("Hidden slider bindings survive unusable display bounds and inherit visibility",
+          "[compatibility][INT-010]") {
+    auto p = rigid_project(
+        rectangle,
+        R"(<BodyController type="ForceController" enabled="true" bodyid="a"><xExpr>a+w</xExpr><yExpr>0</yExpr><ExtForcePoint x="0" y="0"/><ForceMode>0</ForceMode></BodyController>)",
+        "",
+        R"(<desktop><slider name="w" value="5.8"/><panel visible="false"><slider name="a" value="0" rectbounds="1060,145,-132,33"/></panel><slider name="disabled" enabled="false"/></desktop>)");
+    auto r = compat::MechanicalSource::create(p);
+    REQUIRE(r.value());
+    auto s = *r.value();
+    REQUIRE(s.widgets().size() == 3);
+    REQUIRE(s.widgets()[0].maximum == 10);
+    REQUIRE(s.widgets()[0].value == 5.8);
+    REQUIRE_FALSE(s.widgets()[1].visible);
+    REQUIRE(s.widgets()[1].size.x == -132);
+    REQUIRE_FALSE(s.widgets()[2].enabled);
+    REQUIRE(s.widgets()[2].value == 5);
+    scene::MechanismSnapshot state;
+    state.bodies.push_back({{1}, {}, {}, 0, 0});
+    auto c = s.controls(state);
+    REQUIRE(c.value());
+    REQUIRE(c.value()->forces.at(0).force.x == 5.8);
+    REQUIRE(s.set_slider(1, 2).has_value());
+    auto changed = s.controls(state);
+    REQUIRE(changed.value());
+    REQUIRE(changed.value()->forces.at(0).force.x == 7.8);
+    REQUIRE(s.set_slider(2, 3).error());
+}
+TEST_CASE("Source clock requests survive startup preflight and are consumed once",
+          "[compatibility][INT-010]") {
+    auto p = rigid_project(
+        rectangle,
+        R"(<BodyController type="ForceController" enabled="true" bodyid="a"><xExpr>World.getSimulationTime()</xExpr><yExpr>T</yExpr><ExtForcePoint x="0" y="0"/><ForceMode>0</ForceMode></BodyController>)",
+        "World.setSimulationTime(7);function reset(){World.setSimulationTime(0);}");
+    auto r = compat::MechanicalSource::create(p);
+    REQUIRE(r.value());
+    auto s = *r.value();
+    scene::MechanismSnapshot state;
+    state.bodies.push_back({{1}, {}, {}, 0, 0});
+    auto first = s.controls(state);
+    REQUIRE(first.value());
+    REQUIRE(first.value()->time == 7);
+    REQUIRE(first.value()->forces.at(0).force == math::Vec2{7, 7});
+    state.time = 7.5;
+    auto next = s.controls(state);
+    REQUIRE(next.value());
+    REQUIRE_FALSE(next.value()->time);
+    REQUIRE(next.value()->forces.at(0).force == math::Vec2{7.5, 7.5});
+    REQUIRE(s.apply_action("reset()").has_value());
+    auto reset = s.controls(state);
+    REQUIRE(reset.value());
+    REQUIRE(reset.value()->time == 0);
+    REQUIRE(reset.value()->forces.at(0).force == math::Vec2{});
+    REQUIRE(s.apply_action("World.setSimulationTime(-1)").error());
+    REQUIRE(compat::MechanicalSource::create(project("World.setSimulationTime(Infinity)")).error());
+}
+TEST_CASE("Prismatic source anchors axis and actual limit motor signs survive ground swapping",
+          "[compatibility][INT-010]") {
+    const std::string joint =
+        R"(<Joint xsi:type="PrismaticJoint"><BodyId1>a</BodyId1><BodyId2>ground</BodyId2><Anchor1 x="0" y="2"/><Anchor2 x="1" y="0"/><Axis x="0" y="2"/><ReferenceAngle>1.5707963267948966</ReferenceAngle><LimitEnabled>true</LimitEnabled><LowerLimit>0</LowerLimit><UpperLimit>3</UpperLimit><MotorEnabled>true</MotorEnabled><MotorSpeed>2</MotorSpeed><MaximumMotorForce>10</MaximumMotorForce><CollisionAllowed>true</CollisionAllowed></Joint>)";
+    auto r = compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 1, 90, joint));
+    REQUIRE(r.value());
+    const auto s = r.value()->definition().slides.at(0);
+    REQUIRE_FALSE(s.body_a.valid());
+    REQUIRE(s.body_b == core::EntityId{1});
+    REQUIRE(s.local_a == math::Vec2{1, 0});
+    REQUIRE(std::abs(s.local_b.x - 1) < 1e-12);
+    REQUIRE(std::abs(s.local_b.y) < 1e-12);
+    REQUIRE(s.axis == math::Vec2{0, 1});
+    REQUIRE(s.reference == 1.5707963267948966);
+    REQUIRE(s.lower == 0);
+    REQUIRE(s.upper == 3);
+    REQUIRE(s.limit);
+    REQUIRE(s.motor);
+    REQUIRE(s.speed == 2);
+    REQUIRE(s.max_force == 10);
+    REQUIRE(s.lock_rotation);
+    REQUIRE(s.collide_connected);
+    const std::string reversed =
+        R"(<Joint xsi:type="PrismaticJoint"><BodyId1>ground</BodyId1><BodyId2>a</BodyId2><Anchor1 x="1" y="0"/><Anchor2 x="0" y="2"/><Axis x="0" y="1"/><ReferenceAngle>-1.5707963267948966</ReferenceAngle><LimitEnabled>true</LimitEnabled><LowerLimit>-3</LowerLimit><UpperLimit>0</UpperLimit><MotorEnabled>true</MotorEnabled><MotorSpeed>-2</MotorSpeed><MaximumMotorForce>10</MaximumMotorForce><CollisionAllowed>true</CollisionAllowed></Joint>)";
+    auto reversed_result =
+        compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 1, 90, reversed));
+    REQUIRE(reversed_result.value());
+    const auto other = reversed_result.value()->definition().slides.at(0);
+    REQUIRE(other.local_a == s.local_a);
+    REQUIRE(other.local_b == s.local_b);
+    REQUIRE(other.axis == s.axis);
+    REQUIRE(other.reference == s.reference);
+    REQUIRE(other.lower == s.lower);
+    REQUIRE(other.upper == s.upper);
+    REQUIRE(other.speed == s.speed);
+}
+TEST_CASE("Default line ground alias is narrow and never invents missing dynamic bodies",
+          "[compatibility][INT-010]") {
+    const std::string line =
+        R"(<Joint xsi:type="LineJoint"><BodyId1>old-ground</BodyId1><BodyId2>a</BodyId2><LocalAnchor x="2" y="3"/><LineAngle>0</LineAngle></Joint>)";
+    REQUIRE(
+        compat::MechanicalSource::create(rigid_project(rectangle, "", "", "", 0, 0, line)).error());
+    auto valid = compat::MechanicalSource::create(
+        rigid_project(rectangle, "", "", "", 0, 0, line, "", "FixedAnchorBody"));
+    REQUIRE(valid.value());
+    REQUIRE_FALSE(valid.value()->definition().slides.at(0).body_a.valid());
+    const std::string second =
+        R"(<Body Id="other" Name="FixedAnchorBody"><Mass><Type>INFINITE</Type></Mass><Fixtures/></Body>)";
+    REQUIRE(compat::MechanicalSource::create(
+                rigid_project(rectangle, "", "", "", 0, 0, line, "", "FixedAnchorBody", second))
+                .error());
+    auto missing_b = line;
+    missing_b.replace(missing_b.find("<BodyId2>a"), 10, "<BodyId2>missing");
+    REQUIRE(compat::MechanicalSource::create(
+                rigid_project(rectangle, "", "", "", 0, 0, missing_b, "", "FixedAnchorBody"))
+                .error());
+}
+TEST_CASE("Live property commands use current COM and velocity, coalesce, and gate angular units",
+          "[compatibility][INT-010]") {
+    const auto controller = [](std::initializer_list<std::pair<unsigned, std::string>> requested) {
+        std::array<std::string, 15> values;
+        values.fill("null");
+        for (const auto &v : requested)
+            values[v.first] = v.second;
+        std::string list;
+        for (const auto &v : values)
+            list += v + ';';
+        return "<BodyController type='ValuePropertiesController' bodyid='a' enabled='" + list +
+               "'/>";
+    };
+    auto p = rigid_project(
+        rectangle,
+        controller({{10, "2+sin(T)"}, {11, "3"}, {13, "a"}, {14, "a"}}) + controller({{9, "T"}}),
+        "", R"(<desktop><slider name="a" value="0" maximum="1" visible="false"/></desktop>)");
+    auto r = compat::MechanicalSource::create(p);
+    REQUIRE(r.value());
+    auto source = *r.value();
+    scene::MechanismSnapshot state;
+    state.time = 5;
+    state.bodies.push_back({{1}, {10, 20}, {1, 2}, .3, .4});
+    auto c = source.controls(state);
+    REQUIRE(c.value());
+    REQUIRE(c.value()->updates.size() == 1);
+    const auto &u = c.value()->updates[0];
+    REQUIRE(u.center == math::Vec2{5, 2 + std::sin(5.0)});
+    REQUIRE(u.velocity == math::Vec2{3, 2});
+    REQUIRE(u.angle == 0);
+    REQUIRE(u.angular_velocity == 0);
+    REQUIRE(source.set_slider(0, .5).has_value());
+    REQUIRE(source.controls(state).error());
+    REQUIRE(
+        compat::MechanicalSource::create(rigid_project(rectangle, controller({{10, "Infinity"}})))
+            .error());
+}
 TEST_CASE("General rectangle, nested sliders, force/friction controllers and reset callback",
           "[compatibility][rigid]") {
     auto p = rigid_project(

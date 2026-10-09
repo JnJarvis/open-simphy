@@ -4,6 +4,7 @@
 #include <map>
 #include <numbers>
 #include <opensim/physics/mechanism.hpp>
+#include <set>
 namespace opensim::physics {
 namespace {
 b2Vec2 native(math::Vec2 v) { return {static_cast<float>(v.x), static_cast<float>(v.y)}; }
@@ -32,6 +33,7 @@ struct Mechanism::Impl {
     b2BodyId ground{};
     std::map<core::EntityId, b2BodyId> bodies;
     std::uint64_t steps = 0;
+    double time_origin = 0;
     bool poisoned = false;
     scene::MechanismSnapshot published;
     std::vector<scene::AppliedForce> applied;
@@ -226,6 +228,41 @@ struct Mechanism::Impl {
             if (j.spring || j.stiffness > 0 || j.damping_coefficient >= 0)
                 elastic.push_back({j, joint});
         }
+        for (const auto &j : m.slides) {
+            const auto a = j.body_a.valid() ? bodies.at(j.body_a) : ground;
+            const auto b = bodies.at(j.body_b);
+            if (j.lock_rotation) {
+                auto d = b2DefaultPrismaticJointDef();
+                d.bodyIdA = a;
+                d.bodyIdB = b;
+                d.localAnchorA = native(j.local_a);
+                d.localAnchorB = native(j.local_b);
+                d.localAxisA = native(j.axis);
+                d.referenceAngle = float(j.reference);
+                d.enableLimit = j.limit;
+                d.lowerTranslation = float(j.lower);
+                d.upperTranslation = float(j.upper);
+                d.enableMotor = j.motor;
+                d.motorSpeed = float(j.speed);
+                d.maxMotorForce = float(j.max_force);
+                d.collideConnected = j.collide_connected;
+                b2CreatePrismaticJoint(world, &d);
+            } else {
+                auto d = b2DefaultWheelJointDef();
+                d.bodyIdA = a;
+                d.bodyIdB = b;
+                d.localAnchorA = native(j.local_a);
+                d.localAnchorB = native(j.local_b);
+                d.localAxisA = native(j.axis);
+                d.enableSpring = false;
+                d.enableMotor = false;
+                d.enableLimit = j.limit;
+                d.lowerTranslation = float(j.lower);
+                d.upperTranslation = float(j.upper);
+                d.collideConnected = j.collide_connected;
+                b2CreateWheelJoint(world, &d);
+            }
+        }
         for (const auto &j : m.welds) {
             auto d = b2DefaultWeldJointDef();
             d.bodyIdA = bodies.at(j.body_a);
@@ -324,7 +361,7 @@ core::Result<void> Mechanism::step() {
     }
     ++impl_->steps;
     scene::MechanismSnapshot next;
-    next.time = double(impl_->steps) * impl_->initial.fixed_dt;
+    next.time = impl_->time_origin + double(impl_->steps) * impl_->initial.fixed_dt;
     for (const auto &b : impl_->initial.bodies) {
         const auto id = impl_->bodies.at(b.id);
         next.bodies.push_back(
@@ -389,5 +426,105 @@ core::Result<void> Mechanism::relocate(core::EntityId id, math::Vec2 p) {
             return core::Result<void>::success();
         }
     return bad("Drag body not found");
+}
+core::Result<void> Mechanism::set_time(double time) {
+    if (impl_->poisoned || !std::isfinite(time) || time < 0 || time > 1e9)
+        return bad("Invalid simulation time");
+    impl_->steps = 0;
+    impl_->time_origin = time;
+    impl_->published.time = time;
+    return core::Result<void>::success();
+}
+core::Result<void> Mechanism::update(const std::vector<scene::BodyUpdate> &updates) {
+    if (impl_->poisoned || updates.size() > 256)
+        return bad("Invalid body update budget/runtime");
+    if (updates.empty())
+        return core::Result<void>::success();
+    // Validate a complete prospective definition before any backend operation.
+    auto candidate = impl_->initial;
+    std::set<core::EntityId> seen;
+    for (const auto &u : updates) {
+        auto found = std::find_if(candidate.bodies.begin(), candidate.bodies.end(),
+                                  [&](const auto &b) { return b.id == u.body; });
+        if (found == candidate.bodies.end() || !seen.insert(u.body).second)
+            return bad("Missing or duplicate updated body");
+        auto &b = *found;
+        if (u.center)
+            b.center = *u.center;
+        if (u.velocity)
+            b.velocity = *u.velocity;
+        if (u.angle)
+            b.angle = *u.angle;
+        if (u.angular_velocity)
+            b.angular_velocity = *u.angular_velocity;
+        if (u.mass)
+            b.mass = *u.mass;
+        if (u.inertia)
+            b.inertia = *u.inertia;
+        if (u.gravity_scale)
+            b.gravity_scale = *u.gravity_scale;
+        if (u.damping)
+            b.damping = *u.damping;
+        if (u.angular_damping)
+            b.angular_damping = *u.angular_damping;
+        if (u.friction)
+            b.friction = *u.friction;
+        if (u.restitution)
+            b.restitution = *u.restitution;
+        if (b.fixed_rotation && u.angular_velocity && *u.angular_velocity != 0)
+            return bad("Angular velocity conflicts with fixed rotation");
+        for (auto &f : b.fixtures) {
+            if (u.friction)
+                f.friction = *u.friction;
+            if (u.restitution)
+                f.restitution = *u.restitution;
+        }
+    }
+    auto valid = scene::validate(candidate);
+    if (valid.error())
+        return valid;
+    for (const auto &u : updates) {
+        const auto id = impl_->bodies.at(u.body);
+        if (u.center || u.angle)
+            b2Body_SetTransform(id, u.center ? native(*u.center) : b2Body_GetPosition(id),
+                                u.angle ? b2MakeRot(float(*u.angle)) : b2Body_GetRotation(id));
+        if (u.velocity)
+            b2Body_SetLinearVelocity(id, native(*u.velocity));
+        if (u.angular_velocity)
+            b2Body_SetAngularVelocity(id, float(*u.angular_velocity));
+        if (u.mass || u.inertia) {
+            auto data = b2Body_GetMassData(id);
+            if (u.mass)
+                data.mass = float(*u.mass);
+            if (u.inertia && !b2Body_IsFixedRotation(id))
+                data.rotationalInertia = float(*u.inertia);
+            b2Body_SetMassData(id, data);
+        }
+        if (u.gravity_scale)
+            b2Body_SetGravityScale(id, float(*u.gravity_scale));
+        if (u.damping)
+            b2Body_SetLinearDamping(id, float(*u.damping));
+        if (u.angular_damping)
+            b2Body_SetAngularDamping(id, float(*u.angular_damping));
+        if (u.friction || u.restitution) {
+            const int count = b2Body_GetShapeCount(id);
+            std::vector<b2ShapeId> shapes(static_cast<std::size_t>(count));
+            b2Body_GetShapes(id, shapes.data(), count);
+            for (auto shape : shapes) {
+                if (u.friction)
+                    b2Shape_SetFriction(shape, float(*u.friction));
+                if (u.restitution)
+                    b2Shape_SetRestitution(shape, float(*u.restitution));
+            }
+        }
+        for (auto &sample : impl_->published.bodies)
+            if (sample.id == u.body) {
+                sample.center = value(b2Body_GetPosition(id));
+                sample.velocity = value(b2Body_GetLinearVelocity(id));
+                sample.angle = b2Rot_GetAngle(b2Body_GetRotation(id));
+                sample.angular_velocity = b2Body_GetAngularVelocity(id);
+            }
+    }
+    return core::Result<void>::success();
 }
 } // namespace opensim::physics

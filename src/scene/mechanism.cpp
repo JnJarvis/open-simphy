@@ -16,7 +16,8 @@ core::Result<void> bad(const char *message, core::EntityId id = {}) {
 } // namespace
 core::Result<void> validate(const Mechanism &m) {
     if (m.bodies.size() > 256 ||
-        m.links.size() + m.hinges.size() + m.windings.size() + m.welds.size() > 1024 ||
+        m.links.size() + m.hinges.size() + m.windings.size() + m.welds.size() + m.slides.size() >
+            1024 ||
         !point(m.gravity) || !range(m.fixed_dt, .001, 1.0 / 30))
         return bad("Mechanism bounds or timestep invalid");
     const auto valid_mixer = [](MaterialMixer v) {
@@ -89,6 +90,25 @@ core::Result<void> validate(const Mechanism &m) {
         return id.valid() && joints.insert(id).second && ids.contains(a) &&
                (!b.valid() || ids.contains(b)) && a != b && (dyn(a) || dyn(b));
     };
+    for (const auto &j : m.slides) {
+        // The axis is owned by A; ground is therefore permitted at A, unlike
+        // distance/hinge ports which conventionally place ground at B.
+        const auto dynamic = [&](core::EntityId id) {
+            for (const auto &b : m.bodies)
+                if (b.id == id)
+                    return !b.static_body;
+            return false;
+        };
+        if (!j.id.valid() || !joints.insert(j.id).second ||
+            (j.body_a.valid() && !ids.contains(j.body_a)) || !ids.contains(j.body_b) ||
+            j.body_a == j.body_b || (!dynamic(j.body_a) && !dynamic(j.body_b)) ||
+            !point(j.local_a) || !point(j.local_b) || !math::finite(j.axis) ||
+            std::abs(std::hypot(j.axis.x, j.axis.y) - 1) > 1e-9 || !range(j.reference, -1e6, 1e6) ||
+            !range(j.lower, -20000, 20000) || !range(j.upper, j.lower, 20000) ||
+            !range(j.speed, -10000, 10000) || !range(j.max_force, 0, 1e9) ||
+            (j.motor && !j.lock_rotation))
+            return bad("Invalid slide joint", j.id);
+    }
     for (const auto &j : m.welds)
         if (!endpoints(j.body_a, j.body_b, j.id) || !point(j.local_a) || !point(j.local_b) ||
             !range(j.reference, -1e6, 1e6) || !range(j.frequency, 0, 1000) ||

@@ -111,6 +111,7 @@ void SourceView::replace_world() {
     auto w = physics::Mechanism::create(source_.definition());
     if (w.error())
         throw std::runtime_error(w.error()->message);
+    apply_controls(**w.value());
     world_ = *w.value();
     running_ = false;
     remainder_ = 0;
@@ -251,7 +252,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                             vh = float(l.canvas.height) / l.scale;
                 for (std::size_t i = 0; i < source_.widgets().size(); ++i) {
                     const auto &w = source_.widgets()[i];
-                    if (!w.slider)
+                    if (!w.slider || !w.visible || !w.enabled)
                         continue;
                     const double wx = left + std::clamp(w.position.x, 8.0,
                                                         std::max(8.0, double(vw) - w.size.x - 8));
@@ -266,7 +267,7 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                     }
                 }
                 for (const auto &w : source_.widgets())
-                    if (w.button) {
+                    if (w.button && w.visible && w.enabled) {
                         const float wx =
                                         left + std::clamp(float(w.position.x), 8.0f,
                                                           std::max(8.0f, vw - float(w.size.x) - 8)),
@@ -311,13 +312,19 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
     }
     return true;
 }
-void SourceView::step() {
-    const auto controls = source_.controls(world_->snapshot());
+void SourceView::apply_controls(physics::Mechanism &world) {
+    const auto controls = source_.controls(world.snapshot());
     if (controls.error())
         throw std::runtime_error(controls.error()->message);
-    checked(world_->forces(controls.value()->forces));
+    if (controls.value()->time)
+        checked(world.set_time(*controls.value()->time));
+    checked(world.update(controls.value()->updates));
+    checked(world.forces(controls.value()->forces));
     for (const auto &[id, mu] : controls.value()->friction)
-        checked(world_->friction(id, mu));
+        checked(world.friction(id, mu));
+}
+void SourceView::step() {
+    apply_controls(*world_);
     checked(world_->step());
 }
 void SourceView::tick(double dt) {
@@ -547,6 +554,8 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     }
     float textY = top + 136;
     for (const auto &w : source_.widgets()) {
+        if (!w.visible)
+            continue;
         if (w.slider) {
             const float x = left + std::clamp(float(w.position.x), 8.0f,
                                               std::max(8.0f, vw - float(w.size.x) - 8));
@@ -607,13 +616,14 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
     panel(r, 0, 112, l.left, l.height - 144);
     color(r, {230 / 255.0, 230 / 255.0, 230 / 255.0, 1});
     label(14, 128, "IMPORTED BODIES");
-    label(14, 150,
-          std::to_string(state.bodies.size()) + " bodies / " +
-              std::to_string(
-                  source_.definition().links.size() + source_.definition().hinges.size() +
-                  source_.definition().windings.size() + source_.definition().welds.size()) +
-              " joints",
-          l.left - 24);
+    label(
+        14, 150,
+        std::to_string(state.bodies.size()) + " bodies / " +
+            std::to_string(source_.definition().links.size() + source_.definition().hinges.size() +
+                           source_.definition().windings.size() +
+                           source_.definition().welds.size() + source_.definition().slides.size()) +
+            " joints",
+        l.left - 24);
     float row = 176 - list_scroll_;
     for (const auto &b : source_.definition().bodies) {
         if (row < 176) {

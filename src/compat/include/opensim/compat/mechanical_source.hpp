@@ -12,10 +12,13 @@ struct SourceWidget {
     std::string text, action;
     math::Vec2 position{}, size{150, 32};
     bool button = false, slider = false;
+    bool visible = true, enabled = true;
     std::string name;
     double minimum = 0, maximum = 1, value = 0;
 };
 struct SourceControls {
+    std::optional<double> time;
+    std::vector<scene::BodyUpdate> updates;
     std::vector<scene::AppliedForce> forces;
     std::map<core::EntityId, double> friction;
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <opensim/core/values.hpp>
 #include <opensim/math/math.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 namespace opensim::scene {
@@ -56,6 +57,18 @@ struct AppliedForce {
     bool wrapped = false;
     double torque_arm = 0;
 };
+struct SlideLink {
+    core::EntityId id, body_a, body_b;
+    math::Vec2 local_a{}, local_b{}, axis{1, 0};
+    double reference = 0, lower = 0, upper = 0, speed = 0, max_force = 0;
+    bool lock_rotation = false, limit = false, motor = false, collide_connected = false;
+};
+struct BodyUpdate {
+    core::EntityId body;
+    std::optional<math::Vec2> center, velocity;
+    std::optional<double> angle, angular_velocity, mass, inertia, gravity_scale;
+    std::optional<double> damping, angular_damping, friction, restitution;
+};
 enum class MaterialMixer { geometric_mean, minimum, maximum };
 struct Mechanism {
     math::Vec2 gravity{0, -9.8};
@@ -65,6 +78,7 @@ struct Mechanism {
     std::vector<HingeLink> hinges;
     std::vector<WindingLink> windings;
     std::vector<WeldLink> welds;
+    std::vector<SlideLink> slides;
     MaterialMixer friction_mixer = MaterialMixer::geometric_mean;
     MaterialMixer restitution_mixer = MaterialMixer::maximum;
 };

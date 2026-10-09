@@ -22,6 +22,7 @@ class SourceView {
     std::optional<core::EntityId> selected_, dragging_;
     std::optional<std::size_t> slider_;
     void step();
+    void apply_controls(physics::Mechanism &);
     bool resume_drag_ = false;
     std::string status_ =
         "Experimental simulation: collision sounds and some scripted events are not supported yet.";

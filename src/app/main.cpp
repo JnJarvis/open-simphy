@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -294,7 +295,8 @@ void verify_imported_cradle(const scene::Mechanism &definition) {
 int main(int argc, char **argv) {
     std::string open_path, smoke_source;
     bool benchmark = false, benchmark_legacy = false;
-    bool smoke_mechanics = false, smoke_rigid = false, smoke_elastic = false;
+    bool smoke_mechanics = false, smoke_rigid = false, smoke_elastic = false, smoke_clock = false,
+         smoke_driven = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
@@ -317,6 +319,9 @@ int main(int argc, char **argv) {
                         auto c = source.controls(world->snapshot());
                         if (c.error())
                             throw std::runtime_error(c.error()->message);
+                        if (c.value()->time)
+                            checked(world->set_time(*c.value()->time));
+                        checked(world->update(c.value()->updates));
                         checked(world->forces(c.value()->forces));
                         for (const auto &[id, mu] : c.value()->friction)
                             checked(world->friction(id, mu));
@@ -339,6 +344,7 @@ int main(int argc, char **argv) {
                     std::cout << fixtures << " hinges=" << source.definition().hinges.size()
                               << " windings=" << source.definition().windings.size()
                               << " welds=" << source.definition().welds.size()
+                              << " slides=" << source.definition().slides.size()
                               << " time=" << final.time << " travel=" << travel << '\n';
                     return true;
                 } catch (const std::exception &e) {
@@ -388,10 +394,14 @@ int main(int argc, char **argv) {
             return count && !failed ? 0 : 1;
         } else if (arg == "--open" && i + 1 < argc)
             open_path = argv[++i];
-        else if ((arg == "--smoke-rigid" || arg == "--smoke-elastic") && i + 1 < argc) {
+        else if ((arg == "--smoke-rigid" || arg == "--smoke-elastic" || arg == "--smoke-clock" ||
+                  arg == "--smoke-driven") &&
+                 i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_rigid = true;
             smoke_elastic = arg == "--smoke-elastic";
+            smoke_clock = arg == "--smoke-clock";
+            smoke_driven = arg == "--smoke-driven";
         } else if (arg == "--smoke-mechanism" && i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_mechanics = true;
@@ -453,6 +463,12 @@ int main(int argc, char **argv) {
                     });
                 }));
             if (smoke_rigid) {
+                if (smoke_clock) {
+                    auto *clock_view = ui.mechanical();
+                    expect(clock_view && clock_view->snapshot().time == 7,
+                           "Source startup clock was lost or ignored");
+                    std::cout << "PASS: source startup clock7 applied to actual runtime\n";
+                }
                 auto *view = ui.mechanical();
                 expect(view != nullptr, "Required rigid source profile unavailable");
                 if (smoke_elastic) {
@@ -526,7 +542,7 @@ int main(int argc, char **argv) {
                 app::require_sdl(SDL_GetWindowSize(host.window(), &control_width, &control_height),
                                  "Rigid control coordinates");
                 for (const auto &widget : view->widgets())
-                    if (widget.slider) {
+                    if (widget.slider && widget.visible && widget.enabled) {
                         const double fraction = widget.maximum > 1 ? .95 : .1;
                         const double cw =
                             double(control_layout.canvas.width) / control_layout.scale;
@@ -557,10 +573,44 @@ int main(int argc, char **argv) {
                                "Initial slider value not applied");
                     }
                 const auto rigid_initial = view->snapshot();
+                auto first_response = rigid_initial;
+                std::map<core::EntityId, double> excursion;
+                if (smoke_driven) {
+                    expect(view->definition().slides.size() == 4 &&
+                               view->definition().links.size() == 4,
+                           "Driven smoke requires four constrained spring oscillators");
+                    for (const auto &body : view->definition().bodies)
+                        if (!body.static_body)
+                            excursion.emplace(body.id, 0);
+                    expect(excursion.size() == 4, "Driven smoke requires four dynamic oscillators");
+                }
                 key(SDLK_SPACE, session, ui, host);
-                for (int i = 0; i < 180; ++i)
+                for (int i = 0; i < 180; ++i) {
                     ui.tick(view->definition().fixed_dt);
-                expect(view->snapshot().time > 2.9, "Rigid playback stopped");
+                    if (smoke_driven) {
+                        const auto state = view->snapshot();
+                        if (i == 59)
+                            first_response = state;
+                        for (std::size_t index = 0; index < state.bodies.size(); ++index) {
+                            const auto &body = state.bodies[index];
+                            if (!excursion.contains(body.id))
+                                continue;
+                            const auto &start_sample = rigid_initial.bodies[index];
+                            expect(std::abs(body.center.x - start_sample.center.x) < .006,
+                                   "Driven oscillator escaped its line");
+                            excursion.at(body.id) =
+                                std::max(excursion.at(body.id),
+                                         std::abs(body.center.y - start_sample.center.y));
+                        }
+                    }
+                }
+                for (const auto &[id, distance] : excursion) {
+                    static_cast<void>(id);
+                    expect(distance > .01, "A driven oscillator did not move");
+                }
+                expect(std::abs(view->snapshot().time -
+                                (rigid_initial.time + 180 * view->definition().fixed_dt)) < 1e-9,
+                       "Rigid playback did not advance all requested steps");
                 double movement = 0;
                 auto final = view->snapshot();
                 for (std::size_t i = 0; i < rigid_initial.bodies.size(); ++i)
@@ -582,7 +632,7 @@ int main(int argc, char **argv) {
                 app::require_sdl(SDL_GetWindowSize(host.window(), &ww, &wh), "Rigid pointer size");
                 unsigned sliders = 0, buttons = 0;
                 for (const auto &w : view->widgets())
-                    if (w.slider || w.button) {
+                    if ((w.slider || w.button) && w.visible && w.enabled) {
                         const double vw = double(l.canvas.width) / l.scale,
                                      vh = double(l.canvas.height) / l.scale;
                         const double x =
@@ -611,10 +661,26 @@ int main(int argc, char **argv) {
                             expect(view->snapshot().time == 0, "Script reset did not reconstruct");
                         }
                     }
+                const double resumed_time = view->snapshot().time;
                 key(SDLK_SPACE, session, ui, host);
                 for (int i = 0; i < 60; ++i)
                     ui.tick(view->definition().fixed_dt);
-                expect(view->snapshot().time > .99, "Changed-control playback stopped");
+                expect(std::abs(view->snapshot().time -
+                                (resumed_time + 60 * view->definition().fixed_dt)) < 1e-9,
+                       "Changed-control playback did not advance all requested steps");
+                if (smoke_driven) {
+                    const auto changed = view->snapshot();
+                    for (std::size_t index = 0; index < changed.bodies.size(); ++index) {
+                        const auto &body = changed.bodies[index];
+                        if (!excursion.contains(body.id))
+                            continue;
+                        expect(std::abs(body.center.y - first_response.bodies[index].center.y) >
+                                   .0001,
+                               "Frequency control did not change an oscillator's trajectory");
+                    }
+                    std::cout << "PASS: all four oscillators move, retain their lines and respond "
+                                 "to frequency changes\n";
+                }
                 std::cout << "PASS: rigid playback, movement=" << movement
                           << ", sliders=" << sliders << ", callbacks=" << buttons
                           << ", reset and changed-control playback\n";

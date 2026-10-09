@@ -82,6 +82,50 @@ TEST_CASE("Script distance anchors use the body's rotated local frame",
     REQUIRE(j.local_b == math::Vec2{1, 3});
 }
 
+TEST_CASE("Charge slider callbacks stage SI commands and force checkboxes preserve current runtime",
+          "[compatibility][INT-011]") {
+    auto result = compat::MechanicalSource::create(
+        project("var b=World.getBody('ball'); b.setCharge(400);"
+                "function q_onChange(widget,value){if(widget.getValue()!==value)throw "
+                "Error('value');b.setCharge(value);}"
+                "function show_onChange(widget,value){if(widget.isSelected()!==value)throw "
+                "Error('selected');b.setFbdDrawn(value);}",
+                "<desktop><slider name='q' minimum='-15' maximum='15' value='-13'/><checkbox "
+                "name='show'/></desktop>"));
+    REQUIRE(result.has_value());
+    auto source = *result.value();
+    REQUIRE(std::abs(source.definition().bodies[0].charge - .0004) < 1e-15);
+    scene::MechanismSnapshot state;
+    state.time = 5;
+    state.bodies.push_back({{1}, {3, 4}, {1, 2}, 0, 0});
+    REQUIRE(source.set_slider(0, -13).has_value());
+    auto controls = source.controls(state);
+    REQUIRE(controls.has_value());
+    REQUIRE(controls.value()->updates.size() == 1);
+    REQUIRE(std::abs(*controls.value()->updates[0].charge + 13e-6) < 1e-15);
+    REQUIRE_FALSE(controls.value()->updates[0].center);
+    REQUIRE(source.controls(state).value()->updates.empty());
+    REQUIRE(source.set_checkbox(1, true).has_value());
+    REQUIRE(source.styles().at({1}).forces);
+    REQUIRE(source.set_checkbox(1, false).has_value());
+    REQUIRE_FALSE(source.styles().at({1}).forces);
+    REQUIRE(source.set_checkbox(0, true).error());
+    REQUIRE(source.definition().bodies[0].center == math::Vec2{});
+    REQUIRE(source.apply_action("b.setCharge(Infinity)").error());
+}
+TEST_CASE("Unsupported live callback APIs fail rather than mutating a disconnected source body",
+          "[compatibility][INT-011]") {
+    auto result = compat::MechanicalSource::create(
+        project("function q_onChange(widget,value){World.getBody('ball').setPosition(1,2);}",
+                "<desktop><slider name='q'/></desktop>"));
+    REQUIRE(result.has_value());
+    auto source = *result.value();
+    const auto change = source.set_slider(0, 1);
+    REQUIRE(change.error());
+    REQUIRE(change.error()->message.find("live runtime port") != std::string::npos);
+    REQUIRE(source.definition().bodies[0].center == math::Vec2{});
+}
+
 namespace {
 compat::Project rigid_project(std::string shape, std::string controllers = "",
                               std::string script = "", std::string gui = "", double com = 0,

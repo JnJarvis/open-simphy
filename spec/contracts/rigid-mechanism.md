@@ -42,3 +42,11 @@ constraints from rotation locked prismatic constraints, preserving COM-local
 anchors and A-local unit axis. BodyUpdate validates an entire batch before changing
 any bodies, retaining the world and its constraints. set_time changes only the
 finite nonnegative simulation clock. Reset retains its original definition.
+
+INT-011 in-progress additive charged ports: charge is coulombs, field electric
+vectors N/C and magnetic scalar tesla. Runtime validates charge batches and field
+regions before mutation, evaluates symmetric Coulomb COM forces and bounded fields,
+and publishes owning electromagnetic force vectors. See the INT-011 RFC for
+envelopes, COM membership, magnetic integrator and explicit singularity failure.
+Native v1 remains unchanged. Source charge converts from microcoulombs once.
+Backend ports do not imply source field/tracer or complete charged-file support.

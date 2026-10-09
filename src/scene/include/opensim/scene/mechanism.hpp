@@ -19,6 +19,7 @@ struct CircleBody {
     math::Vec2 center{}, velocity{};
     double angle = 0, angular_velocity = 0, radius = .5, mass = 1, inertia = .125;
     double friction = .3, restitution = 1, damping = 0, angular_damping = 0, gravity_scale = 1;
+    double charge = 0;
     bool fixed_rotation = false, static_body = false, sensor = false;
     std::uint64_t category = 1, mask = ~std::uint64_t{0};
     std::vector<RigidFixture> fixtures;
@@ -68,6 +69,13 @@ struct BodyUpdate {
     std::optional<math::Vec2> center, velocity;
     std::optional<double> angle, angular_velocity, mass, inertia, gravity_scale;
     std::optional<double> damping, angular_damping, friction, restitution;
+    std::optional<double> charge;
+};
+struct ElectromagneticField {
+    math::Vec2 electric{}, center{};
+    double magnetic = 0, radius = 0;
+    std::vector<math::Vec2> vertices;
+    bool enabled = true;
 };
 enum class MaterialMixer { geometric_mean, minimum, maximum };
 struct Mechanism {
@@ -79,6 +87,8 @@ struct Mechanism {
     std::vector<WindingLink> windings;
     std::vector<WeldLink> welds;
     std::vector<SlideLink> slides;
+    double coulomb_constant = 9e9;
+    std::vector<ElectromagneticField> fields;
     MaterialMixer friction_mixer = MaterialMixer::geometric_mean;
     MaterialMixer restitution_mixer = MaterialMixer::maximum;
 };
@@ -91,5 +101,9 @@ struct CircleSample {
 struct MechanismSnapshot {
     double time = 0;
     std::vector<CircleSample> bodies;
+};
+struct BodyForce {
+    core::EntityId body;
+    math::Vec2 electric{}, magnetic{}, coulomb{};
 };
 } // namespace opensim::scene

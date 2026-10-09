@@ -3,5 +3,5 @@ opensim_add_test(physics_unit CATEGORY unit SOURCES time.cpp header.cpp LIBRARIE
 target_include_directories(physics_unit PRIVATE "${PROJECT_SOURCE_DIR}/src/physics")
 
 if(OPENSIM_BUILD_COMPAT)
-    target_sources(physics_unit PRIVATE mechanism.cpp)
+    target_sources(physics_unit PRIVATE mechanism.cpp electromagnetic.cpp)
 endif()

@@ -7,11 +7,12 @@ namespace opensim::compat {
 struct BodyStyle {
     scene::Color fill{1, 1, 1, 1}, outline{224.0 / 255, 224.0 / 255, 224.0 / 255, 1};
     std::string image;
+    bool forces = false;
 };
 struct SourceWidget {
     std::string text, action;
     math::Vec2 position{}, size{150, 32};
-    bool button = false, slider = false;
+    bool button = false, slider = false, checkbox = false;
     bool visible = true, enabled = true;
     std::string name;
     double minimum = 0, maximum = 1, value = 0;
@@ -38,6 +39,7 @@ class MechanicalSource {
     double camera_scale() const;
     core::Result<void> apply_action(std::string_view);
     core::Result<void> set_slider(std::size_t, double);
+    core::Result<void> set_checkbox(std::size_t, bool);
     core::Result<SourceControls> controls(const scene::MechanismSnapshot &);
 };
 } // namespace opensim::compat

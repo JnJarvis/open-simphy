@@ -37,6 +37,86 @@ struct Mechanism::Impl {
     bool poisoned = false;
     scene::MechanismSnapshot published;
     std::vector<scene::AppliedForce> applied;
+    std::map<core::EntityId, double> charges;
+    std::vector<scene::ElectromagneticField> fields;
+    std::vector<scene::BodyForce> field_forces;
+    static bool inside(const scene::ElectromagneticField &f, math::Vec2 p) {
+        if (f.radius > 0)
+            return std::hypot(p.x - f.center.x, p.y - f.center.y) <= f.radius;
+        for (std::size_t i = 0; i < f.vertices.size(); ++i) {
+            auto a = f.vertices[i], b = f.vertices[(i + 1) % f.vertices.size()];
+            if ((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) < 0)
+                return false;
+        }
+        return true;
+    }
+    bool electromagnetic_step(double dt) {
+        if (std::all_of(charges.begin(), charges.end(),
+                        [](const auto &p) { return p.second == 0; })) {
+            field_forces.clear();
+            return true;
+        }
+        std::vector<scene::BodyForce> next;
+        std::vector<double> magnetic;
+        next.reserve(initial.bodies.size());
+        magnetic.reserve(initial.bodies.size());
+        for (const auto &b : initial.bodies) {
+            const auto id = bodies.at(b.id);
+            const auto p = value(b2Body_GetWorldCenterOfMass(id));
+            const auto v = value(b2Body_GetLinearVelocity(id));
+            const double q = charges.at(b.id);
+            scene::BodyForce force;
+            force.body = b.id;
+            double field_b = 0;
+            for (const auto &f : fields)
+                if (f.enabled && inside(f, p)) {
+                    force.electric.x += q * f.electric.x;
+                    force.electric.y += q * f.electric.y;
+                    field_b += f.magnetic;
+                }
+            force.magnetic = {q * v.y * field_b, -q * v.x * field_b};
+            next.push_back(force);
+            magnetic.push_back(field_b);
+        }
+        for (std::size_t i = 0; i < next.size(); ++i)
+            for (std::size_t j = i + 1; j < next.size(); ++j) {
+                const double product =
+                    initial.coulomb_constant * charges.at(next[i].body) * charges.at(next[j].body);
+                if (product == 0)
+                    continue;
+                auto a = value(b2Body_GetWorldCenterOfMass(bodies.at(next[i].body)));
+                auto b = value(b2Body_GetWorldCenterOfMass(bodies.at(next[j].body)));
+                const double dx = a.x - b.x, dy = a.y - b.y, r = std::hypot(dx, dy);
+                if (r == 0)
+                    return false;
+                const double scale = product / (r * r * r);
+                next[i].coulomb.x += scale * dx;
+                next[i].coulomb.y += scale * dy;
+                next[j].coulomb.x -= scale * dx;
+                next[j].coulomb.y -= scale * dy;
+            }
+        for (const auto &f : next)
+            for (const auto p : {f.electric, f.magnetic, f.coulomb})
+                if (!math::finite(p) || std::abs(p.x) > 1e9 || std::abs(p.y) > 1e9)
+                    return false;
+        // All force computations precede mutation. Magnetic work is exactly zero
+        // under the Cayley rotation; no magnetic force is also applied by Box2D.
+        for (std::size_t i = 0; i < next.size(); ++i) {
+            const auto &f = next[i];
+            const auto id = bodies.at(f.body);
+            b2Body_ApplyForceToCenter(
+                id, native({f.electric.x + f.coulomb.x, f.electric.y + f.coulomb.y}), true);
+            if (magnetic[i] != 0 && b2Body_GetType(id) == b2_dynamicBody) {
+                const auto v = value(b2Body_GetLinearVelocity(id));
+                const double angle = -2 * std::atan(charges.at(f.body) * magnetic[i] * dt /
+                                                    (2 * b2Body_GetMass(id)));
+                const double c = std::cos(angle), s = std::sin(angle);
+                b2Body_SetLinearVelocity(id, native({c * v.x - s * v.y, s * v.x + c * v.y}));
+            }
+        }
+        field_forces = std::move(next);
+        return true;
+    }
     struct WindingState {
         scene::WindingLink link;
         double constant, a, b, previous_a, previous_b, phi;
@@ -137,7 +217,7 @@ struct Mechanism::Impl {
             b2Body_ApplyAngularImpulse(b, float(impulse * w.link.radius_b), true);
         }
     }
-    explicit Impl(const scene::Mechanism &m) : initial(m) {
+    explicit Impl(const scene::Mechanism &m) : initial(m), fields(m.fields) {
         auto w = b2DefaultWorldDef();
         w.gravity = native(m.gravity);
         w.frictionCallback = mixer(m.friction_mixer);
@@ -150,6 +230,7 @@ struct Mechanism::Impl {
         auto g = b2DefaultBodyDef();
         ground = b2CreateBody(world, &g);
         for (const auto &b : m.bodies) {
+            charges.emplace(b.id, b.charge);
             auto d = b2DefaultBodyDef();
             d.type = b.static_body ? b2_staticBody : b2_dynamicBody;
             d.position = native(b.center);
@@ -343,6 +424,10 @@ core::Result<void> Mechanism::step() {
     if (impl_->poisoned || impl_->steps >= 9007199254740991ULL)
         return bad("Reset invalid or exhausted mechanism runtime");
     for (unsigned substep = 0; substep < 8; ++substep) {
+        if (!impl_->electromagnetic_step(impl_->initial.fixed_dt / 8)) {
+            impl_->poisoned = true;
+            return bad("Singular or exhausted electromagnetic force; reset required");
+        }
         impl_->spring_parameters(impl_->initial.fixed_dt / 8);
         for (const auto &f : impl_->applied) {
             const auto id = impl_->bodies.at(f.body);
@@ -471,6 +556,8 @@ core::Result<void> Mechanism::update(const std::vector<scene::BodyUpdate> &updat
             b.friction = *u.friction;
         if (u.restitution)
             b.restitution = *u.restitution;
+        if (u.charge)
+            b.charge = *u.charge;
         if (b.fixed_rotation && u.angular_velocity && *u.angular_velocity != 0)
             return bad("Angular velocity conflicts with fixed rotation");
         for (auto &f : b.fixtures) {
@@ -485,6 +572,8 @@ core::Result<void> Mechanism::update(const std::vector<scene::BodyUpdate> &updat
         return valid;
     for (const auto &u : updates) {
         const auto id = impl_->bodies.at(u.body);
+        if (u.charge)
+            impl_->charges.at(u.body) = *u.charge;
         if (u.center || u.angle)
             b2Body_SetTransform(id, u.center ? native(*u.center) : b2Body_GetPosition(id),
                                 u.angle ? b2MakeRot(float(*u.angle)) : b2Body_GetRotation(id));
@@ -526,5 +615,19 @@ core::Result<void> Mechanism::update(const std::vector<scene::BodyUpdate> &updat
             }
     }
     return core::Result<void>::success();
+}
+core::Result<void> Mechanism::fields(const std::vector<scene::ElectromagneticField> &fields) {
+    if (impl_->poisoned)
+        return bad("Reset invalid electromagnetic runtime");
+    auto candidate = impl_->initial;
+    candidate.fields = fields;
+    auto valid = scene::validate(candidate);
+    if (valid.error())
+        return valid;
+    impl_->fields = fields;
+    return core::Result<void>::success();
+}
+std::vector<scene::BodyForce> Mechanism::electromagnetic_forces() const {
+    return impl_->field_forces;
 }
 } // namespace opensim::physics

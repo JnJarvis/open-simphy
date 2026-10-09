@@ -42,5 +42,9 @@ class SourceView {
     double zoom() const { return scale_; }
     const std::vector<compat::SourceWidget> &widgets() const { return source_.widgets(); }
     bool running() const { return running_; }
+    bool forces_visible(core::EntityId id) const { return source_.styles().at(id).forces; }
+    std::vector<scene::BodyForce> electromagnetic_forces() const {
+        return world_->electromagnetic_forces();
+    }
 };
 } // namespace opensim::app

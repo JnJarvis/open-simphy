@@ -18,5 +18,7 @@ class Mechanism {
     core::Result<void> relocate(core::EntityId, math::Vec2);
     core::Result<void> update(const std::vector<scene::BodyUpdate> &);
     core::Result<void> set_time(double);
+    core::Result<void> fields(const std::vector<scene::ElectromagneticField> &);
+    std::vector<scene::BodyForce> electromagnetic_forces() const;
 };
 } // namespace opensim::physics

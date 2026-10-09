@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
     std::string open_path, smoke_source;
     bool benchmark = false, benchmark_legacy = false;
     bool smoke_mechanics = false, smoke_rigid = false, smoke_elastic = false, smoke_clock = false,
-         smoke_driven = false;
+         smoke_driven = false, smoke_charge = false;
     bool smoke_mode = false, fail_window = false, fail_texture = false;
     for (int i = 1; i < argc; ++i) {
         const std::string_view arg(argv[i]);
@@ -395,13 +395,14 @@ int main(int argc, char **argv) {
         } else if (arg == "--open" && i + 1 < argc)
             open_path = argv[++i];
         else if ((arg == "--smoke-rigid" || arg == "--smoke-elastic" || arg == "--smoke-clock" ||
-                  arg == "--smoke-driven") &&
+                  arg == "--smoke-driven" || arg == "--smoke-charge") &&
                  i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_rigid = true;
             smoke_elastic = arg == "--smoke-elastic";
             smoke_clock = arg == "--smoke-clock";
             smoke_driven = arg == "--smoke-driven";
+            smoke_charge = arg == "--smoke-charge";
         } else if (arg == "--smoke-mechanism" && i + 1 < argc) {
             smoke_source = argv[++i];
             smoke_mechanics = true;
@@ -543,7 +544,7 @@ int main(int argc, char **argv) {
                                  "Rigid control coordinates");
                 for (const auto &widget : view->widgets())
                     if (widget.slider && widget.visible && widget.enabled) {
-                        const double fraction = widget.maximum > 1 ? .95 : .1;
+                        const double fraction = smoke_charge ? .1 : (widget.maximum > 1 ? .95 : .1);
                         const double cw =
                             double(control_layout.canvas.width) / control_layout.scale;
                         const double ch =
@@ -572,6 +573,59 @@ int main(int argc, char **argv) {
                                          fraction * (widget.maximum - widget.minimum))) < .001,
                                "Initial slider value not applied");
                     }
+                core::EntityId charged_body;
+                double charge_min = 10000, charge_max = -10000;
+                if (smoke_charge) {
+                    const auto body = std::find_if(
+                        view->definition().bodies.begin(), view->definition().bodies.end(),
+                        [](const auto &b) { return b.charge != 0 && !b.static_body; });
+                    expect(body != view->definition().bodies.end(),
+                           "Charge smoke needs a moving charge");
+                    charged_body = body->id;
+                    const auto l = host.workspace();
+                    int ww = 0, wh = 0;
+                    app::require_sdl(SDL_GetWindowSize(host.window(), &ww, &wh),
+                                     "Charge drag size");
+                    const auto mouse = [&](Uint32 type, math::Vec2 p) {
+                        const double px = l.x + double(l.canvas.width) / 2 +
+                                          (p.x - view->camera().x) * view->zoom() * l.scale;
+                        const double py = l.y + double(l.canvas.height) / 2 -
+                                          (p.y - view->camera().y) * view->zoom() * l.scale;
+                        SDL_Event e{};
+                        e.type = type;
+                        if (type == SDL_EVENT_MOUSE_MOTION) {
+                            e.motion.x = float(px * ww / host.extent().width);
+                            e.motion.y = float(py * wh / host.extent().height);
+                        } else {
+                            e.button.button = SDL_BUTTON_LEFT;
+                            e.button.x = float(px * ww / host.extent().width);
+                            e.button.y = float(py * wh / host.extent().height);
+                        }
+                        expect(ui.event(e, session, host), "Charge mouse event failed");
+                    };
+                    mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, body->center);
+                    mouse(SDL_EVENT_MOUSE_MOTION, {body->center.x, body->center.y - .75});
+                    mouse(SDL_EVENT_MOUSE_BUTTON_UP, {body->center.x, body->center.y - .75});
+                    for (const auto &w : view->widgets())
+                        if (w.checkbox && w.visible && w.enabled) {
+                            const double vw = double(l.canvas.width) / l.scale,
+                                         vh = double(l.canvas.height) / l.scale;
+                            const double x =
+                                std::clamp(w.position.x, 8.0, std::max(8.0, vw - w.size.x - 8)) +
+                                w.size.x * .5;
+                            const double y =
+                                std::clamp(w.position.y, 8.0, std::max(8.0, vh - w.size.y - 8)) +
+                                w.size.y * .5;
+                            const math::Vec2 point{view->camera().x + (x - vw / 2) / view->zoom(),
+                                                   view->camera().y - (y - vh / 2) / view->zoom()};
+                            if (w.value == 0) {
+                                mouse(SDL_EVENT_MOUSE_BUTTON_DOWN, point);
+                                mouse(SDL_EVENT_MOUSE_BUTTON_UP, point);
+                            }
+                            expect(w.value != 0 && view->forces_visible(charged_body),
+                                   "Native force checkbox did not invoke callback");
+                        }
+                }
                 const auto rigid_initial = view->snapshot();
                 auto first_response = rigid_initial;
                 std::map<core::EntityId, double> excursion;
@@ -587,6 +641,25 @@ int main(int argc, char **argv) {
                 key(SDLK_SPACE, session, ui, host);
                 for (int i = 0; i < 180; ++i) {
                     ui.tick(view->definition().fixed_dt);
+                    if (smoke_charge) {
+                        const auto state = view->snapshot();
+                        const auto body =
+                            std::find_if(state.bodies.begin(), state.bodies.end(),
+                                         [&](const auto &b) { return b.id == charged_body; });
+                        expect(std::abs(body->center.x) < .006,
+                               "Moving charge escaped prismatic guide");
+                        charge_min = std::min(charge_min, body->center.y);
+                        charge_max = std::max(charge_max, body->center.y);
+                        if (i == 0) {
+                            const auto forces = view->electromagnetic_forces();
+                            const auto force =
+                                std::find_if(forces.begin(), forces.end(),
+                                             [&](const auto &f) { return f.body == charged_body; });
+                            expect(force != forces.end() &&
+                                       std::hypot(force->coulomb.x, force->coulomb.y) > 0,
+                                   "Charge force display has no measured physical force");
+                        }
+                    }
                     if (smoke_driven) {
                         const auto state = view->snapshot();
                         if (i == 59)
@@ -607,6 +680,13 @@ int main(int argc, char **argv) {
                 for (const auto &[id, distance] : excursion) {
                     static_cast<void>(id);
                     expect(distance > .01, "A driven oscillator did not move");
+                }
+                if (smoke_charge) {
+                    expect(charge_min < -.1 && charge_max > .1,
+                           "Released attractive charge did not oscillate through equilibrium");
+                    std::cout
+                        << "PASS: charged oscillator moves through both sides of equilibrium; y="
+                        << charge_min << ".." << charge_max << '\n';
                 }
                 expect(std::abs(view->snapshot().time -
                                 (rigid_initial.time + 180 * view->definition().fixed_dt)) < 1e-9,

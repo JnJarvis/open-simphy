@@ -18,7 +18,8 @@ core::Result<void> validate(const Mechanism &m) {
     if (m.bodies.size() > 256 ||
         m.links.size() + m.hinges.size() + m.windings.size() + m.welds.size() + m.slides.size() >
             1024 ||
-        !point(m.gravity) || !range(m.fixed_dt, .001, 1.0 / 30))
+        !point(m.gravity) || !range(m.fixed_dt, .001, 1.0 / 30) ||
+        !range(m.coulomb_constant, 0, 1e12) || m.fields.size() > 64)
         return bad("Mechanism bounds or timestep invalid");
     const auto valid_mixer = [](MaterialMixer v) {
         return v == MaterialMixer::geometric_mean || v == MaterialMixer::minimum ||
@@ -27,6 +28,24 @@ core::Result<void> validate(const Mechanism &m) {
     if (!valid_mixer(m.friction_mixer) || !valid_mixer(m.restitution_mixer))
         return bad("Invalid material mixer");
     std::set<core::EntityId> ids, joints;
+    for (const auto &f : m.fields) {
+        if (!point(f.center) || !point(f.electric) || !range(f.magnetic, -1e6, 1e6) ||
+            !range(f.radius, 0, 10000) || f.vertices.size() > 64 ||
+            (!f.vertices.empty() && (f.vertices.size() < 3 || f.radius != 0)))
+            return bad("Invalid electromagnetic field");
+        for (std::size_t i = 0; i < f.vertices.size(); ++i) {
+            const auto a = f.vertices[i], b = f.vertices[(i + 1) % f.vertices.size()];
+            if (!point(a))
+                return bad("Field vertex outside envelope");
+            for (std::size_t k = 0; k < f.vertices.size(); ++k) {
+                if (k == i || k == (i + 1) % f.vertices.size())
+                    continue;
+                const auto p = f.vertices[k];
+                if ((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) <= 1e-10)
+                    return bad("Field region must be strictly convex CCW");
+            }
+        }
+    }
     std::size_t fixture_count = 0;
     for (const auto &b : m.bodies) {
         if (!b.id.valid() || !ids.insert(b.id).second)
@@ -37,6 +56,7 @@ core::Result<void> validate(const Mechanism &m) {
             (!b.static_body && (b.mass < 1e-6 || b.inertia < 1e-9)) || !range(b.friction, 0, 1e6) ||
             !range(b.restitution, 0, 1) || !range(b.damping, 0, 1e6) ||
             !range(b.angular_damping, 0, 1e6) || !range(b.gravity_scale, -100, 100) ||
+            !range(b.charge, -1e6, 1e6) ||
             (b.static_body && (b.velocity != math::Vec2{} || b.angular_velocity != 0)))
             return bad("Invalid circular body", b.id);
         fixture_count += b.fixtures.size();

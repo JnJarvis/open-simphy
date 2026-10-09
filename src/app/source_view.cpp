@@ -280,6 +280,19 @@ bool SourceView::event(const SDL_Event &e, Host &host) {
                             return true;
                         }
                     }
+                for (std::size_t i = 0; i < source_.widgets().size(); ++i) {
+                    const auto &w = source_.widgets()[i];
+                    if (!w.checkbox || !w.visible || !w.enabled)
+                        continue;
+                    const double wx = left + std::clamp(w.position.x, 8.0,
+                                                        std::max(8.0, double(vw) - w.size.x - 8));
+                    const double wy = top + std::clamp(w.position.y, 8.0,
+                                                       std::max(8.0, double(vh) - w.size.y - 8));
+                    if (x >= wx && x < wx + w.size.x && y >= wy && y < wy + w.size.y) {
+                        checked(source_.set_checkbox(i, w.value == 0));
+                        return true;
+                    }
+                }
                 if (x < l.left && y >= 176 && y < l.property_y() - 40) {
                     const auto index = static_cast<std::size_t>((y - 176 + list_scroll_) / 20);
                     if (index < source_.definition().bodies.size())
@@ -552,6 +565,31 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
                     "Draw suspension");
         panel(r, pb.x - 2, pb.y - 2, 4, 4);
     }
+    for (const auto &force : world_->electromagnetic_forces()) {
+        if (!source_.styles().at(force.body).forces)
+            continue;
+        const auto origin = project(samples.at(force.body).center);
+        const auto arrow = [&](math::Vec2 f, scene::Color shade, const std::string &name) {
+            const double magnitude = std::hypot(f.x, f.y);
+            if (magnitude == 0)
+                return;
+            const double length = std::clamp(magnitude * scale_ * 10, 8.0, 120.0);
+            const float dx = float(length * f.x / magnitude), dy = float(-length * f.y / magnitude);
+            const float ux = float(f.x / magnitude), uy = float(-f.y / magnitude);
+            color(r, shade);
+            require_sdl(SDL_RenderLine(r, origin.x, origin.y, origin.x + dx, origin.y + dy),
+                        "Force vector");
+            for (float side : {-1.0f, 1.0f})
+                require_sdl(SDL_RenderLine(r, origin.x + dx, origin.y + dy,
+                                           origin.x + dx - 7 * ux + side * 4 * uy,
+                                           origin.y + dy - 7 * uy - side * 4 * ux),
+                            "Force arrow");
+            label(origin.x + dx + 5, origin.y + dy + 4, name + " " + number(magnitude) + " N");
+        };
+        arrow(force.electric, {1, .8, .2, 1}, "Electric");
+        arrow(force.magnetic, {.3, .9, .8, 1}, "Magnetic");
+        arrow(force.coulomb, {1, .5, .7, 1}, "Coulomb");
+    }
     float textY = top + 136;
     for (const auto &w : source_.widgets()) {
         if (!w.visible)
@@ -574,6 +612,17 @@ void SourceView::paint(SDL_Renderer *r, renderer::Extent extent, float density) 
             color(r, {.9, .65, .2, 1});
             const float value = float((w.value - w.minimum) / (w.maximum - w.minimum));
             panel(r, x + float(w.size.x) * value - 3, y + 23, 6, 11);
+        } else if (w.checkbox) {
+            const float x = left + std::clamp(float(w.position.x), 8.0f,
+                                              std::max(8.0f, vw - float(w.size.x) - 8));
+            const float y = top + std::clamp(float(w.position.y), 8.0f,
+                                             std::max(8.0f, vh - float(w.size.y) - 8));
+            color(r, {.35, .35, .35, 1});
+            panel(r, x, y, float(w.size.x), float(w.size.y));
+            color(r, w.value != 0 ? scene::Color{.9, .65, .2, 1} : scene::Color{.2, .2, .2, 1});
+            panel(r, x + 4, y + 3, 12, 12);
+            color(r, {1, 1, 1, 1});
+            label(x + 22, y + 2, w.text, float(w.size.x) - 24);
         } else if (w.button) {
             float x = left + std::clamp(float(w.position.x), 8.0f,
                                         std::max(8.0f, vw - float(w.size.x) - 8)),

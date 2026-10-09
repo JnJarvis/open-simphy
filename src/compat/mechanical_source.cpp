@@ -236,24 +236,29 @@ class Color {
 }
 let __bodies=__seed.bodies, __links=__seed.links, __next=__bodies.length+1, __joint=__links.reduce((n,j)=>Math.max(n,j.id),0)+1;
 const __initial=JSON.parse(JSON.stringify(__seed.bodies));
+var __chargeCommands={},__liveControl=false;
+function __startupOnly(){if(__liveControl)throw Error('This callback API needs a live runtime port');}
 class Body {
  constructor(d){this.d=d;}
- setFillColor(c){this.d.fill=c.rgba.slice();}
- setPosition(v,y){const p=typeof v==='object'?v:{x:v,y:y};this.d.center={x:p.x,y:p.y};this.d.velocity={x:0,y:0};}
- getPosition(){return new Vector2(this.d.center.x,this.d.center.y);}
- setRotation(a){if(!Number.isFinite(a))throw Error('Invalid angle');this.d.angle=a;this.d.angular=0;}
- reset(){const initial=__initial.find(b=>b.id===this.d.id);if(!initial)throw Error('Missing initial body');Object.assign(this.d,JSON.parse(JSON.stringify(initial)));}
- getVelocity(){return new Vector2(this.d.velocity.x,this.d.velocity.y);}
+ setFillColor(c){__startupOnly();this.d.fill=c.rgba.slice();}
+ setPosition(v,y){__startupOnly();const p=typeof v==='object'?v:{x:v,y:y};this.d.center={x:p.x,y:p.y};this.d.velocity={x:0,y:0};}
+ getPosition(){__startupOnly();return new Vector2(this.d.center.x,this.d.center.y);}
+ setRotation(a){__startupOnly();if(!Number.isFinite(a))throw Error('Invalid angle');this.d.angle=a;this.d.angular=0;}
+ reset(){__startupOnly();const initial=__initial.find(b=>b.id===this.d.id);if(!initial)throw Error('Missing initial body');if(this.d.charge!==initial.charge)throw Error('Changed-charge reset behavior requires source verification');Object.assign(this.d,JSON.parse(JSON.stringify(initial)));}
+ getVelocity(){__startupOnly();return new Vector2(this.d.velocity.x,this.d.velocity.y);}
+ setCharge(q){if(typeof q!=='number'||!Number.isFinite(q)||Math.abs(q)>1e12)throw Error('Invalid charge');this.d.charge=q;__chargeCommands[this.d.id]=q*1e-6;}
+ getCharge(){return this.d.charge;}
+ setFbdDrawn(value){this.d.fbd=Boolean(value);}
 }
 function __local(body,p){const x=p.x-body.d.center.x,y=p.y-body.d.center.y,c=Math.cos(body.d.angle),s=Math.sin(body.d.angle);return {x:c*x+s*y,y:-s*x+c*y};}
 var __requestedTime=null,T=0,t=0;
 const World={
  setSimulationTime(time){if(typeof time!=='number'||!Number.isFinite(time)||time<0||time>1e9)throw Error('Invalid simulation time');__requestedTime=time;T=time;t=time;},
  getSimulationTime(){return T;},
- clear(){__bodies=__bodies.filter(b=>!b.spawned);__links=__links.filter(j=>!j.spawned);},
+ clear(){__startupOnly();__bodies=__bodies.filter(b=>!b.spawned);__links=__links.filter(j=>!j.spawned);},
  getBody(name){const b=__bodies.find(b=>b.name===name);if(!b)throw Error('Missing body '+name);return new Body(b);},
- createCopy(body){if(__bodies.length>=256)throw Error('Body budget');const b=JSON.parse(JSON.stringify(body.d));b.id=__next++;b.spawned=true;__bodies.push(b);return new Body(b);},
- addDistanceJoint(a,b,p,q){if(__links.length>=1024)throw Error('Joint budget');const j={id:__joint++,a:a.d.id,b:b?b.d.id:0,pa:__local(a,p),pb:b?__local(b,q):{x:q.x,y:q.y},length:Math.hypot(p.x-q.x,p.y-q.y),color:[1,.647,0,1],spawned:true};__links.push(j);return {setColor(c){j.color=c.rgba.slice();}};}
+ createCopy(body){__startupOnly();if(__bodies.length>=256)throw Error('Body budget');const b=JSON.parse(JSON.stringify(body.d));b.id=__next++;b.spawned=true;__bodies.push(b);return new Body(b);},
+ addDistanceJoint(a,b,p,q){__startupOnly();if(__links.length>=1024)throw Error('Joint budget');const j={id:__joint++,a:a.d.id,b:b?b.d.id:0,pa:__local(a,p),pb:b?__local(b,q):{x:q.x,y:q.y},length:Math.hypot(p.x-q.x,p.y-q.y),color:[1,.647,0,1],spawned:true};__links.push(j);return {setColor(c){j.color=c.rgba.slice();}};}
 };
 const Resources={getSound(name){return {isPlaying(){return false;},play(){throw Error('Collision audio unsupported in experimental mechanics');}};}};
 // No host modules, I/O, network, native handles or clocks are installed.
@@ -281,6 +286,41 @@ struct MechanicalSource::Impl {
     std::map<core::EntityId, scene::Color> joint_colors;
     std::map<std::string, std::vector<std::uint8_t>> images;
     std::vector<SourceWidget> widgets;
+    void control_callback(const SourceWidget &w) {
+        auto widget = JS_NewObject(context);
+        JS_SetPropertyStr(context, widget, "name", JS_NewString(context, w.name.c_str()));
+        JS_SetPropertyStr(context, widget, "value",
+                          w.checkbox ? JS_NewBool(context, w.value != 0)
+                                     : JS_NewFloat64(context, w.value));
+        Value global(context, JS_GetGlobalObject(context));
+        JS_SetPropertyStr(context, global.value, "__controlWidget", widget);
+        const std::string action = w.action.empty()
+                                       ? "if(typeof " + w.name + "_onChange==='function') " +
+                                             w.name + "_onChange(this,this.value);"
+                                       : w.action;
+        Value result(
+            context,
+            eval("__liveControl=true;try{(function(){this.getValue=function(){return this.value;};"
+                 "this.isSelected=function(){return this.value;};" +
+                 action + "}).call(__controlWidget)}finally{__liveControl=false;}"));
+        Value values(context, eval("__bodies"));
+        if (num(context, values.value, "length") != double(definition.bodies.size()))
+            throw std::runtime_error("Callback body topology requires a live runtime port");
+        std::vector<core::EntityId> seen;
+        for (unsigned i = 0; i < num(context, values.value, "length"); ++i) {
+            Value b(context, JS_GetPropertyUint32(context, values.value, i));
+            auto flag = field(context, b.value, "fbd");
+            const double identifier = num(context, b.value, "id");
+            if (identifier < 1 || identifier > 9007199254740991.0 ||
+                std::floor(identifier) != identifier)
+                throw std::runtime_error("Invalid controlled body ID");
+            const core::EntityId id{static_cast<std::uint64_t>(identifier)};
+            if (!styles.contains(id) || std::find(seen.begin(), seen.end(), id) != seen.end())
+                throw std::runtime_error("Callback body topology requires a live runtime port");
+            seen.push_back(id);
+            styles.at(id).forces = JS_ToBool(context, flag.value) != 0;
+        }
+    }
     math::Vec2 camera{};
     double scale = 45;
     bool poisoned = false, ready = false;
@@ -354,6 +394,7 @@ struct MechanicalSource::Impl {
             b.damping = num(context, v.value, "damping");
             b.angular_damping = num(context, v.value, "angularDamping");
             b.gravity_scale = num(context, v.value, "gravityScale");
+            b.charge = num(context, v.value, "charge") * 1e-6;
             b.fixed_rotation = num(context, v.value, "fixed") != 0;
             b.static_body = num(context, v.value, "static") != 0;
             b.category = bits_value(context, v.value, "category");
@@ -385,6 +426,8 @@ struct MechanicalSource::Impl {
                 b.fixtures.push_back(std::move(f));
             }
             BodyStyle style;
+            auto fbd = field(context, v.value, "fbd");
+            style.forces = JS_ToBool(context, fbd.value) != 0;
             auto fill = field(context, v.value, "fill");
             style.fill = rgba(context, fill.value);
             auto line = field(context, v.value, "outline");
@@ -544,16 +587,19 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                 throw std::runtime_error("Prescribed nonzero angular velocity unsupported");
             if ((body.child("AccumulatedForce") &&
                  point(body.child("AccumulatedForce")) != math::Vec2{}) ||
-                scalar(body.child("AccumulatedTorque")) != 0 || scalar(body.child("Charge")) != 0 ||
+                scalar(body.child("AccumulatedTorque")) != 0 ||
 
                 body.child("Active").text().as_bool(true) == false)
-                throw std::runtime_error("Unsupported force/filter/charge/inactive state");
+                throw std::runtime_error("Unsupported force/filter/inactive state");
             Value v(p->context, JS_NewObject(p->context));
             unsigned id = ++index;
             ids[key] = id;
             centers[id] = center;
             angles[id] = angle;
             put(p->context, v.value, "id", id);
+            put(p->context, v.value, "charge", scalar(body.child("Charge")));
+            JS_SetPropertyStr(p->context, v.value, "fbd",
+                              JS_NewBool(p->context, body.child("FbdDrawn").text().as_bool(false)));
             JS_SetPropertyStr(p->context, v.value, "name",
                               JS_NewString(p->context, body.attribute("Name").value()));
             JS_SetPropertyStr(p->context, v.value, "center", vector(p->context, center));
@@ -916,7 +962,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                         continue;
                     }
                     if (kind != "button" && kind != "textarea" && kind != "label" &&
-                        kind != "slider")
+                        kind != "slider" && kind != "checkbox")
                         throw std::runtime_error("Unsupported embedded widget: " + kind);
                     if (p->widgets.size() >= 64)
                         throw std::runtime_error("Widget budget");
@@ -925,13 +971,14 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                     w.enabled = active;
                     w.button = kind == "button";
                     w.slider = kind == "slider";
+                    w.checkbox = kind == "checkbox";
                     w.text = node.attribute("text").value();
                     w.action = node.attribute("action").value();
                     w.name = node.attribute("name").value();
                     if (w.text.size() > 65536 || w.action.size() > 4096 || w.name.size() > 128)
                         throw std::runtime_error("Widget text budget");
                     w.position = {16, row};
-                    w.size = {300, w.button || w.slider ? 36.0 : 80.0};
+                    w.size = {300, w.button || w.slider || w.checkbox ? 36.0 : 80.0};
                     std::string bounds = node.attribute("rectbounds").value();
                     if (!bounds.empty()) {
                         for (auto &ch : bounds)
@@ -949,7 +996,7 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                         throw std::runtime_error("Invalid widget bounds");
                     if (w.visible)
                         row += w.size.y + 8;
-                    if (w.slider) {
+                    if (w.slider || w.checkbox) {
                         if (w.name.empty() ||
                             !(std::isalpha(static_cast<unsigned char>(w.name[0])) ||
                               w.name[0] == '_') ||
@@ -959,14 +1006,16 @@ core::Result<MechanicalSource> MechanicalSource::create(const Project &project) 
                             throw std::runtime_error("Invalid slider variable");
                         w.minimum = node.attribute("minimum").as_double(0);
                         w.maximum = node.attribute("maximum").as_double(10);
-                        w.value = node.attribute("value").as_double(5);
+                        w.value = w.checkbox ? double(node.attribute("selected").as_bool(false))
+                                             : node.attribute("value").as_double(5);
                         if (!std::isfinite(w.minimum) || !std::isfinite(w.maximum) ||
                             !std::isfinite(w.value) || w.minimum >= w.maximum ||
                             w.value < w.minimum || w.value > w.maximum ||
                             std::abs(w.minimum) > 1e9 || std::abs(w.maximum) > 1e9)
                             throw std::runtime_error("Invalid slider range");
                         JS_SetPropertyStr(p->context, global.value, w.name.c_str(),
-                                          JS_NewFloat64(p->context, w.value));
+                                          w.checkbox ? JS_NewBool(p->context, w.value != 0)
+                                                     : JS_NewFloat64(p->context, w.value));
                     }
                     if (w.button && w.action.empty() && !w.name.empty())
                         w.action = w.name + "_onClick()";
@@ -1089,7 +1138,7 @@ core::Result<void> MechanicalSource::apply_action(std::string_view action) {
     }
 }
 core::Result<void> MechanicalSource::set_slider(std::size_t index, double value) {
-    if (index >= impl_->widgets.size() || !impl_->widgets[index].slider ||
+    if (impl_->poisoned || index >= impl_->widgets.size() || !impl_->widgets[index].slider ||
         !impl_->widgets[index].enabled || !std::isfinite(value) ||
         value < impl_->widgets[index].minimum || value > impl_->widgets[index].maximum)
         return core::Result<void>::failure({core::Code::invalid_argument,
@@ -1102,7 +1151,42 @@ core::Result<void> MechanicalSource::set_slider(std::size_t index, double value)
     JS_SetPropertyStr(impl_->context, global.value, w.name.c_str(),
                       JS_NewFloat64(impl_->context, value));
     w.value = value;
+    try {
+        impl_->control_callback(w);
+    } catch (const std::exception &e) {
+        impl_->poisoned = true;
+        return core::Result<void>::failure({core::Code::unsupported_feature,
+                                            core::Severity::error,
+                                            e.what(),
+                                            {},
+                                            "compat.controls"});
+    }
     return core::Result<void>::success();
+}
+core::Result<void> MechanicalSource::set_checkbox(std::size_t index, bool selected) {
+    if (index >= impl_->widgets.size() || !impl_->widgets[index].checkbox ||
+        !impl_->widgets[index].enabled || impl_->poisoned)
+        return core::Result<void>::failure({core::Code::invalid_argument,
+                                            core::Severity::error,
+                                            "Invalid checkbox",
+                                            {},
+                                            "compat.controls"});
+    auto &w = impl_->widgets[index];
+    w.value = selected ? 1 : 0;
+    Value global(impl_->context, JS_GetGlobalObject(impl_->context));
+    JS_SetPropertyStr(impl_->context, global.value, w.name.c_str(),
+                      JS_NewBool(impl_->context, selected));
+    try {
+        impl_->control_callback(w);
+        return core::Result<void>::success();
+    } catch (const std::exception &e) {
+        impl_->poisoned = true;
+        return core::Result<void>::failure({core::Code::unsupported_feature,
+                                            core::Severity::error,
+                                            e.what(),
+                                            {},
+                                            "compat.controls"});
+    }
 }
 core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSnapshot &state) {
     try {
@@ -1126,6 +1210,19 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
             return number(impl_->context, n.value);
         };
         std::map<core::EntityId, scene::BodyUpdate> updates;
+        Value staged(impl_->context, impl_->eval("__chargeCommands"));
+        for (const auto &b : impl_->definition.bodies) {
+            const auto key = std::to_string(b.id.value);
+            auto q = field(impl_->context, staged.value, key.c_str());
+            if (!JS_IsUndefined(q.value)) {
+                auto &u = updates[b.id];
+                u.body = b.id;
+                u.charge = number(impl_->context, q.value);
+            }
+        }
+        Value keys(impl_->context, impl_->eval("Object.keys(__chargeCommands)"));
+        if (num(impl_->context, keys.value, "length") != double(updates.size()))
+            throw std::runtime_error("Missing controlled charge body");
         for (const auto &c : impl_->controllers) {
             if (c.properties) {
                 if (!c.friction.empty()) {
@@ -1211,6 +1308,8 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
                     b->angle = *u.angle;
                 if (u.angular_velocity)
                     b->angular_velocity = *u.angular_velocity;
+                if (u.charge)
+                    b->charge = *u.charge;
                 result.updates.push_back(u);
             }
             auto valid = scene::validate(candidate);
@@ -1218,6 +1317,8 @@ core::Result<SourceControls> MechanicalSource::controls(const scene::MechanismSn
                 throw std::runtime_error(valid.error()->message);
         }
         JS_SetPropertyStr(impl_->context, global.value, "__requestedTime", JS_NULL);
+        JS_SetPropertyStr(impl_->context, global.value, "__chargeCommands",
+                          JS_NewObject(impl_->context));
         return core::Result<SourceControls>::success(std::move(result));
     } catch (const std::exception &e) {
         impl_->poisoned = true;
